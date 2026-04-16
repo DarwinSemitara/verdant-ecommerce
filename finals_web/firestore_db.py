@@ -10,7 +10,13 @@ from werkzeug.security import generate_password_hash
 import os
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate('firebase_verdant_db.json')
+import os as _os
+_cred_path = 'firebase_verdant_db.json'
+if not _os.path.exists(_cred_path):
+    # On Render, the secret file may be at /etc/secrets/
+    _cred_path = '/etc/secrets/firebase_verdant_db.json'
+
+cred = credentials.Certificate(_cred_path)
 firebase_admin.initialize_app(cred)
 
 # Get Firestore client
