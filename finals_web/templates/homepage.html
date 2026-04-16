@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Homepage</title>
+</head>
+<body>
+  <h1>Welcome, you're logged in!</h1>
+
+
+  <form action="{{ url_for('logout') }}" method="GET" style="margin-top: 20px;">
+  <button type="submit" style="
+    padding: 0.5rem 1rem;
+    background-color: #f9c6aa;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+  ">
+    Logout
+  </button>
+</form>
+
+</body>
+</html>

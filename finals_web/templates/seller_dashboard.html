@@ -1,0 +1,444 @@
+{% extends 'base_user.html' %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  {% if not seller_approved %}
+  {% if application_status == 'pending' %}
+  <!-- Waiting for approval state -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body p-5 text-center">
+          <div class="mb-3">
+            <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
+          </div>
+          <h2 class="mt-2 mb-2">Application submitted</h2>
+          <p class="text-muted mb-1">Your seller application is being reviewed by an admin.</p>
+          {% if application_submitted_at %}
+          <p class="text-muted small mb-3">Submitted: {{ application_submitted_at }}</p>
+          {% endif %}
+          <p class="text-muted">We'll notify you once it's approved. You can continue browsing while you wait.</p>
+          <a href="{{ url_for('seller_messages') }}" class="btn btn-outline-secondary mt-2">Open Messages</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- Seller Application Form -->
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body p-5">
+          <div class="text-center mb-4">
+            <i class="bi bi-shop" style="font-size: 4rem; color: #198754;"></i>
+            <h2 class="mt-3 mb-2">Complete Your Seller Application</h2>
+            <p class="text-muted">Before you can start selling, please complete your store information</p>
+          </div>
+
+          <form id="sellerApplicationForm" method="POST" action="{{ url_for('submit_seller_application') }}" enctype="multipart/form-data">
+            <!-- Store Information -->
+            <div class="mb-4">
+              <h5 class="mb-3"><i class="bi bi-shop-window me-2"></i>Store Information</h5>
+              
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Store Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="store_name" placeholder="Enter your store name" required>
+                <small class="text-muted">This will be displayed to customers</small>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Store Description <span class="text-danger">*</span></label>
+                <textarea class="form-control" name="store_description" rows="4" placeholder="Describe what your store sells..." required></textarea>
+                <small class="text-muted">Tell customers about your products and services</small>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-semibold">Store Category <span class="text-danger">*</span></label>
+                  <select class="form-select" name="store_category" required>
+                    <option value="">Select category</option>
+                    <option value="Home & Garden">Home & Garden</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Fashion">Fashion</option>
+                    <option value="Food & Beverages">Food & Beverages</option>
+                    <option value="Health & Beauty">Health & Beauty</option>
+                    <option value="Sports & Outdoors">Sports & Outdoors</option>
+                    <option value="Books & Media">Books & Media</option>
+                    <option value="Toys & Games">Toys & Games</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label fw-semibold">Store Phone Number <span class="text-danger">*</span></label>
+                  <input type="tel" class="form-control" name="store_phone" placeholder="09XXXXXXXXX" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Business Documents -->
+            <div class="mb-4">
+              <h5 class="mb-3"><i class="bi bi-file-earmark-text me-2"></i>Business Documents</h5>
+              
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Business Permit/DTI Registration (Optional)</label>
+                <input type="file" class="form-control" name="business_permit" accept="image/*,.pdf">
+                <small class="text-muted">Upload your business permit or DTI registration (JPG, PNG, PDF)</small>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Valid ID <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" name="valid_id" accept="image/*,.pdf" required>
+                <small class="text-muted">Upload a clear photo of your valid government-issued ID</small>
+              </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="mb-4">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                <label class="form-check-label" for="agreeTerms">
+                  I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Seller Policy</a>
+                </label>
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <button id="submitApplicationBtn" type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-check-circle me-2"></i>Submit Application
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var form = document.getElementById('sellerApplicationForm');
+      var btn = document.getElementById('submitApplicationBtn');
+      if (form && btn) {
+        form.addEventListener('submit', function() {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+        });
+      }
+    })();
+  </script>
+  {% endif %}
+  {% else %}
+  <div class="row mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="metric-card">
+        <div class="metric-body">
+          <div class="metric-icon primary"><i class="bi bi-graph-up"></i></div>
+          <div class="metric-value" id="metricTotalRevenue"></div>
+          <div class="metric-label">Total revenue</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="metric-card">
+        <div class="metric-body">
+          <div class="metric-icon success"><i class="bi bi-bag-check"></i></div>
+          <div class="metric-value" id="metricTotalOrders">0</div>
+          <div class="metric-label">Total orders</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="metric-card">
+        <div class="metric-body">
+          <div class="metric-icon warning"><i class="bi bi-sun"></i></div>
+          <div class="metric-value" id="metricTodayRevenue">0</div>
+          <div class="metric-label">Today27s revenue</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="metric-card">
+        <div class="metric-body">
+          <div class="metric-icon info"><i class="bi bi-cash-coin"></i></div>
+          <div class="metric-value" id="metricAvgOrderValue">0</div>
+          <div class="metric-label">Avg. order value</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm h-100" style="border-radius: 1rem;">
+        <div class="card-body" style="height: 320px;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Store performance</h5>
+            <span class="text-muted small" id="metricRangeLabel">Based on recent orders</span>
+          </div>
+          <div style="position: relative; width: 100%; height: 250px;">
+            <canvas id="salesTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow-sm h-100" style="border-radius: 1rem;">
+        <div class="card-body">
+          <h6 class="mb-3">Order status overview</h6>
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="status-label">Pending</span>
+              <span class="status-count" id="metricPendingOrders">0</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="status-label">Accepted</span>
+              <span class="status-count" id="metricAcceptedOrders">0</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="status-label">Out for delivery</span>
+              <span class="status-count" id="metricDeliveringOrders">0</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="status-label">Delivered</span>
+              <span class="status-count" id="metricDeliveredOrders">0</span>
+            </div>
+          </div>
+          <a href="{{ url_for('seller_orders') }}" class="btn btn-outline-primary w-100 mt-3">View all orders</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.initSellerDashboard = function() {
+      var canvas = document.getElementById('salesTrendChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      var ctx = canvas.getContext('2d');
+      if (window._sellerSalesChart) {
+        window._sellerSalesChart.destroy();
+      }
+
+      fetch("{{ url_for('api_get_seller_orders') }}")
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+          if (!data || !data.success) return;
+          var orders = data.orders || [];
+          var byDate = {};
+          var statusCounts = {
+            pending: 0,
+            accepted: 0,
+            approved: 0,
+            out_for_delivery: 0,
+            delivered: 0,
+            rejected: 0
+          };
+          var totalRevenue = 0;
+          var totalOrders = orders.length;
+          var todayIso = new Date().toISOString().slice(0, 10);
+          var todayRevenue = 0;
+
+          orders.forEach(function(o) {
+            var amount = Number(o.total_amount) || 0;
+            var dateStr = (o.order_date || '').slice(0, 10);
+            var statusKey = (o.status || '').toLowerCase();
+            if (dateStr) {
+              if (!byDate[dateStr]) {
+                byDate[dateStr] = 0;
+              }
+              byDate[dateStr] += amount;
+            }
+            if (Object.prototype.hasOwnProperty.call(statusCounts, statusKey)) {
+              statusCounts[statusKey] += 1;
+            }
+            if (statusKey !== 'rejected') {
+              totalRevenue += amount;
+              if (dateStr === todayIso) {
+                todayRevenue += amount;
+              }
+            }
+          });
+
+          var labels = Object.keys(byDate).sort();
+          var series = labels.map(function(d) { return byDate[d]; });
+
+          var totalRevenueEl = document.getElementById('metricTotalRevenue');
+          var totalOrdersEl = document.getElementById('metricTotalOrders');
+          var todayRevenueEl = document.getElementById('metricTodayRevenue');
+          var avgOrderValueEl = document.getElementById('metricAvgOrderValue');
+          var pendingEl = document.getElementById('metricPendingOrders');
+          var acceptedEl = document.getElementById('metricAcceptedOrders');
+          var deliveringEl = document.getElementById('metricDeliveringOrders');
+          var deliveredEl = document.getElementById('metricDeliveredOrders');
+
+          function formatCurrency(value) {
+            return '₱' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          }
+
+          if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(totalRevenue);
+          if (totalOrdersEl) totalOrdersEl.textContent = String(totalOrders);
+          if (todayRevenueEl) todayRevenueEl.textContent = formatCurrency(todayRevenue);
+          if (avgOrderValueEl) {
+            var avg = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            avgOrderValueEl.textContent = formatCurrency(avg);
+          }
+
+          if (pendingEl) pendingEl.textContent = String(statusCounts.pending || 0);
+          if (acceptedEl) acceptedEl.textContent = String((statusCounts.accepted || 0) + (statusCounts.approved || 0));
+          if (deliveringEl) deliveringEl.textContent = String(statusCounts.out_for_delivery || 0);
+          if (deliveredEl) deliveredEl.textContent = String(statusCounts.delivered || 0);
+
+          if (labels.length === 0) {
+            labels.push(todayIso);
+            series.push(0);
+          }
+
+          window._sellerSalesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Revenue',
+                data: series,
+                fill: true,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.12)',
+                tension: 0.35,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointBackgroundColor: '#0d6efd'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      var v = context.parsed.y || 0;
+                      return formatCurrency(v);
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  ticks: {
+                    maxTicksLimit: 6
+                  },
+                  grid: {
+                    display: false
+                  }
+                },
+                y: {
+                  beginAtZero: true,
+                  grid: {
+                    color: 'rgba(148, 163, 184, 0.25)'
+                  },
+                  ticks: {
+                    callback: function(value) { return formatCurrency(value); }
+                  }
+                }
+              }
+            }
+          });
+        })
+        .catch(function(e) {
+          console.error('Seller dashboard load error:', e);
+        });
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.initSellerDashboard) window.initSellerDashboard();
+      });
+    } else {
+      if (window.initSellerDashboard) window.initSellerDashboard();
+    }
+  </script>
+  {% endif %}
+</div>
+
+
+<style>
+.metric-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  text-decoration: none;
+  color: inherit;
+}
+
+.metric-body {
+  text-align: center;
+}
+
+.metric-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.metric-icon.primary { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+.metric-icon.success { background: rgba(25, 135, 84, 0.1); color: #198754; }
+.metric-icon.warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+.metric-icon.danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.metric-icon.info { background: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
+.metric-icon.secondary { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.header-chip {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chip-success {
+  background: rgba(25, 135, 84, 0.1);
+  color: #198754;
+}
+
+.status-count {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.status-label {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Add New Product</h2>
+    <a href="{{ url_for('manage_products') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Products</a>
+  </div>
+
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+    <i class="bi bi-shield-lock me-2"></i>
+    <div>
+      Admin approval is required before this product appears in your store. This is a UI notice only; approval workflow is not yet wired.
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form id="addProductForm" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="row g-3">
+          <!-- Basics -->
+          <div class="col-md-6">
+            <label class="form-label" for="product_name">Product Name</label>
+            <input id="product_name" type="text" name="product_name" class="form-control" placeholder="e.g., Garden Shovel" value="{{ (form.product_name if form else '') or '' }}" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="price">Price</label>
+            <div class="input-group">
+              <span class="input-group-text">₱</span>
+              <input id="price" type="number" step="0.01" min="0" name="price" class="form-control" placeholder="0.00" value="{{ (form.price if form else '') or '' }}" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="stock">Stock</label>
+            <input id="stock" type="number" min="0" name="stock" class="form-control" placeholder="0" value="{{ (form.stock if form else '') or '' }}" required>
+          </div>
+
+          <!-- Additional info -->
+          <div class="col-md-3">
+            <label class="form-label" for="sku">SKU</label>
+            <input id="sku" type="text" class="form-control" placeholder="e.g., SHVL-001">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="brand">Brand</label>
+            <input id="brand" type="text" class="form-control" placeholder="e.g., Home&Garden Co.">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="condition">Condition</label>
+            <select id="condition" class="form-select">
+              <option>New</option>
+              <option>Used - Like New</option>
+              <option>Used - Good</option>
+              <option>Used - Fair</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="category">Category</label>
+            <select id="category" name="category" class="form-select">
+              {% set categories = ['Tools','Plants','Soil & Fertilizers','Pots & Planters','Outdoor','Decor','Other'] %}
+              {% for c in categories %}
+                <option value="{{ c }}" {% if form and form.category == c %}selected{% endif %}>{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Description -->
+          <div class="col-12">
+            <label class="form-label" for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Describe the product..." maxlength="1000">{{ (form.description if form else '') or '' }}</textarea>
+            <div class="form-text"><span id="descCount">0</span>/1000</div>
+          </div>
+
+          <!-- Physical attributes -->
+          <div class="col-md-3">
+            <label class="form-label" for="weight">Weight (kg)</label>
+            <input id="weight" type="number" step="0.01" min="0" class="form-control" placeholder="e.g., 1.25">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="length">Length (cm)</label>
+            <input id="length" type="number" step="0.1" min="0" class="form-control" placeholder="e.g., 30">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="width">Width (cm)</label>
+            <input id="width" type="number" step="0.1" min="0" class="form-control" placeholder="e.g., 10">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="height">Height (cm)</label>
+            <input id="height" type="number" step="0.1" min="0" class="form-control" placeholder="e.g., 5">
+          </div>
+
+          <!-- Tags / Material / Color -->
+          <div class="col-md-6">
+            <label class="form-label" for="tags">Tags</label>
+            <input id="tags" type="text" class="form-control" placeholder="Comma-separated, e.g., gardening,tools,metal">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="material">Material</label>
+            <input id="material" type="text" class="form-control" placeholder="e.g., Steel">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" for="color">Color</label>
+            <input id="color" type="text" class="form-control" placeholder="e.g., Black">
+          </div>
+
+          <!-- Images & preview -->
+          <div class="col-md-6">
+            <label class="form-label" for="images">Images</label>
+            <input id="images" type="file" name="images" class="form-control" accept="image/*" multiple>
+            <div id="preview" class="d-flex flex-wrap gap-2 mt-2"></div>
+          </div>
+
+          <!-- Admin approval (UI only) -->
+          <div class="col-md-6">
+            <label class="form-label">Admin Approval</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="needsApproval" checked disabled>
+              <label for="needsApproval" class="form-check-label">Requires admin approval before publishing</label>
+            </div>
+            <div class="small text-muted">This is a placeholder. No admin workflow is implemented yet.</div>
+          </div>
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button id="btnSubmit" type="submit" class="btn btn-success">
+            <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+            <i class="bi bi-plus-circle me-1"></i> Add Product
+          </button>
+          <button type="reset" class="btn btn-outline-secondary">Reset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const form = document.getElementById('addProductForm');
+  const btn = document.getElementById('btnSubmit');
+  const spinner = btn ? btn.querySelector('.spinner-border') : null;
+  const desc = document.getElementById('description');
+  const descCount = document.getElementById('descCount');
+  const images = document.getElementById('images');
+  const preview = document.getElementById('preview');
+
+  // Description counter
+  function updateCount(){ if (descCount && desc){ descCount.textContent = (desc.value||'').length; } }
+  if (desc){ desc.addEventListener('input', updateCount); updateCount(); }
+
+  // Image preview
+  if (images && preview){
+    images.addEventListener('change', function(){
+      preview.innerHTML = '';
+      const files = Array.from(images.files||[]).slice(0,6);
+      files.forEach(file=>{
+        const url = URL.createObjectURL(file);
+        const img = document.createElement('img');
+        img.src = url; img.alt = file.name; img.width = 90; img.height = 90;
+        img.style.objectFit = 'cover'; img.className = 'rounded border';
+        preview.appendChild(img);
+      });
+    });
+  }
+
+  // Submit UX
+  if (form && btn){
+    form.addEventListener('submit', function(){
+      btn.disabled = true;
+      if (spinner) spinner.classList.remove('d-none');
+      btn.classList.add('opacity-75');
+    });
+  }
+})();
+</script>
+{% endblock %}

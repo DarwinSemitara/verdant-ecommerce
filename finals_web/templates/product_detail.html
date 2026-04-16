@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ product.name }} - Verdant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <style>
+    body { background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%); min-height: 100vh; }
+    .product-detail-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+    .back-btn { color: #198754; text-decoration: none; font-weight: 600; margin-bottom: 1rem; display: inline-block; }
+    .back-btn:hover { text-decoration: underline; }
+    .product-main { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+    .product-image-section { display: flex; flex-direction: column; gap: 1rem; max-width: 600px; }
+    .product-main-image-wrap { width: 100%; height: 500px; border-radius: 8px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; position: relative; }
+    .product-main-image { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+    .thumbnail-strip { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .thumb-button { border: 2px solid transparent; padding: 0; border-radius: 6px; overflow: hidden; background: #f8f9fa; cursor: pointer; flex-shrink: 0; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
+    .thumb-button img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
+    .thumb-button.active { border-color: #198754; box-shadow: 0 0 0 1px rgba(25,135,84,0.4); background: #fff; }
+    .product-info { min-width: 0; max-width: 100%; }
+    .product-info h1 { font-size: 2rem; margin-bottom: 0.75rem; color: #212529; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; hyphens: auto; line-height: 1.3; max-width: 100%; }
+    .seller-info { display: flex; align-items: center; gap: 0.75rem; margin: 0.75rem 0 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+    .seller-avatar-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; overflow: hidden; text-decoration: none; }
+    .seller-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; background: #e9ecef; display: flex; align-items: center; justify-content: center; }
+    .seller-name { font-weight: 600; color: #495057; }
+    .price-stock-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; margin: 1rem 0; }
+    .price { font-size: 1.25rem; color: #495057; font-weight: 700; }
+    .stock-info { color: #6c757d; font-size: 0.95rem; }
+    .stock-info.low { color: #dc3545; }
+    .specifications { margin: 1.75rem 0 1.25rem; }
+    .specifications h3 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6c757d; margin-bottom: 0.5rem; }
+    .specifications p { white-space: pre-wrap; line-height: 1.7; color: #343a40; font-size: 1rem; }
+    .action-buttons { display: flex; gap: 1rem; margin-top: 2rem; }
+    .btn-add-cart { background: #198754; color: white; border: none; padding: 0.875rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+    .btn-add-cart:hover { background: #157347; transform: translateY(-1px); }
+    .btn-buy-now { background: #0d6efd; color: white; border: none; padding: 0.875rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+    .btn-buy-now:hover { background: #0b5ed7; transform: translateY(-1px); }
+    
+    /* Reviews Section */
+    .reviews-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .reviews-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .reviews-header h2 { font-size: 1.5rem; margin: 0; }
+    .rating-summary { display: flex; align-items: center; gap: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 2rem; }
+    .rating-number { font-size: 3rem; font-weight: 700; color: #212529; }
+    .stars { color: #ffc107; font-size: 1.5rem; }
+    .star { display: inline-block; }
+    .star.filled { color: #ffc107; }
+    .star.empty { color: #dee2e6; }
+    .total-reviews { color: #6c757d; margin-top: 0.5rem; }
+    
+    .review-item { border-bottom: 1px solid #e9ecef; padding: 1.5rem 0; }
+    .review-item:last-child { border-bottom: none; }
+    .review-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem; }
+    .reviewer-info { display: flex; align-items: center; gap: 0.75rem; }
+    .reviewer-avatar { width: 40px; height: 40px; border-radius: 50%; background: #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; font-weight: 600; }
+    .reviewer-name { font-weight: 600; color: #212529; }
+    .review-date { color: #6c757d; font-size: 0.875rem; }
+    .review-rating { color: #ffc107; margin-bottom: 0.5rem; }
+    .review-text { color: #495057; line-height: 1.6; }
+    .review-photos { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .review-photo-img { width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #dee2e6; cursor: pointer; }
+    
+    .write-review-btn { background: #198754; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .write-review-btn:hover { background: #157347; }
+    
+    .no-reviews { text-align: center; padding: 3rem 1rem; color: #6c757d; }
+    .no-reviews i { font-size: 3rem; margin-bottom: 1rem; display: block; }
+    
+    @media (max-width: 768px) {
+      .product-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .action-buttons { flex-direction: column; }
+      .rating-summary { flex-direction: column; align-items: start; }
+      .product-image-section { max-width: 100%; }
+      .product-main-image-wrap { height: 400px; }
+      .product-info h1 { font-size: 1.5rem; }
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+
+    @keyframes dropdownSlide {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .profile-menu-item {
+      display: block;
+      padding: 0.875rem 1.25rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    /* Variation boxes */
+    .variations-container {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .variations-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .variations-grid {
+      display: flex;
+      gap: 0.75rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: #198754 #e9ecef;
+    }
+    .variations-grid::-webkit-scrollbar {
+      height: 6px;
+    }
+    .variations-grid::-webkit-scrollbar-track {
+      background: #e9ecef;
+      border-radius: 3px;
+    }
+    .variations-grid::-webkit-scrollbar-thumb {
+      background: #198754;
+      border-radius: 3px;
+    }
+    .variation-box {
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+      text-align: center;
+      min-width: 100px;
+      max-width: 120px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .variation-box:hover {
+      border-color: #198754;
+      box-shadow: 0 2px 8px rgba(25, 135, 84, 0.15);
+      transform: translateY(-2px);
+    }
+    .variation-box.active {
+      border-color: #198754;
+      background: #f0fdf4;
+      box-shadow: 0 0 0 1px rgba(25, 135, 84, 0.3);
+    }
+    .variation-image {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #f8f9fa;
+    }
+    .variation-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #212529;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      line-height: 1.2;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="has-main-header">
+  <!-- Header -->
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('guest_home') if is_guest else (url_for('homepage') if not is_seller else url_for('seller_dashboard')) }}" class="nav-logo">Verdant</a>
+      </div>
+      <div class="nav-right">
+        {% if is_guest %}
+          <a href="{{ url_for('login_page') }}" class="nav-item" style="text-decoration: none; color: #2d5016; font-weight: 600;">Login</a>
+          <a href="{{ url_for('login_page') }}" class="nav-item" style="text-decoration: none; color: #2d5016; font-weight: 600;">Sign Up</a>
+        {% elif not is_seller %}
+          <a href="{{ url_for('cart') }}" class="icon-button" aria-label="Cart" style="text-decoration: none; color: inherit;" id="cartButton">
+            <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
+              <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+              <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+            </svg>
+            <span id="cartCount" class="badge">0</span>
+          </a>
+          {% include 'notification_component.html' %}
+          <a href="{{ url_for('user_messages') }}" class="icon-button" aria-label="Messages" style="text-decoration: none; color: inherit;">
+            <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M4 5h16v10H6l-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </a>
+          <button id="helpButton" class="icon-button" aria-label="Help">
+            <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+              <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <circle cx="12" cy="17" r="1" fill="currentColor"/>
+            </svg>
+            <span>Help</span>
+          </button>
+          <div class="profile-dropdown">
+            <button class="profile-btn" aria-label="Profile" id="profileButton">
+              {% if session.get('profile_picture') %}
+                <img alt="Profile" src="{{ url_for('static', filename='uploads/profiles/' + session.get('profile_picture')) }}" style="width: 100%; height: 100%; object-fit: cover;" />
+              {% else %}
+                <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+              {% endif %}
+            </button>
+            <div class="profile-menu" id="profileMenu">
+              <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
+              <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
+              <div class="profile-menu-divider"></div>
+              <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+                <button type="submit" class="profile-menu-item logout">Logout</button>
+              </form>
+            </div>
+          </div>
+        {% else %}
+          <a href="{{ url_for('seller_dashboard') }}" class="nav-item" style="text-decoration: none; color: #2d5016; font-weight: 600;">Seller dashboard</a>
+        {% endif %}
+      </div>
+    </nav>
+  </header>
+
+  <div class="product-detail-container">
+    <a href="{{ url_for('guest_home') if is_guest else (url_for('homepage') if not is_seller else url_for('store_preview')) }}" class="back-btn">
+      ← Back to {{ 'Shop' if not is_seller else 'Store' }}
+    </a>
+
+    <!-- Product Main Section -->
+    <div class="product-main">
+      <div class="product-grid">
+        <!-- Product Image -->
+        <div class="product-image-section">
+          {% if images and images|length > 0 %}
+            <div class="product-main-image-wrap">
+              <img id="mainProductImage" class="product-main-image" src="{{ url_for('static', filename='uploads/products/' ~ images[0].filename) }}" alt="{{ product.name }}">
+            </div>
+            {% if images|length > 1 %}
+            <div class="thumbnail-strip">
+              {% for img in images %}
+                <button type="button" class="thumb-button {% if loop.index0 == 0 %}active{% endif %}" data-image="{{ url_for('static', filename='uploads/products/' ~ img.filename) }}">
+                  <img src="{{ url_for('static', filename='uploads/products/' ~ img.filename) }}" alt="{{ product.name }} image {{ loop.index }}">
+                </button>
+              {% endfor %}
+            </div>
+            {% endif %}
+          {% elif product.image %}
+            <div class="product-main-image-wrap">
+              <img id="mainProductImage" class="product-main-image" src="{{ url_for('static', filename='uploads/products/' ~ product.image) }}" alt="{{ product.name }}">
+            </div>
+          {% else %}
+            <div style="width: 100%; height: 500px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <svg style="width: 120px; height: 120px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+              </svg>
+            </div>
+          {% endif %}
+          
+          <!-- Variations (if product has variations) -->
+          {% if product.has_variations and product.variations %}
+          <div class="variations-container">
+            <div class="variations-title">Available Options</div>
+            <div class="variations-grid">
+              {% for variation in product.variations %}
+              <div class="variation-box {% if loop.first %}active{% endif %}" 
+                   data-variation-id="{{ variation.id }}"
+                   data-variation-name="{{ variation.name }}"
+                   data-variation-price="{{ variation.price }}"
+                   data-variation-stock="{{ variation.stock }}"
+                   data-variation-image="{{ variation.image }}">
+                {% if variation.image %}
+                  <img src="{{ url_for('static', filename='uploads/products/' ~ variation.image) }}" alt="{{ variation.name }}" class="variation-image">
+                {% else %}
+                  <div class="variation-image" style="display: flex; align-items: center; justify-content: center;">
+                    <svg style="width: 30px; height: 30px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                      <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="variation-name">{{ variation.name }}</div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Product Info -->
+        <div class="product-info">
+          <h1>{{ product.name }}</h1>
+          
+          <!-- Seller Info -->
+          <div class="seller-info">
+            <a href="{{ url_for('public_store', seller_username=product.seller_username) }}" class="seller-avatar-link">
+              {% if product.store_profile %}
+                <img src="{{ url_for('static', filename='uploads/store/' ~ product.store_profile) }}" alt="Store" class="seller-avatar">
+              {% else %}
+                <div class="seller-avatar">
+                  <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 21V8l9-6 9 6v13h-6v-6h-6v6H3z"/>
+                  </svg>
+                </div>
+              {% endif %}
+            </a>
+            <div>
+              <div class="seller-name">
+                <a href="{{ url_for('public_store', seller_username=product.seller_username) }}" style="color: inherit; text-decoration: none;">
+                  {{ product.store_name }}
+                </a>
+              </div>
+              <small style="color: #6c757d;">Seller</small>
+            </div>
+          </div>
+
+          <div class="price-stock-row">
+            <div class="price">₱{{ '%.2f'|format(product.price|float) }}</div>
+            <div class="stock-info {% if product.stock < 10 %}low{% endif %}">
+              {% if product.stock > 0 %}
+                <strong>In Stock:</strong> {{ product.stock }} available
+                {% if product.stock < 10 %}
+                  <span style="color: #dc3545; font-weight: 600;"> (Low Stock!)</span>
+                {% endif %}
+              {% else %}
+                <strong style="color: #dc3545;">Out of Stock</strong>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Specifications -->
+          <div class="specifications">
+            <h3>Product Details</h3>
+            <p>{{ product.specifications or 'No detailed specifications available.' }}</p>
+          </div>
+
+          <!-- Action Buttons (Only for buyers and guests) -->
+          {% if not is_seller %}
+          <div class="action-buttons">
+            {% if is_guest %}
+            <button class="btn-add-cart" onclick="window.location.href='{{ url_for('login_page') }}'" {% if product.stock == 0 %}disabled{% endif %}>
+              <svg style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 6h15l-1.5 9h-12z"/>
+                <path d="M6 6L5 3H2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+              </svg>
+              Login to Add to Cart
+            </button>
+            <button class="btn-buy-now" onclick="window.location.href='{{ url_for('login_page') }}'" {% if product.stock == 0 %}disabled{% endif %}>Login to Buy</button>
+            {% else %}
+            <button class="btn-add-cart" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
+              <svg style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 6h15l-1.5 9h-12z"/>
+                <path d="M6 6L5 3H2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+              </svg>
+              Add to Cart
+            </button>
+            <button class="btn-buy-now" {% if product.stock == 0 %}disabled{% endif %}>Buy Now</button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Section (for buyers/guests, hidden for sellers viewing their own products) -->
+    {% if not is_owner %}
+    <div class="reviews-section">
+      <div class="reviews-header">
+        <h2>Customer Reviews</h2>
+        {% if not is_seller and not is_guest %}
+          {% if user_can_review %}
+            <button class="write-review-btn" id="openReviewFormBtn">Write a Review</button>
+          {% else %}
+            <button class="write-review-btn" id="openReviewFormBtn" disabled style="opacity: 0.6; cursor: not-allowed;">Write a Review (after delivery)</button>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if not is_seller and not is_guest and user_can_review %}
+      <div id="reviewFormPanel" style="display:none; margin-bottom: 1.5rem; padding: 1rem; border-radius: 8px; background: #f8f9fa;">
+        <form id="reviewForm" enctype="multipart/form-data">
+          <div style="margin-bottom: 0.75rem;">
+            <label for="reviewRating" style="font-weight: 600; font-size: 0.95rem;">Your rating</label>
+            <select id="reviewRating" name="rating" style="margin-top: 0.25rem; padding: 0.5rem; border-radius: 6px; border: 1px solid #ced4da;">
+              <option value="5">5 - Excellent</option>
+              <option value="4">4 - Good</option>
+              <option value="3">3 - Average</option>
+              <option value="2">2 - Poor</option>
+              <option value="1">1 - Very Poor</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 0.75rem;">
+            <label for="reviewComment" style="font-weight: 600; font-size: 0.95rem;">Your review</label>
+            <textarea id="reviewComment" name="comment" rows="3" style="width: 100%; margin-top: 0.25rem; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid #ced4da; resize: vertical;"></textarea>
+          </div>
+          <div style="margin-bottom: 0.75rem;">
+            <label for="reviewPhotos" style="font-weight: 600; font-size: 0.95rem;">Photos (optional)</label>
+            <input type="file" id="reviewPhotos" name="photos" multiple accept="image/*" style="display: block; margin-top: 0.25rem;">
+            <small style="color: #6c757d;">You can upload clear photos as proof for other buyers.</small>
+          </div>
+          <button type="submit" class="write-review-btn" id="submitReviewBtn">Submit Review</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Rating Summary -->
+      <div class="rating-summary">
+        <div>
+          <div class="rating-number" id="ratingNumber">{{ (avg_rating or 0.0) | round(1) }}</div>
+          <div class="stars" id="ratingStars">
+            {% set rounded = (avg_rating or 0) | int %}
+            {% for i in range(1, 6) %}
+              <span class="star {% if i <= rounded %}filled{% else %}empty{% endif %}">★</span>
+            {% endfor %}
+          </div>
+          <div class="total-reviews" id="totalReviewsText">
+            {{ total_reviews }} review{% if total_reviews != 1 %}s{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviews List -->
+      <div id="reviewsContainer">
+        {% if total_reviews == 0 %}
+        <div class="no-reviews">
+          <i>📝</i>
+          <h3>No reviews yet</h3>
+          <p>Be the first to review this product!</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Help modal -->
+  <div class="modal" id="helpModal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeHelpModal">&times;</span>
+      <h2>Help & FAQs</h2>
+      <div class="info-content-placeholder">This is a placeholder. FAQs coming soon.</div>
+    </div>
+  </div>
+
+  <script>
+    // Load cart count on page load for logged-in buyers
+    const isLoggedIn = {{ 'true' if session.get('username') and session.get('role') == 'user' else 'false' }};
+    
+    if (isLoggedIn) {
+      fetch('{{ url_for("get_cart_count") }}')
+        .then(response => response.json())
+        .then(data => {
+          const cartCount = document.getElementById('cartCount');
+          if (cartCount) {
+            if (data.cart_count > 0) {
+              cartCount.textContent = data.cart_count;
+              cartCount.style.display = 'flex';
+            } else {
+              cartCount.style.display = 'none';
+            }
+          }
+        })
+        .catch(error => console.error('Error loading cart count:', error));
+    }
+
+    // Enable Add to Cart from product detail page - v2
+    document.addEventListener('DOMContentLoaded', function() {
+      const addToCartButton = document.querySelector('.btn-add-cart[data-product-id]');
+      if (!addToCartButton) {
+        console.log('No add to cart button found');
+        return;
+      }
+      
+      console.log('Add to Cart button initialized');
+
+      addToCartButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Button clicked!');
+        
+        const productId = this.getAttribute('data-product-id');
+        const activeVariation = document.querySelector('.variation-box.active');
+        const variationId = activeVariation ? activeVariation.getAttribute('data-variation-id') : null;
+        
+        console.log('Adding to cart:', { productId, variationId });
+
+        this.disabled = true;
+        const originalHtml = this.innerHTML;
+        this.innerHTML = '<span>Adding...</span>';
+
+        const requestBody = variationId ? { variation_id: variationId } : {};
+
+        fetch('/add_to_cart/' + productId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        })
+        .then(r => r.json())
+        .then(data => {
+          console.log('Response:', data);
+          if (data.success) {
+            const cartCountEl = document.getElementById('cartCount');
+            if (cartCountEl) {
+              cartCountEl.textContent = data.cart_count;
+              cartCountEl.style.display = 'flex';
+            }
+            this.innerHTML = '<span>✓ Added!</span>';
+            this.style.background = '#198754';
+            setTimeout(() => {
+              this.innerHTML = originalHtml;
+              this.style.background = '';
+              this.disabled = false;
+            }, 2000);
+          } else {
+            alert(data.message || 'Failed to add item');
+            this.innerHTML = originalHtml;
+            this.disabled = false;
+          }
+        })
+        .catch(err => {
+          console.error('Error:', err);
+          alert('Error occurred');
+          this.innerHTML = originalHtml;
+          this.disabled = false;
+        });
+      });
+    });
+
+    // Enable Buy Now from product detail page (add to cart, then go to cart with preselect)
+    (function() {
+      const buyNowButton = document.querySelector('.btn-buy-now');
+      const cartCountEl = document.getElementById('cartCount');
+      if (!buyNowButton) return;
+
+      buyNowButton.addEventListener('click', function() {
+        const productId = "{{ product.id }}";
+        if (!productId) return;
+
+        // Get selected variation if product has variations
+        const activeVariation = document.querySelector('.variation-box.active');
+        const variationId = activeVariation ? activeVariation.getAttribute('data-variation-id') : null;
+
+        const btn = this;
+        btn.disabled = true;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span>Processing...</span>';
+
+        const requestBody = variationId ? { variation_id: variationId } : {};
+
+        fetch(`/add_to_cart/${productId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (cartCountEl && data.cart_count !== undefined) {
+              cartCountEl.textContent = data.cart_count;
+              cartCountEl.style.display = 'flex';
+            }
+            const cartUrl = '{{ url_for("cart") }}';
+            const redirectUrl = cartUrl + '?buy_product_id=' + encodeURIComponent(productId) + '&buy_now=1';
+            window.location.href = redirectUrl;
+          } else {
+            alert(data.message || 'Failed to start checkout');
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('Error starting checkout:', error);
+          alert('An error occurred. Please try again.');
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        });
+      });
+    })();
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const closeHelpModal = document.getElementById('closeHelpModal');
+
+      if (helpButton && helpModal && closeHelpModal) {
+        helpButton.addEventListener('click', () => {
+          helpModal.style.display = 'flex';
+        });
+
+        closeHelpModal.addEventListener('click', () => {
+          helpModal.style.display = 'none';
+        });
+      }
+
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+
+      if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          profileMenu.classList.toggle('show');
+        });
+      }
+
+      window.addEventListener('click', (e) => {
+        if (helpModal && e.target === helpModal) helpModal.style.display = 'none';
+        if (profileButton && profileMenu && !profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove('show');
+        }
+      });
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const productId = "{{ product.id }}";
+      const ratingNumberEl = document.getElementById('ratingNumber');
+      const starsContainer = document.getElementById('ratingStars');
+      const totalReviewsText = document.getElementById('totalReviewsText');
+      const reviewsContainer = document.getElementById('reviewsContainer');
+      const openReviewBtn = document.getElementById('openReviewFormBtn');
+      const reviewFormPanel = document.getElementById('reviewFormPanel');
+      const reviewForm = document.getElementById('reviewForm');
+      const submitReviewBtn = document.getElementById('submitReviewBtn');
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function updateStars(avg) {
+        if (!starsContainer) return;
+        const rounded = Math.round(avg || 0);
+        const starEls = starsContainer.querySelectorAll('.star');
+        starEls.forEach(function(star, index) {
+          if (index < rounded) {
+            star.classList.add('filled');
+            star.classList.remove('empty');
+          } else {
+            star.classList.add('empty');
+            star.classList.remove('filled');
+          }
+        });
+      }
+
+      function loadReviews() {
+        if (!reviewsContainer) return;
+        fetch(`/product/${productId}/reviews`)
+          .then(function(response) { return response.json(); })
+          .then(function(data) {
+            if (!data || !data.success) return;
+
+            const avg = data.avg_rating || 0;
+            const total = data.total_reviews || 0;
+
+            if (ratingNumberEl) {
+              ratingNumberEl.textContent = avg.toFixed(1);
+            }
+            if (totalReviewsText) {
+              totalReviewsText.textContent = `${total} review${total === 1 ? '' : 's'}`;
+            }
+            updateStars(avg);
+
+            if (!data.reviews || data.reviews.length === 0) {
+              reviewsContainer.innerHTML = '<div class="no-reviews"><i>📝</i><h3>No reviews yet</h3><p>Be the first to review this product!</p></div>';
+              return;
+            }
+
+            const html = data.reviews.map(function(r) {
+              const name = r.customer_name || 'Customer';
+              const initials = name.split(' ').map(function(part) { return part.charAt(0); }).join('').slice(0, 2).toUpperCase();
+              const rating = Math.max(1, Math.min(5, r.rating || 0));
+              const starHtml = Array.from({ length: 5 }, function(_, i) {
+                return `<span class="star ${i < rating ? 'filled' : 'empty'}">★</span>`;
+              }).join('');
+
+              const photos = (r.photos || []);
+              const photosHtml = photos.length ? (
+                '<div class="review-photos">' + photos.map(function(p) {
+                  const encoded = encodeURIComponent(p);
+                  const src = `/static/uploads/reviews/${encoded}`;
+                  return `<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="Review photo" class="review-photo-img"></a>`;
+                }).join('') + '</div>'
+              ) : '';
+
+              return `
+                <div class="review-item">
+                  <div class="review-header">
+                    <div class="reviewer-info">
+                      <div class="reviewer-avatar">${initials}</div>
+                      <div>
+                        <div class="reviewer-name">${escapeHtml(name)}</div>
+                        <div class="review-rating">${starHtml}</div>
+                      </div>
+                    </div>
+                    <div class="review-date">${escapeHtml(r.created_at || '')}</div>
+                  </div>
+                  <div class="review-text">${escapeHtml(r.comment || '')}</div>
+                  ${photosHtml}
+                </div>
+              `;
+            }).join('');
+
+            reviewsContainer.innerHTML = html;
+          })
+          .catch(function(error) {
+            console.error('Error loading reviews:', error);
+          });
+      }
+
+      if (openReviewBtn && reviewFormPanel) {
+        openReviewBtn.addEventListener('click', function() {
+          if (this.disabled) return;
+          const isHidden = !reviewFormPanel.style.display || reviewFormPanel.style.display === 'none';
+          reviewFormPanel.style.display = isHidden ? 'block' : 'none';
+        });
+      }
+
+      if (reviewForm && submitReviewBtn) {
+        reviewForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          submitReviewBtn.disabled = true;
+          submitReviewBtn.textContent = 'Submitting...';
+
+          const formData = new FormData(reviewForm);
+
+          fetch(`/product/${productId}/reviews`, {
+            method: 'POST',
+            body: formData
+          })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+              if (data && data.success) {
+                reviewForm.reset();
+                reviewFormPanel.style.display = 'none';
+                loadReviews();
+                alert('Review submitted!');
+              } else {
+                alert((data && data.error) || 'Failed to submit review.');
+              }
+            })
+            .catch(function(error) {
+              console.error('Error submitting review:', error);
+              alert('An error occurred while submitting your review.');
+            })
+            .finally(function() {
+              submitReviewBtn.disabled = false;
+              submitReviewBtn.textContent = 'Submit Review';
+            });
+        });
+      }
+
+      loadReviews();
+    });
+  </script>
+
+  <script>
+    (function() {
+      const mainImage = document.getElementById('mainProductImage');
+      if (!mainImage) return;
+
+      const buttons = document.querySelectorAll('.thumb-button');
+      if (!buttons.length) return;
+
+      buttons.forEach(function(button) {
+        button.addEventListener('click', function() {
+          const src = button.getAttribute('data-image');
+          if (!src) return;
+          mainImage.src = src;
+
+          buttons.forEach(function(other) {
+            other.classList.toggle('active', other === button);
+          });
+        });
+      });
+    })();
+  </script>
+
+  <script>
+    // Handle variation selection
+    (function() {
+      const variationBoxes = document.querySelectorAll('.variation-box');
+      if (!variationBoxes.length) return;
+
+      const mainImage = document.getElementById('mainProductImage');
+      const priceEl = document.querySelector('.price');
+      const stockInfoEl = document.querySelector('.stock-info');
+      const productNameEl = document.querySelector('.product-info h1');
+
+      variationBoxes.forEach(function(box) {
+        box.addEventListener('click', function() {
+          // Remove active class from all boxes
+          variationBoxes.forEach(function(b) {
+            b.classList.remove('active');
+          });
+          
+          // Add active class to clicked box
+          box.classList.add('active');
+
+          // Update product details
+          const varName = box.getAttribute('data-variation-name');
+          const varPrice = parseFloat(box.getAttribute('data-variation-price'));
+          const varStock = parseInt(box.getAttribute('data-variation-stock'));
+          const varImage = box.getAttribute('data-variation-image');
+
+          if (productNameEl && varName) {
+            productNameEl.textContent = varName;
+          }
+
+          if (priceEl && !isNaN(varPrice)) {
+            priceEl.textContent = '₱' + varPrice.toFixed(2);
+          }
+
+          if (stockInfoEl && !isNaN(varStock)) {
+            if (varStock > 0) {
+              stockInfoEl.innerHTML = '<strong>In Stock:</strong> ' + varStock + ' available';
+              if (varStock < 10) {
+                stockInfoEl.innerHTML += ' <span style="color: #dc3545; font-weight: 600;"> (Low Stock!)</span>';
+                stockInfoEl.classList.add('low');
+              } else {
+                stockInfoEl.classList.remove('low');
+              }
+            } else {
+              stockInfoEl.innerHTML = '<strong style="color: #dc3545;">Out of Stock</strong>';
+            }
+          }
+
+          if (mainImage && varImage) {
+            mainImage.src = '/static/uploads/products/' + varImage;
+          }
+        });
+      });
+    })();
+  </script>
+
+  {% include 'footer_verdant.html' %}
+</body>
+</html>

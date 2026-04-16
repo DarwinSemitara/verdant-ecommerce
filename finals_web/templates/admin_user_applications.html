@@ -1,0 +1,195 @@
+{% extends 'base_admin.html' %}
+
+{% block extra_head %}
+<style>
+  .user-app-card {
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+    border: 1px solid #e5e7eb;
+  }
+
+  .user-app-card .table td,
+  .user-app-card .table th {
+    color: #111827;
+  }
+
+  .user-app-card .table td .text-muted {
+    color: #6b7280 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="h5 mb-1 text-dark">User Account Verifications</h2>
+    <p class="text-muted small mb-0">Review and approve user account verification requests.</p>
+  </div>
+  <div class="text-end small text-muted">
+    Pending: <span class="text-dark fw-semibold">{{ pending_count }}</span>
+    &middot; Approved: <span class="text-dark fw-semibold">{{ approved_count }}</span>
+    &middot; Total: <span class="text-dark fw-semibold">{{ total_count }}</span>
+  </div>
+</div>
+
+<div class="mb-3 d-flex gap-2">
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="pending">Pending</button>
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="approved">Approved</button>
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="rejected">Rejected</button>
+</div>
+
+<div class="card user-app-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Full Name</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr data-status="{{ app.status }}">
+            <td>
+              <div class="fw-semibold text-dark">{{ app.username }}</div>
+              <div class="text-muted small">{{ app.email }}</div>
+            </td>
+            <td>
+              <div class="text-dark">{{ app.first_name }} {% if app.middle_initial %}{{ app.middle_initial }}. {% endif %}{{ app.last_name }}</div>
+              <div class="text-muted small">{{ app.gender|capitalize }} • DOB: {{ app.date_of_birth }}</div>
+            </td>
+            <td class="text-muted small">{{ app.phone or 'N/A' }}</td>
+            <td class="status-cell">
+              {% if app.status == 'pending' %}
+                <span class="text-warning fw-semibold">Pending</span>
+              {% elif app.status == 'approved' %}
+                <span class="text-success fw-semibold">Approved</span>
+              {% else %}
+                <span class="text-danger fw-semibold">Rejected</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">
+              {{ app.submitted_at.strftime('%Y-%m-%d %H:%M') if app.submitted_at else 'N/A' }}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('admin_user_application_detail', application_id=app.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                View
+              </a>
+              {% if app.status == 'pending' %}
+              <button type="button" class="btn btn-sm btn-success me-1" onclick="handleApplication('{{ app.id }}', 'approve', this)">
+                Approve
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="handleApplication('{{ app.id }}', 'reject', this)">
+                Reject
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              No user verification applications yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleApplication(applicationId, action, btn) {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${actionText} this user application?`)) {
+      return;
+    }
+
+    const row = btn ? btn.closest('tr') : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+      const sibling = btn.nextElementSibling || btn.previousElementSibling;
+      if (sibling && sibling.tagName === 'BUTTON') {
+        sibling.disabled = true;
+      }
+    }
+
+    fetch(`/admin/user-application/${applicationId}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        if (row) {
+          const statusCell = row.querySelector('.status-cell');
+          if (statusCell) {
+            if (action === 'approve') {
+              statusCell.innerHTML = '<span class="text-success fw-semibold">Approved</span>';
+              row.setAttribute('data-status', 'approved');
+            } else {
+              statusCell.innerHTML = '<span class="text-danger fw-semibold">Rejected</span>';
+              row.setAttribute('data-status', 'rejected');
+            }
+          }
+          const actionsCell = row.querySelector('td:last-child');
+          if (actionsCell) {
+            actionsCell.innerHTML = '<span class="text-muted small">Updated</span>';
+          }
+        }
+        alert(data.message);
+      } else {
+        alert(data.message || 'An error occurred.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+          const sibling = btn.nextElementSibling || btn.previousElementSibling;
+          if (sibling && sibling.tagName === 'BUTTON') {
+            sibling.disabled = false;
+          }
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while processing the application.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+        const sibling = btn.nextElementSibling || btn.previousElementSibling;
+        if (sibling && sibling.tagName === 'BUTTON') {
+          sibling.disabled = false;
+        }
+      }
+    });
+  }
+
+  // Filter functionality
+  document.querySelectorAll('.app-filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const filter = this.getAttribute('data-filter');
+      const rows = document.querySelectorAll('tbody tr[data-status]');
+      
+      document.querySelectorAll('.app-filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      rows.forEach(row => {
+        if (row.getAttribute('data-status') === filter) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,1274 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<style>
+  .store-hero { position: relative; }
+  .store-hero .cover { width: 100%; height: 240px; object-fit: cover; border-radius: .5rem; }
+  .store-hero .cover-placeholder { height: 240px; border-radius: .5rem; background: linear-gradient(135deg,#e9ecef,#f8f9fa); display:flex; align-items:center; justify-content:center; color:#6c757d; cursor: pointer; }
+  .store-hero .avatar-container { position: absolute; left: 24px; bottom: -36px; width: 96px; height: 96px; }
+  .store-hero .avatar { width: 96px; height: 96px; border-radius: 50%; border: 4px solid #fff; object-fit: cover; background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,.12); cursor: pointer; }
+  .edit-photo-btn { position: absolute; top: 12px; right: 12px; z-index: 10; }
+  .avatar-edit-btn { position: absolute; top: 0; left: 0; width: 96px; height: 96px; border-radius: 50%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; color: white; font-size: 1.5rem; cursor: pointer; z-index: 5; }
+  .avatar-container:hover .avatar-edit-btn { display: flex; }
+  .product-card { transition: transform .18s ease, box-shadow .18s ease; }
+  .product-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important; }
+  .product-img { height: 160px; object-fit: cover; }
+  .muted { color: #495057; }
+  /* Sticky subnav */
+  .store-subnav { position: sticky; top: 56px; z-index: 9; background: rgba(255,255,255,.8); backdrop-filter: saturate(180%) blur(6px); border-bottom: 1px solid #eee; }
+  .store-subnav .nav { gap: .5rem; }
+  .store-subnav .nav-link { color: #000; transition: color .15s ease; }
+  .store-subnav .nav-link:hover { color: #0d6efd; }
+  .store-subnav .nav-link.active { color: #0d6efd; font-weight: 700; background: rgba(13,110,253,.10); }
+  .store-subnav .nav-link { padding: 8px 12px; border-radius: 8px; }
+  /* Skeleton */
+  .skeleton { position: relative; background: #e9ecef; overflow: hidden; }
+  .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(233,236,239,0) 0%, rgba(255,255,255,.6) 50%, rgba(233,236,239,0) 100%); transform: translateX(-100%); animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+</style>
+
+<div class="container">
+  <!-- Header / Hero -->
+  <div class="store-hero mb-5">
+    {% if store and store.cover_photo %}
+      <img class="cover w-100" src="{{ url_for('static', filename='uploads/store/' ~ store.cover_photo) }}" alt="Cover" onclick="document.getElementById('coverPhotoInput').click()" />
+    {% else %}
+      <div class="cover-placeholder" onclick="document.getElementById('coverPhotoInput').click()">
+        <div class="text-center">
+          <i class="bi bi-image fs-1"></i>
+          <p class="mb-0 mt-2">Click to upload cover photo</p>
+        </div>
+      </div>
+    {% endif %}
+    <button class="btn btn-light btn-sm edit-photo-btn" onclick="document.getElementById('coverPhotoInput').click()">
+      <i class="bi bi-camera"></i> Edit Cover
+    </button>
+
+    <div class="avatar-container">
+      {% if store and store.store_profile %}
+        <img class="avatar" src="{{ url_for('static', filename='uploads/store/' ~ store.store_profile) }}" alt="Logo" onclick="document.getElementById('storeProfileInput').click()" />
+      {% else %}
+        <div class="avatar d-flex align-items-center justify-content-center" onclick="document.getElementById('storeProfileInput').click()">
+          <i class="bi bi-shop fs-2 text-muted"></i>
+        </div>
+      {% endif %}
+      <div class="avatar-edit-btn" onclick="document.getElementById('storeProfileInput').click()">
+        <i class="bi bi-camera"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden form for photo uploads -->
+  <form id="photoUploadForm" method="POST" enctype="multipart/form-data" style="display: none;">
+    <input type="file" id="coverPhotoInput" name="cover_photo" accept="image/*" onchange="submitPhotoForm()">
+    <input type="file" id="storeProfileInput" name="store_profile" accept="image/*" onchange="submitPhotoForm()">
+  </form>
+
+  <!-- Sticky Subnav -->
+  <div class="store-subnav mb-3">
+    <div class="container px-0">
+      <ul class="nav nav-pills small">
+        <li class="nav-item"><a class="nav-link active" href="#overview">Overview</a></li>
+        <li class="nav-item"><a class="nav-link" href="#products">Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Store Title / Meta -->
+  <div id="overview" class="d-flex justify-content-between align-items-end mb-4">
+    <div class="ms-0" style="margin-left: 132px;">
+      <h3 class="mb-0">{{ store.name }}</h3>
+      <div class="muted">
+        Home & Garden Store
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  <section id="products" class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Products</h5>
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="toggleSelectBtn">Select Items</button>
+        <button type="button" class="btn btn-outline-danger btn-sm d-none" id="deleteSelectedBtn">
+          <i class="bi bi-trash me-1"></i>Delete Selected
+        </button>
+        <button class="btn text-white" style="background-color: #0d6efd;" data-bs-toggle="modal" data-bs-target="#addProductV2Modal">
+          <i class="bi bi-plus-circle me-2"></i>Add Item
+        </button>
+      </div>
+    </div>
+    
+    <div class="row g-3" id="productsGrid">
+      {% if products and products|length > 0 %}
+        {% for p in products %}
+        <div class="col-6 col-md-4 col-lg-3 product-item" data-batch="1">
+          <div class="card h-100 shadow-sm product-card position-relative {% if p.stock <= 0 %}sold-out{% endif %}" 
+               data-product-id="{{ p.id }}" 
+               data-product-name="{{ p.name }}"
+               data-product-price="{{ p.price }}"
+               data-product-stock="{{ p.stock }}"
+               data-product-image="{{ p.image }}"
+               data-product-specs="{{ p.specifications }}"
+               data-has-variations="{{ 'true' if p.get('has_variations') else 'false' }}"
+               data-variations='{{ p.get("variations", [])|tojson }}'
+               onclick="showSellerProductModal(this)" 
+               style="cursor: pointer; {% if p.stock <= 0 %}opacity: 0.6; filter: grayscale(50%);{% endif %}">
+            <div class="position-absolute top-0 start-0 m-2 d-none">
+              <input type="checkbox" class="form-check-input product-select-checkbox">
+            </div>
+            {% if p.stock <= 0 %}
+            <div class="position-absolute top-0 end-0 m-2" style="background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.75rem; z-index: 10;">
+              SOLD OUT
+            </div>
+            {% endif %}
+            {% if p.image %}
+              <img src="{{ url_for('static', filename='uploads/products/' ~ p.image) }}" class="card-img-top product-img" alt="{{ p.name }}">
+            {% else %}
+              <div class="card-img-top product-img d-flex align-items-center justify-content-center bg-light">
+                <i class="bi bi-image text-muted fs-1"></i>
+              </div>
+            {% endif %}
+            <div class="card-body d-flex flex-column">
+              <h6 class="card-title">{{ p.name }}</h6>
+              <div class="text-muted small mb-2">Stock: {{ p.stock }}{% if p.stock <= 0 %} <span class="text-danger">(Out of Stock)</span>{% endif %}</div>
+              <div class="mt-auto fw-bold {% if p.stock <= 0 %}text-muted{% else %}text-success{% endif %}">₱{{ '%.2f'|format(p.price|float) }}</div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12 text-center py-5">
+          <i class="bi bi-box-seam text-muted" style="font-size: 4rem;"></i>
+          <h5 class="mt-3 text-muted">No products yet</h5>
+          <p class="text-muted">Start adding products to your store by clicking the "Add Item" button above.</p>
+        </div>
+      {% endif %}
+    </div>
+    {% if products and products|length > 8 %}
+    <div class="text-center mt-3">
+      <button class="btn btn-outline-secondary" id="btnLoadMore">Load more</button>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="mb-5">
+    <div class="card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="card-title mb-0">About</h5>
+          <span class="text-muted small">Shown on your store page</span>
+        </div>
+        <p class="mb-3" style="white-space: pre-line;">
+          {{ (store.description or 'This is a sample store description for preview purposes.') if store else 'This is a sample store description for preview purposes.' }}
+        </p>
+        <form method="POST" class="mt-2">
+          <div class="mb-2">
+            <label for="aboutText" class="form-label fw-semibold small text-muted">Edit About</label>
+            <textarea class="form-control" id="aboutText" name="about_text" rows="4" placeholder="Describe your store, what you sell, and what makes you unique.">{{ store.description or '' }}</textarea>
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-success btn-sm">Save About</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProductModalLabel"><i class="bi bi-plus-circle me-2"></i>Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_product') }}" enctype="multipart/form-data" id="addProductWizardForm">
+        <div class="modal-body">
+          <div class="mb-3">
+            <span class="text-muted small fw-semibold" id="wizardStepText">Step 1 of 6 — Product Photo</span>
+          </div>
+
+          <!-- Step 1: Product Photo -->
+          <div class="wizard-step" data-step="1">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Product Photos <span class="text-danger">*</span></label>
+              <input type="file" class="form-control" name="product_images" id="wizardProductImage" accept="image/*" multiple required>
+              <small class="text-muted d-block">Upload one or more clear photos of your product (JPG, PNG, GIF).</small>
+              <small class="text-muted d-block mt-1">Choose which photo will appear as the main thumbnail below.</small>
+              <input type="hidden" name="thumbnail_index" id="thumbnailIndexInput" value="0">
+              <div id="imagePreviewList" class="mt-2"></div>
+            </div>
+          </div>
+
+          <!-- Step 2: Category -->
+          <div class="wizard-step d-none" data-step="2">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+              <select class="form-select" name="category" id="wizardCategory" required>
+                <option value="">Select a category</option>
+                <option value="Tools">Tools</option>
+                <option value="Garden Supplies">Garden Supplies</option>
+                <option value="Home Decor">Home Decor</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Outdoor Living">Outdoor Living</option>
+                <option value="Kitchen & Dining">Kitchen & Dining</option>
+                <option value="Cleaning Supplies">Cleaning Supplies</option>
+                <option value="Storage & Organization">Storage & Organization</option>
+                <option value="Pet Supplies">Pet Supplies</option>
+                <option value="DIY & Crafts">DIY & Crafts</option>
+              </select>
+              <small class="text-muted">Choose the category that best fits your product.</small>
+            </div>
+          </div>
+
+          <!-- Step 3: Stock Quantity -->
+          <div class="wizard-step d-none" data-step="3">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Stock Quantity <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="stock" id="wizardStock" placeholder="0" min="0" required>
+              <small class="text-muted">How many units are currently available?</small>
+            </div>
+          </div>
+
+          <!-- Step 4: Product Name -->
+          <div class="wizard-step d-none" data-step="4">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="product_name" id="wizardName" placeholder="Enter product name" required>
+              <small class="text-muted">Use a clear, descriptive name that customers will recognize.</small>
+            </div>
+          </div>
+
+          <!-- Step 5: Price -->
+          <div class="wizard-step d-none" data-step="5">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Price (₱) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="price" id="wizardPrice" placeholder="0.00" step="0.01" min="0" required>
+              <small class="text-muted">Set the selling price per unit.</small>
+            </div>
+          </div>
+
+          <!-- Step 6: Specifications/Details -->
+          <div class="wizard-step d-none" data-step="6">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Product Details <span class="text-danger">*</span></label>
+              <textarea class="form-control" name="specifications" id="wizardDetails" rows="5" placeholder="Add materials, dimensions, usage instructions, care tips, etc." required></textarea>
+              <small class="text-muted">Give customers everything they need to understand this item.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer d-flex flex-column align-items-stretch">
+          <div class="d-flex justify-content-center gap-2 w-100 mb-2">
+            <button type="button" class="btn btn-outline-danger d-none" id="wizardPrevBtn">Back</button>
+            <button type="button" class="btn btn-outline-success" id="wizardNextBtn">Next</button>
+            <button type="submit" class="btn btn-success d-none" id="wizardSubmitBtn">
+              <i class="bi bi-check-circle me-2"></i>Add Product
+            </button>
+          </div>
+          <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Product V2 Modal (with Variations) -->
+<div class="modal fade" id="addProductV2Modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="bi bi-layers me-2"></i>Add New Product (with Variations)</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="addProductV2Form" method="POST" action="/add_product_v2" enctype="multipart/form-data">
+        <div class="modal-body">
+          <!-- Progress indicator -->
+          <div class="mb-4">
+            <div class="d-flex justify-content-between mb-2">
+              <small class="text-muted fw-semibold" id="v2StepIndicator">Step 1 of 6</small>
+              <small class="text-muted" id="v2StepTitle">Category Selection</small>
+            </div>
+            <div class="progress" style="height: 4px;">
+              <div class="progress-bar bg-info" id="v2ProgressBar" style="width: 16.67%"></div>
+            </div>
+          </div>
+
+          <!-- Step 1: Category Selection -->
+          <div class="wizard-step-v2" data-step="1">
+            <h6 class="fw-semibold mb-3">Select Product Category</h6>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="v2MainCategory" class="form-label">Main Category <span class="text-danger">*</span></label>
+                <select class="form-select" id="v2MainCategory" name="main_category" required>
+                  <option value="">Choose...</option>
+                  <option value="indoor">Indoor</option>
+                  <option value="garden_outdoor">Garden and Outdoor</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label for="v2Subcategory" class="form-label">Subcategory <span class="text-danger">*</span></label>
+                <select class="form-select" id="v2Subcategory" name="subcategory" required disabled>
+                  <option value="">Select main category first...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Variations Question -->
+          <div class="wizard-step-v2 d-none" data-step="2">
+            <h6 class="fw-semibold mb-3">Does this item have variations?</h6>
+            <p class="text-muted small">Variations are different versions of the same product (e.g., different colors, sizes, or styles)</p>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="has_variations" id="v2HasVariationsYes" value="yes">
+                <label class="form-check-label" for="v2HasVariationsYes">
+                  Yes, this product has variations
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="has_variations" id="v2HasVariationsNo" value="no" checked>
+                <label class="form-check-label" for="v2HasVariationsNo">
+                  No, single product only
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Product Name & Image (No Variations) OR Variation Names (With Variations) -->
+          <div class="wizard-step-v2 d-none" data-step="3">
+            <div id="v2SingleProductSection">
+              <h6 class="fw-semibold mb-3">Product Name & Image</h6>
+              <div class="mb-3">
+                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="v2ProductName" name="product_name" placeholder="Enter product name">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Product Image <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="v2ProductImage" name="product_image" accept="image/*">
+              </div>
+            </div>
+            <div id="v2VariationsSection" class="d-none">
+              <h6 class="fw-semibold mb-3">Add Variations</h6>
+              <p class="text-muted small">Add each variation with its name and image</p>
+              <div id="v2VariationsList"></div>
+              <button type="button" class="btn btn-outline-info btn-sm" id="v2AddVariationBtn">
+                <i class="bi bi-plus-circle me-1"></i>Add Variation
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: Description -->
+          <div class="wizard-step-v2 d-none" data-step="4">
+            <h6 class="fw-semibold mb-3">Product Description</h6>
+            <div id="v2DescriptionContainer"></div>
+          </div>
+
+          <!-- Step 5: Price -->
+          <div class="wizard-step-v2 d-none" data-step="5">
+            <h6 class="fw-semibold mb-3">Pricing</h6>
+            <div id="v2PriceContainer"></div>
+          </div>
+
+          <!-- Step 6: Stock/Quantity -->
+          <div class="wizard-step-v2 d-none" data-step="6">
+            <h6 class="fw-semibold mb-3">Stock Quantity</h6>
+            <div id="v2StockContainer"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-outline-danger d-none" id="v2PrevBtn">Back</button>
+          <button type="button" class="btn btn-info" id="v2NextBtn">Next</button>
+          <button type="submit" class="btn btn-success d-none" id="v2SubmitBtn">
+            <i class="bi bi-check-circle me-2"></i>Create Product
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script>
+// Check if product was just added and show notification
+(function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('product_added') === '1') {
+    // Show notification if function exists
+    if (typeof showNotification === 'function') {
+      showNotification('Product added successfully!', 'success');
+    }
+    // Clean up URL without reloading
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+})();
+
+// Photo upload form submission
+function submitPhotoForm() {
+  document.getElementById('photoUploadForm').submit();
+}
+
+(function(){
+  // Skeleton reveal on image load
+  const images = document.querySelectorAll('#productsGrid img.real-img');
+  images.forEach(img=>{
+    img.addEventListener('load', ()=>{
+      const skeleton = img.previousElementSibling; // skeleton div
+      if (skeleton && skeleton.classList.contains('skeleton')) skeleton.remove();
+      img.classList.remove('d-none');
+    });
+    // in case cached
+    if (img.complete){ img.dispatchEvent(new Event('load')); }
+  });
+
+  // Load more (client-only)
+  const items = Array.from(document.querySelectorAll('#productsGrid .product-item'));
+  const btn = document.getElementById('btnLoadMore');
+  const pageSize = 8;
+  let shown = 0;
+  function renderMore(){
+    const end = Math.min(shown + pageSize, items.length);
+    for (let i = shown; i < end; i++){
+      items[i].classList.remove('d-none');
+    }
+    shown = end;
+    if (shown >= items.length && btn){ btn.disabled = true; btn.textContent = 'No more items'; }
+  }
+  // init: hide all, show first batch
+  items.forEach(el=>el.classList.add('d-none'));
+  renderMore();
+  if (btn){ btn.addEventListener('click', renderMore); }
+
+  // Subnav active state on scroll
+  const links = document.querySelectorAll('.store-subnav .nav-link');
+  const secs = ['overview','products','about'].map(id=>document.getElementById(id));
+  function onScroll(){
+    let active = 'overview';
+    const y = window.scrollY + 70; // offset
+    secs.forEach(sec=>{ if (sec && sec.offsetTop <= y) active = sec.id; });
+    links.forEach(a=>{ a.classList.toggle('active', a.getAttribute('href') === '#' + active); });
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Subnav click: smooth scroll and set active immediately
+  function smoothScrollTo(targetId){
+    const sec = document.getElementById(targetId);
+    if (!sec) return;
+    const top = sec.getBoundingClientRect().top + window.scrollY - 70;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+  links.forEach(a=>{
+    a.addEventListener('click', function(e){
+      const href = a.getAttribute('href') || '';
+      if (!href.startsWith('#')) return; // let normal links pass
+      e.preventDefault();
+      // set active immediately
+      links.forEach(x=>x.classList.remove('active'));
+      a.classList.add('active');
+      const id = href.slice(1);
+      smoothScrollTo(id);
+      // update URL hash without jumping
+      if (history.pushState){ history.pushState(null, '', '#' + id); }
+    });
+  });
+})();
+
+// Add Product Wizard (step-by-step flow)
+(function(){
+  const form = document.getElementById('addProductWizardForm');
+  if (!form) return;
+
+  const steps = Array.from(form.querySelectorAll('.wizard-step'));
+  const totalSteps = steps.length;
+  const stepText = document.getElementById('wizardStepText');
+  const btnPrev = document.getElementById('wizardPrevBtn');
+  const btnNext = document.getElementById('wizardNextBtn');
+  const btnSubmit = document.getElementById('wizardSubmitBtn');
+
+  let currentStep = 1;
+
+  const stepTitles = {
+    1: 'Product Photo',
+    2: 'Category',
+    3: 'Stock Quantity',
+    4: 'Product Name',
+    5: 'Price',
+    6: 'Product Details'
+  };
+
+  function updateStepUI() {
+    steps.forEach(stepEl => {
+      const n = parseInt(stepEl.getAttribute('data-step') || '0', 10);
+      stepEl.classList.toggle('d-none', n !== currentStep);
+    });
+
+    if (stepText) {
+      const title = stepTitles[currentStep] || '';
+      stepText.textContent = 'Step ' + currentStep + ' of ' + totalSteps + ' — ' + title;
+    }
+
+    if (btnPrev) btnPrev.classList.toggle('d-none', currentStep === 1);
+    if (btnNext) btnNext.classList.toggle('d-none', currentStep === totalSteps);
+    if (btnSubmit) btnSubmit.classList.toggle('d-none', currentStep !== totalSteps);
+  }
+
+  function validateCurrentStep() {
+    switch (currentStep) {
+      case 1: {
+        const input = document.getElementById('wizardProductImage');
+        if (!input || !input.files || input.files.length === 0) {
+          alert('Please upload a product photo before continuing.');
+          input && input.focus();
+          return false;
+        }
+        return true;
+      }
+      case 2: {
+        const select = document.getElementById('wizardCategory');
+        if (!select || !select.value) {
+          alert('Please select a category for this product.');
+          select && select.focus();
+          return false;
+        }
+        return true;
+      }
+      case 3: {
+        const stock = document.getElementById('wizardStock');
+        if (!stock || stock.value === '' || Number(stock.value) < 0) {
+          alert('Please enter a valid stock quantity (0 or more).');
+          stock && stock.focus();
+          return false;
+        }
+        return true;
+      }
+      case 4: {
+        const name = document.getElementById('wizardName');
+        if (!name || !name.value.trim()) {
+          alert('Please provide a product name.');
+          name && name.focus();
+          return false;
+        }
+        return true;
+      }
+      case 5: {
+        const price = document.getElementById('wizardPrice');
+        if (!price || price.value === '' || Number(price.value) <= 0) {
+          alert('Please enter a valid price greater than 0.');
+          price && price.focus();
+          return false;
+        }
+        return true;
+      }
+      case 6: {
+        const details = document.getElementById('wizardDetails');
+        if (!details || !details.value.trim()) {
+          alert('Please add product details or description.');
+          details && details.focus();
+          return false;
+        }
+        return true;
+      }
+      default:
+        return true;
+    }
+  }
+
+  if (btnNext) {
+    btnNext.addEventListener('click', function () {
+      if (!validateCurrentStep()) return;
+      if (currentStep < totalSteps) {
+        currentStep += 1;
+        updateStepUI();
+      }
+    });
+  }
+
+  if (btnPrev) {
+    btnPrev.addEventListener('click', function () {
+      if (currentStep > 1) {
+        currentStep -= 1;
+        updateStepUI();
+      }
+    });
+  }
+
+  // Ensure validation runs before submitting on last step
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      if (!validateCurrentStep()) {
+        e.preventDefault();
+      }
+    });  
+  }
+  updateStepUI();
+})();
+
+(function(){
+  const fileInput = document.getElementById('wizardProductImage');
+  const previewList = document.getElementById('imagePreviewList');
+  const thumbInput = document.getElementById('thumbnailIndexInput');
+  if (!fileInput || !previewList || !thumbInput) return;
+
+  fileInput.addEventListener('change', function(){
+    const files = Array.from(fileInput.files || []);
+    previewList.innerHTML = '';
+
+    if (!files.length) {
+      thumbInput.value = '0';
+      return;
+    }
+
+    files.forEach(function(file, index){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'd-flex align-items-center mb-2';
+
+      const id = 'thumbChoice' + index;
+      wrapper.innerHTML =
+        '<input class="form-check-input me-2" type="radio" name="thumbnail_choice" id="' + id + '" value="' + index + '"' + (index === 0 ? ' checked' : '') + '>' +
+        '<label class="form-check-label small" for="' + id + '">Thumbnail ' + (index === 0 ? '(default) ' : '') + ': ' + file.name + '</label>';
+
+      previewList.appendChild(wrapper);
+    });
+
+    thumbInput.value = '0';
+
+    const radios = previewList.querySelectorAll('input[type="radio"][name="thumbnail_choice"]');
+    radios.forEach(function(radio){
+      radio.addEventListener('change', function(){
+        thumbInput.value = radio.value || '0';
+      });
+    });
+  });
+})();
+
+// Bulk delete selection mode for products
+(function(){
+  const productsGrid = document.getElementById('productsGrid');
+  const toggleBtn = document.getElementById('toggleSelectBtn');
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  if (!productsGrid || !toggleBtn || !deleteBtn) return;
+
+  let selectionMode = false;
+
+  const productCards = Array.from(productsGrid.querySelectorAll('.product-card'));
+
+  function setSelectionMode(on) {
+    selectionMode = on;
+    productCards.forEach(card => {
+      const checkbox = card.querySelector('.product-select-checkbox');
+      if (checkbox) {
+        const wrapper = checkbox.parentElement;
+        if (wrapper) {
+          wrapper.classList.toggle('d-none', !on);
+        }
+        checkbox.checked = false;
+      }
+    });
+    deleteBtn.classList.toggle('d-none', !on);
+    toggleBtn.textContent = on ? 'Cancel Selection' : 'Select Items';
+  }
+
+  toggleBtn.addEventListener('click', function(){
+    setSelectionMode(!selectionMode);
+  });
+
+  productCards.forEach(card => {
+    const checkbox = card.querySelector('.product-select-checkbox');
+    if (!checkbox) return;
+    const productId = card.getAttribute('data-product-id');
+    checkbox.dataset.productId = productId;
+
+    card.addEventListener('click', function(e){
+      if (!selectionMode) return;
+      e.preventDefault();
+      e.stopPropagation();
+      checkbox.checked = !checkbox.checked;
+    });
+
+    checkbox.addEventListener('click', function(e){
+      e.stopPropagation();
+    });
+  });
+
+  deleteBtn.addEventListener('click', function(){
+    const selected = Array.from(productsGrid.querySelectorAll('.product-select-checkbox'))
+      .filter(cb => cb.checked)
+      .map(cb => cb.dataset.productId)  // Keep as string, don't parse as int
+      .filter(id => id && id.trim() !== '');  // Filter out empty strings
+
+    console.log('Selected product IDs for deletion:', selected);
+
+    if (!selected.length) {
+      if (typeof showNotification === 'function') {
+        showNotification('Please select at least one product to delete.', 'error');
+      } else {
+        alert('Please select at least one product to delete.');
+      }
+      return;
+    }
+
+    if (!confirm('Delete the selected products? This cannot be undone.')) {
+      return;
+    }
+
+    fetch('/seller/products/bulk-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ product_ids: selected })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Force a hard refresh to reload products from server
+        if (typeof showNotification === 'function') {
+          showNotification('Selected products deleted from your store.', 'error');
+        }
+        // Reload the page to get fresh data from server
+        setTimeout(() => {
+          window.location.reload(true);
+        }, 500);
+      } else {
+        if (typeof showNotification === 'function') {
+          showNotification(data.message || 'Failed to delete products.', 'error');
+        } else {
+          alert(data.message || 'Failed to delete products.');
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting products:', error);
+      alert('An error occurred while deleting products.');
+    });
+  });
+})();
+
+// Seller Product Preview Modal
+function showSellerProductModal(card) {
+  const productId = card.dataset.productId;
+  const hasVariations = card.dataset.hasVariations === 'true';
+  
+  console.log('Product ID:', productId);
+  console.log('Has Variations:', hasVariations);
+  console.log('Variations data:', card.dataset.variations);
+  
+  let variations = [];
+  
+  try {
+    variations = JSON.parse(card.dataset.variations || '[]');
+    console.log('Parsed variations:', variations);
+  } catch(e) {
+    console.error('Error parsing variations:', e);
+  }
+  
+  // Use first variation or card data
+  let currentVariation = hasVariations && variations.length > 0 ? variations[0] : {
+    name: card.dataset.productName,
+    price: parseFloat(card.dataset.productPrice),
+    stock: parseInt(card.dataset.productStock),
+    description: card.dataset.productSpecs,
+    image: card.dataset.productImage
+  };
+  
+  const isOutOfStock = parseInt(currentVariation.stock) <= 0;
+  
+  function renderModal(variation) {
+    const isOutOfStock = parseInt(variation.stock) <= 0;
+    const imageHtml = variation.image && variation.image !== 'null'
+      ? `<img src="/static/uploads/products/${variation.image}" alt="${variation.name}" style="width: 100%; height: 280px; object-fit: cover; border-radius: 0.5rem; display: block;">`
+      : `<div style="width: 100%; height: 280px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; border: 2px dashed #dee2e6;">
+           <i class="bi bi-image text-muted" style="font-size: 4rem;"></i>
+         </div>`;
+    
+    // Variation selector boxes
+    let variationSelectorHtml = '';
+    if (hasVariations && variations.length > 1) {
+      variationSelectorHtml = `
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef; width: 100%; overflow: hidden;">
+          <h6 style="font-size: 0.875rem; font-weight: 600; color: #6c757d; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Available Variations</h6>
+          <div class="variation-selector-container" style="display: flex; gap: 0.5rem; ${variations.length > 3 ? 'overflow-x: auto;' : 'flex-wrap: wrap;'} padding-bottom: 0.5rem; width: 100%;">
+            <style>
+              .variation-selector-container {
+                scrollbar-width: thin;
+                scrollbar-color: #888 #f1f1f1;
+              }
+              .variation-selector-container::-webkit-scrollbar {
+                height: 8px;
+              }
+              .variation-selector-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+              }
+              .variation-selector-container::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 4px;
+              }
+              .variation-selector-container::-webkit-scrollbar-thumb:hover {
+                background: #555;
+              }
+              .variation-selector-btn {
+                min-width: fit-content;
+                max-width: 150px;
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                box-sizing: border-box;
+              }
+            </style>
+            ${variations.map((v, idx) => {
+              const truncatedName = v.name.length > 12 ? v.name.substring(0, 12) + '...' : v.name;
+              return `
+              <button type="button" class="variation-selector-btn" data-variation-index="${idx}" 
+                title="${v.name}"
+                style="padding: 0.5rem 1rem; border: 2px solid ${v.id === variation.id ? '#2d5016' : '#dee2e6'}; 
+                background: ${v.id === variation.id ? '#f0f7ed' : 'white'}; border-radius: 0.375rem; cursor: pointer; 
+                font-size: 0.875rem; font-weight: ${v.id === variation.id ? '600' : '400'}; 
+                color: ${v.id === variation.id ? '#2d5016' : '#495057'}; transition: all 0.2s; flex-shrink: 0;">
+                ${truncatedName}
+              </button>
+            `}).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    const modalHtml = `
+      <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;" id="sellerProductModal" onclick="if(event.target.id === 'sellerProductModal') closeSellerProductModal()">
+        <div style="background: #ffffff; border-radius: 0.75rem; max-width: 900px; width: 100%; max-height: 90vh; overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+          
+          <div id="scrollProgress" style="position: absolute; top: 0; left: 0; height: 4px; background: #2d5016; width: 0%; transition: width 0.1s; z-index: 11; border-radius: 0.75rem 0 0 0;"></div>
+          
+          ${isOutOfStock ? `<div style="position: absolute; top: 0; left: 0; width: 0; height: 0; border-style: solid; border-width: 80px 80px 0 0; border-color: #dc3545 transparent transparent transparent; z-index: 10;"></div>
+          <div style="position: absolute; top: 8px; left: 8px; color: white; font-size: 0.65rem; font-weight: 700; transform: rotate(-45deg); z-index: 11; letter-spacing: 0.5px;">OUT OF<br>STOCK</div>` : ''}
+          
+          <button onclick="closeSellerProductModal()" onmouseover="this.style.color='#dc3545'" onmouseout="this.style.color='#6c757d'" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; font-size: 2rem; line-height: 1; cursor: pointer; z-index: 10; color: #6c757d; transition: color 0.2s; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+            ×
+          </button>
+          
+          <div id="modalScrollContent" style="overflow-y: auto; max-height: 90vh; padding: 2.5rem 2rem 2rem 2rem; scrollbar-width: none; -ms-overflow-style: none;" onscroll="updateScrollProgress()">
+            <style>
+              #modalScrollContent::-webkit-scrollbar { display: none; }
+            </style>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; margin-top: 1rem;">
+              <div style="min-width: 0;">
+                ${imageHtml}
+                ${variationSelectorHtml}
+              </div>
+              <div style="display: flex; flex-direction: column; min-width: 0;">
+                <div style="margin-bottom: 1rem;">
+                  <h2 style="font-size: 2rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #212529; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">${variation.name}</h2>
+                  <p style="color: #6c757d; line-height: 1.6; margin: 0; font-size: 0.95rem; word-wrap: break-word;">- ${variation.description || 'No description available for this product.'}</p>
+                </div>
+                
+                <div style="margin-top: auto;">
+                  <div style="margin-bottom: 0.75rem;">
+                    <div style="font-size: 0.75rem; font-weight: 600; color: #6c757d; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Price</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #2d5016;">₱${parseFloat(variation.price).toFixed(2)}</div>
+                  </div>
+                  
+                  <div style="font-size: 0.875rem; color: #6c757d; margin-bottom: 0.5rem;">
+                    <span style="font-weight: 600;">Stock:</span> <span style="color: ${isOutOfStock ? '#dc3545' : '#198754'}; font-weight: 600;">${variation.stock} units</span>
+                  </div>
+                  
+                  <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                    <div style="color: #ffc107; font-size: 1rem;" id="productRating${productId}">☆☆☆☆☆</div>
+                    <span style="color: #6c757d;" id="productRatingText${productId}">(No reviews yet)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            ${isOutOfStock ? '<div style="padding: 1rem 1.25rem; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 0.25rem; margin-bottom: 2rem;"><div style="display: flex; align-items: center; gap: 0.75rem;"><i class="bi bi-exclamation-triangle" style="font-size: 1.25rem; color: #856404;"></i><span style="color: #856404; font-weight: 500;">This product is currently unavailable for purchase until stock is replenished.</span></div></div>' : ''}
+            
+            <div style="border-top: 2px solid #e9ecef; padding-top: 2rem;">
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0 0 1.5rem 0; color: #212529;">Customer Reviews</h3>
+              <div id="productReviews${productId}" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="text-align: center; padding: 3rem 1rem; color: #6c757d;">
+                  <i class="bi bi-chat-square-text" style="font-size: 3rem; opacity: 0.3;"></i>
+                  <p style="margin-top: 1rem; font-size: 0.95rem;">No reviews yet for this product.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('sellerProductModal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+    
+    // Add click handlers to variation buttons
+    document.querySelectorAll('.variation-selector-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const idx = parseInt(this.dataset.variationIndex);
+        renderModal(variations[idx]);
+      });
+    });
+    
+    // Load reviews
+    loadProductReviews(productId);
+  }
+  
+  renderModal(currentVariation);
+}
+
+
+function updateScrollProgress() {
+  const scrollContent = document.getElementById('modalScrollContent');
+  const progressBar = document.getElementById('scrollProgress');
+  if (scrollContent && progressBar) {
+    const scrollPercentage = (scrollContent.scrollTop / (scrollContent.scrollHeight - scrollContent.clientHeight)) * 100;
+    progressBar.style.width = scrollPercentage + '%';
+  }
+}
+
+function loadProductReviews(productId) {
+  fetch(`/api/product/${productId}/reviews`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Reviews not available');
+      }
+      return response.json();
+    })
+    .then(data => {
+      const container = document.getElementById(`productReviews${productId}`);
+      const ratingElement = document.getElementById(`productRating${productId}`);
+      const ratingTextElement = document.getElementById(`productRatingText${productId}`);
+      
+      if (!container) return;
+      
+      if (data.success && data.reviews && data.reviews.length > 0) {
+        // Calculate average rating
+        const totalRating = data.reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+        const avgRating = totalRating / data.reviews.length;
+        const roundedRating = Math.round(avgRating * 2) / 2;
+        
+        // Update rating display
+        if (ratingElement) {
+          const fullStars = Math.floor(roundedRating);
+          const hasHalfStar = roundedRating % 1 !== 0;
+          const emptyStars = 5 - Math.ceil(roundedRating);
+          ratingElement.innerHTML = '★'.repeat(fullStars) + (hasHalfStar ? '⯨' : '') + '☆'.repeat(emptyStars);
+        }
+        if (ratingTextElement) {
+          ratingTextElement.textContent = `(${avgRating.toFixed(1)} avg, ${data.reviews.length} reviews)`;
+        }
+        
+        container.innerHTML = data.reviews.map(review => `
+          <div style="padding: 1.25rem; background: #f8f9fa; border-radius: 0.5rem; border-left: 3px solid #2d5016;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+              <div>
+                <div style="font-weight: 600; color: #212529; margin-bottom: 0.25rem;">${review.username || 'Anonymous'}</div>
+                <div style="color: #ffc107; font-size: 0.95rem;">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+              </div>
+              <div style="font-size: 0.875rem; color: #6c757d;">${review.created_at || ''}</div>
+            </div>
+            <p style="color: #495057; margin: 0; line-height: 1.6;">${review.comment || ''}</p>
+          </div>
+        `).join('');
+      }
+    })
+    .catch(error => {
+      console.log('Reviews not available for this product');
+      // Silently fail - the default "No reviews" message will remain
+    });
+}
+
+function closeSellerProductModal() {
+  const modal = document.getElementById('sellerProductModal');
+  if (modal) {
+    modal.remove();
+    document.body.style.overflow = '';
+  }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeSellerProductModal();
+  }
+});
+
+// Product V2 Wizard (with Variations)
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('V2 Wizard: DOM loaded');
+  
+  const modal = document.getElementById('addProductV2Modal');
+  if (!modal) {
+    console.error('V2 Wizard: Modal not found');
+    return;
+  }
+  
+  console.log('V2 Wizard: Modal found');
+  
+  const subcategories = {
+    indoor: ['Furniture', 'Decor Accessories', 'Textiles & Furnishings', 'Lighting', 'Housewares', 'Paint', 'Others'],
+    garden_outdoor: ['Plants and Gardening', 'Outdoor Furniture', 'Gardening Tools and Equipment', 'Power Equipment', 'Landscaping and Maintenance', 'Other']
+  };
+
+  let currentStep = 1;
+  let totalSteps = 6;
+  let variations = [];
+  let hasVariations = false;
+
+  // Category selection - use direct event binding
+  const mainCatSelect = document.getElementById('v2MainCategory');
+  const subcatSelect = document.getElementById('v2Subcategory');
+  
+  console.log('V2 Wizard: Main category select:', mainCatSelect);
+  console.log('V2 Wizard: Subcategory select:', subcatSelect);
+  
+  if (mainCatSelect) {
+    console.log('V2 Wizard: Attaching onchange handler');
+    mainCatSelect.onchange = function() {
+      console.log('V2 Wizard: Main category changed to:', this.value);
+      console.log('V2 Wizard: Subcategory select element:', subcatSelect);
+      
+      if (subcatSelect) {
+        subcatSelect.disabled = false;
+        subcatSelect.innerHTML = '<option value="">Choose...</option>';
+        
+        console.log('V2 Wizard: Subcategory enabled, disabled status:', subcatSelect.disabled);
+        
+        if (this.value && subcategories[this.value]) {
+          console.log('V2 Wizard: Adding subcategories for:', this.value);
+          subcategories[this.value].forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub.toLowerCase().replace(/\s+/g, '_').replace(/&/g, 'and');
+            option.textContent = sub;
+            subcatSelect.appendChild(option);
+          });
+          console.log('V2 Wizard: Subcategories added, total options:', subcatSelect.options.length);
+        }
+      } else {
+        console.error('V2 Wizard: Subcategory select not found!');
+      }
+    };
+  } else {
+    console.error('V2 Wizard: Main category select not found!');
+  }
+
+  // Variations radio change
+  document.querySelectorAll('input[name="has_variations"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      hasVariations = this.value === 'yes';
+    });
+  });
+
+  // Add variation button
+  document.getElementById('v2AddVariationBtn').addEventListener('click', function() {
+    const index = variations.length;
+    variations.push({ name: '', image: null });
+    
+    const variationHtml = `
+      <div class="card mb-3" data-variation-index="${index}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0">Variation ${index + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-variation-btn" data-index="${index}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Variation Name</label>
+            <input type="text" class="form-control variation-name" name="variation_name_${index}" data-index="${index}" placeholder="e.g., Red, Large, Style A" required>
+          </div>
+          <div>
+            <label class="form-label">Variation Image</label>
+            <input type="file" class="form-control variation-image" name="variation_image_${index}" data-index="${index}" accept="image/*" required>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('v2VariationsList').insertAdjacentHTML('beforeend', variationHtml);
+    
+    // Add event listeners
+    document.querySelector(`[data-variation-index="${index}"] .remove-variation-btn`).addEventListener('click', function() {
+      const idx = parseInt(this.dataset.index);
+      variations.splice(idx, 1);
+      this.closest('.card').remove();
+      updateVariationIndices();
+    });
+  });
+
+  function updateVariationIndices() {
+    document.querySelectorAll('#v2VariationsList .card').forEach((card, idx) => {
+      card.dataset.variationIndex = idx;
+      card.querySelector('h6').textContent = `Variation ${idx + 1}`;
+      card.querySelector('.variation-name').dataset.index = idx;
+      card.querySelector('.variation-image').dataset.index = idx;
+      card.querySelector('.remove-variation-btn').dataset.index = idx;
+    });
+  }
+
+  // Navigation
+  document.getElementById('v2NextBtn').addEventListener('click', function() {
+    if (validateStep(currentStep)) {
+      if (currentStep === 2) {
+        // Show appropriate section based on variations choice
+        if (hasVariations) {
+          document.getElementById('v2SingleProductSection').classList.add('d-none');
+          document.getElementById('v2VariationsSection').classList.remove('d-none');
+        } else {
+          document.getElementById('v2SingleProductSection').classList.remove('d-none');
+          document.getElementById('v2VariationsSection').classList.add('d-none');
+        }
+      }
+      
+      if (currentStep === 3 && !hasVariations) {
+        // For single product, populate description/price/stock containers
+        populateSingleProductContainers();
+      } else if (currentStep === 3 && hasVariations) {
+        // For variations, populate containers for each variation
+        populateVariationContainers();
+      }
+      
+      goToStep(currentStep + 1);
+    }
+  });
+
+  document.getElementById('v2PrevBtn').addEventListener('click', function() {
+    goToStep(currentStep - 1);
+  });
+
+  function goToStep(step) {
+    document.querySelectorAll('.wizard-step-v2').forEach(s => s.classList.add('d-none'));
+    document.querySelector(`.wizard-step-v2[data-step="${step}"]`).classList.remove('d-none');
+    
+    currentStep = step;
+    document.getElementById('v2StepIndicator').textContent = `Step ${step} of ${totalSteps}`;
+    document.getElementById('v2ProgressBar').style.width = `${(step / totalSteps) * 100}%`;
+    
+    const stepTitles = ['Category Selection', 'Variations', 'Product Info', 'Description', 'Pricing', 'Stock'];
+    document.getElementById('v2StepTitle').textContent = stepTitles[step - 1];
+    
+    // Show/hide buttons
+    document.getElementById('v2PrevBtn').classList.toggle('d-none', step === 1);
+    document.getElementById('v2NextBtn').classList.toggle('d-none', step === totalSteps);
+    document.getElementById('v2SubmitBtn').classList.toggle('d-none', step !== totalSteps);
+  }
+
+  function validateStep(step) {
+    switch(step) {
+      case 1:
+        const mainCat = document.getElementById('v2MainCategory').value;
+        const subCat = document.getElementById('v2Subcategory').value;
+        if (!mainCat || !subCat) {
+          alert('Please select both main category and subcategory');
+          return false;
+        }
+        return true;
+      case 2:
+        return true; // Radio buttons always have a value
+      case 3:
+        if (!hasVariations) {
+          const name = document.getElementById('v2ProductName').value;
+          const image = document.getElementById('v2ProductImage').files[0];
+          if (!name || !image) {
+            alert('Please provide product name and image');
+            return false;
+          }
+        } else {
+          if (variations.length === 0) {
+            alert('Please add at least one variation');
+            return false;
+          }
+          // Validate all variations have name and image
+          const names = document.querySelectorAll('.variation-name');
+          const images = document.querySelectorAll('.variation-image');
+          for (let i = 0; i < variations.length; i++) {
+            if (!names[i].value || !images[i].files[0]) {
+              alert(`Please provide name and image for Variation ${i + 1}`);
+              return false;
+            }
+          }
+        }
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  function populateSingleProductContainers() {
+    // Description
+    document.getElementById('v2DescriptionContainer').innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" name="description" rows="4" placeholder="Describe your product..."></textarea>
+      </div>
+    `;
+    
+    // Price
+    document.getElementById('v2PriceContainer').innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Price (₱)</label>
+        <input type="number" class="form-control" name="price" step="0.01" min="0" placeholder="0.00">
+      </div>
+    `;
+    
+    // Stock
+    document.getElementById('v2StockContainer').innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">Stock Quantity</label>
+        <input type="number" class="form-control" name="stock" min="0" placeholder="0">
+      </div>
+    `;
+  }
+
+  function populateVariationContainers() {
+    const names = Array.from(document.querySelectorAll('.variation-name')).map(input => input.value);
+    
+    // Description
+    let descHtml = '';
+    names.forEach((name, idx) => {
+      descHtml += `
+        <div class="mb-3">
+          <label class="form-label">${name} - Description</label>
+          <textarea class="form-control" name="variation_description_${idx}" rows="3" placeholder="Describe this variation..."></textarea>
+        </div>
+      `;
+    });
+    document.getElementById('v2DescriptionContainer').innerHTML = descHtml;
+    
+    // Price
+    let priceHtml = '';
+    names.forEach((name, idx) => {
+      priceHtml += `
+        <div class="mb-3">
+          <label class="form-label">${name} - Price (₱)</label>
+          <input type="number" class="form-control" name="variation_price_${idx}" step="0.01" min="0" placeholder="0.00">
+        </div>
+      `;
+    });
+    document.getElementById('v2PriceContainer').innerHTML = priceHtml;
+    
+    // Stock
+    let stockHtml = '';
+    names.forEach((name, idx) => {
+      stockHtml += `
+        <div class="mb-3">
+          <label class="form-label">${name} - Stock Quantity</label>
+          <input type="number" class="form-control" name="variation_stock_${idx}" min="0" placeholder="0">
+        </div>
+      `;
+    });
+    document.getElementById('v2StockContainer').innerHTML = stockHtml;
+  }
+});
+</script>
+{% endblock %}

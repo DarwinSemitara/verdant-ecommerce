@@ -1,0 +1,61 @@
+{% extends 'base_user.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Admin • Cash Out Requests</h2>
+    <a href="{{ url_for('wallet') }}" class="btn btn-outline-secondary"><i class="bi bi-wallet2"></i> Wallet</a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Amount</th>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Reviewed</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in requests %}
+            <tr>
+              <td>{{ r.id }}</td>
+              <td>₱{{ '%.2f'|format(r.amount|float) }}</td>
+              <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                {% if r.status == 'Approved' %}
+                  <span class="badge bg-success">Approved</span>
+                {% elif r.status == 'Rejected' %}
+                  <span class="badge bg-secondary">Rejected</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% endif %}
+              </td>
+              <td>{% if r.reviewed_at %}{{ r.reviewed_at.strftime('%Y-%m-%d %H:%M') }}{% else %}—{% endif %}</td>
+              <td class="text-end">
+                {% if r.status == 'Pending' %}
+                  <form method="POST" action="{{ url_for('approve_cashout', req_id=r.id) }}" class="d-inline" onsubmit="return confirm('Approve this cash out?');">
+                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('reject_cashout', req_id=r.id) }}" class="d-inline" onsubmit="return confirm('Reject this cash out?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                  </form>
+                {% else %}
+                  <button class="btn btn-sm btn-outline-secondary" disabled>No actions</button>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No cash out requests yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

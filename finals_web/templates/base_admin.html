@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Verdant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <style>
+    :root {
+      --admin-bg: #020617;
+      --admin-bg-elevated: #020617;
+      --admin-sidebar: #000000;
+      --admin-sidebar-accent: #f97316;
+      --admin-text: #e5e7eb;
+      --admin-muted: #9ca3af;
+      --admin-border: #111827;
+      --admin-card-bg: #020617;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #111827 0, #020617 40%, #000000 100%);
+      color: var(--admin-text);
+      min-height: 100vh;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .admin-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .admin-sidebar {
+      width: 240px;
+      background: var(--admin-sidebar);
+      border-right: 1px solid var(--admin-border);
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 1rem 1rem;
+    }
+
+    .admin-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      padding: 0 0.25rem;
+    }
+
+    .admin-brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #f9fafb;
+    }
+
+    .admin-brand-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #f9fafb;
+    }
+
+    .admin-nav-section-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--admin-muted);
+      margin-bottom: 0.5rem;
+      padding: 0 0.25rem;
+    }
+
+    .admin-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .admin-nav-link,
+    .admin-nav-toggle {
+      border-radius: 0.75rem;
+      padding: 0.55rem 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--admin-muted);
+      font-size: 0.9rem;
+      border: none;
+      width: 100%;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .admin-nav-link .icon,
+    .admin-nav-toggle .icon {
+      width: 18px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .admin-nav-link:hover,
+    .admin-nav-toggle:hover {
+      background: #111827;
+      color: #f9fafb;
+      transform: translateX(1px);
+    }
+
+    .admin-nav-link.active {
+      background: linear-gradient(90deg, #f5f5f5, #d4d4d4);
+      color: #020617;
+      font-weight: 600;
+    }
+
+    .admin-nav-link.active .icon {
+      color: #020617;
+    }
+
+    .admin-nav-toggle-label {
+      flex: 1;
+      text-align: left;
+    }
+
+    .admin-nav-toggle .chevron {
+      margin-left: auto;
+      transition: transform 0.18s ease;
+      font-size: 0.8rem;
+    }
+
+    .admin-nav-toggle[aria-expanded="true"] .chevron {
+      transform: rotate(90deg);
+    }
+
+    .admin-subnav {
+      max-height: 0;
+      overflow: hidden;
+      padding-left: 0.5rem;
+      transition: max-height 0.18s ease;
+    }
+
+    .admin-subnav.open {
+      max-height: 160px;
+    }
+
+    .admin-subnav-link {
+      border-radius: 0.75rem;
+      padding: 0.45rem 0.7rem 0.45rem 2.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--admin-muted);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      margin-bottom: 0.25rem;
+      width: 100%;
+      text-align: left;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .admin-subnav-link span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .admin-subnav-link:hover {
+      background: #111827;
+      color: #f9fafb;
+      transform: translateX(1px);
+    }
+
+    .admin-sidebar-footer {
+      margin-top: auto;
+      padding: 0.75rem 0.35rem 0 0.35rem;
+      font-size: 0.78rem;
+      color: #6b7280;
+      border-top: 1px solid rgba(31, 41, 55, 0.9);
+      margin-top: 1.5rem;
+    }
+
+    .admin-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f3f4f6;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .admin-header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .admin-header-title h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .admin-header-title span {
+      font-size: 0.78rem;
+      color: #6b7280;
+    }
+
+    .admin-header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .admin-profile-dropdown {
+      position: relative;
+    }
+
+    .admin-profile-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      cursor: pointer;
+      color: #111827;
+    }
+
+    .admin-profile-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: #ffffff;
+      border-radius: 0.75rem;
+      min-width: 180px;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.25);
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+      display: none;
+      z-index: 40;
+    }
+
+    .admin-profile-menu.show {
+      display: block;
+    }
+
+    .admin-profile-menu-item {
+      display: block;
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      border: none;
+      background: #ffffff;
+      text-align: left;
+      font-size: 0.85rem;
+      color: #111827;
+      cursor: pointer;
+    }
+
+    .admin-profile-menu-item:hover {
+      background: #f3f4f6;
+    }
+
+    .admin-profile-menu-item.logout {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    .admin-content-shell {
+      padding: 1.4rem 1.75rem 2rem;
+      background: #ffffff;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .admin-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .admin-card {
+      background: radial-gradient(circle at top left, #111827 0, #020617 40%, #020617 100%);
+      border-radius: 1rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      padding: 1rem 1.1rem;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.5);
+    }
+
+    .admin-card-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--admin-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .admin-card-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f9fafb;
+    }
+
+    .admin-card-caption {
+      font-size: 0.8rem;
+      color: var(--admin-muted);
+      margin-top: 0.1rem;
+    }
+
+    .admin-placeholder-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .admin-placeholder-card {
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 1rem;
+      border: 1px dashed rgba(148, 163, 184, 0.5);
+      padding: 1rem 1.25rem;
+      color: var(--admin-muted);
+      font-size: 0.88rem;
+    }
+
+    .admin-placeholder-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 0.25rem;
+    }
+
+    .admin-link-subtle {
+      color: var(--admin-muted);
+      font-size: 0.8rem;
+    }
+
+    .admin-link-subtle a {
+      color: #e5e7eb;
+      text-decoration: underline;
+      text-underline-offset: 0.2rem;
+    }
+
+    @media (max-width: 900px) {
+      .admin-sidebar {
+        display: none;
+      }
+
+      .admin-main {
+        margin-left: 0;
+      }
+
+      .admin-header {
+        padding-inline: 1rem;
+      }
+
+      .admin-content-shell {
+        padding-inline: 1rem;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div>
+        <div class="admin-brand">
+          <div class="admin-brand-text">Verdant</div>
+        </div>
+
+        <div class="admin-nav-section-label">Admin</div>
+        <nav class="admin-nav" aria-label="Admin navigation">
+          <a href="{{ url_for('admin_dashboard') }}" class="admin-nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+            <span class="icon"><i class="bi bi-speedometer2"></i></span>
+            <span>Dashboard</span>
+          </a>
+          <a href="{{ url_for('admin_seller_applications') }}" class="admin-nav-link {% if request.endpoint in ['admin_seller_applications', 'admin_seller_application_detail'] %}active{% endif %}">
+            <span class="icon"><i class="bi bi-shop"></i></span>
+            <span>Seller applications</span>
+          </a>
+          <a href="{{ url_for('admin_rider_applications') }}" class="admin-nav-link {% if request.endpoint in ['admin_rider_applications', 'admin_rider_application_detail'] %}active{% endif %}">
+            <span class="icon"><i class="bi bi-bicycle"></i></span>
+            <span>Rider applications</span>
+          </a>
+          <a href="{{ url_for('admin_user_applications') }}" class="admin-nav-link {% if request.endpoint in ['admin_user_applications', 'admin_user_application_detail'] %}active{% endif %}">
+            <span class="icon"><i class="bi bi-person-check"></i></span>
+            <span>User verifications</span>
+          </a>
+
+          <button type="button" class="admin-nav-toggle" data-target="adminNotifications" aria-expanded="false">
+            <span class="icon"><i class="bi bi-bell"></i></span>
+            <span class="admin-nav-toggle-label">Notifications</span>
+            <span class="chevron"><i class="bi bi-chevron-right"></i></span>
+          </button>
+          <div id="adminNotifications" class="admin-subnav" aria-hidden="true">
+            <button type="button" class="admin-subnav-link">
+              <span>
+                <i class="bi bi-flag"></i>
+                Issue reporting
+              </span>
+            </button>
+            <a href="{{ url_for('admin_messaging') }}" class="admin-subnav-link">
+              <span>
+                <i class="bi bi-chat-dots"></i>
+                Messaging
+              </span>
+            </a>
+          </div>
+        </nav>
+      </div>
+
+      <div class="admin-sidebar-footer">
+        <div>Signed in as <strong>Admin</strong></div>
+        <div class="admin-link-subtle">Admin tools for Verdant marketplace.</div>
+      </div>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-header">
+        <div class="admin-header-title">
+          <h1>Admin Panel</h1>
+          <span>Manage sellers, issues, and marketplace settings.</span>
+        </div>
+        <div class="admin-header-right">
+          <div class="admin-profile-dropdown">
+            <button id="adminProfileButton" class="admin-profile-btn" aria-label="Admin settings" type="button">
+              <i class="bi bi-gear"></i>
+            </button>
+            <div id="adminProfileMenu" class="admin-profile-menu" aria-label="Profile menu">
+              <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+                <button type="submit" class="admin-profile-menu-item logout">Logout</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="admin-content-shell">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="mb-3">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-sm mb-2">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function() {
+      const profileBtn = document.getElementById('adminProfileButton');
+      const profileMenu = document.getElementById('adminProfileMenu');
+      if (profileBtn && profileMenu) {
+        profileBtn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          profileMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function (e) {
+          if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
+            profileMenu.classList.remove('show');
+          }
+        });
+      }
+
+      const toggles = document.querySelectorAll('.admin-nav-toggle');
+      toggles.forEach(function(btn) {
+        const targetId = btn.getAttribute('data-target');
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (!target) return;
+        btn.addEventListener('click', function() {
+          const isOpen = target.classList.toggle('open');
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          target.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!-- Notification Icon and Dropdown Component -->
+<!-- Add this to the nav-right section of any user page, right before the cart button -->
+
+<style>
+  .notification-button {
+    position: relative;
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .notification-badge.show {
+    display: flex;
+  }
+
+  .notification-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 400px;
+    max-height: 500px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+    overflow: hidden;
+  }
+
+  .notification-dropdown.show {
+    display: flex;
+  }
+
+  .notification-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+  }
+
+  .notification-title {
+    font-weight: 700;
+    color: #2d5016;
+    font-size: 1.1rem;
+  }
+
+  .notification-mark-all {
+    color: #2d5016;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .notification-mark-all:hover {
+    color: #1a3009;
+  }
+
+  .notification-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+
+  .notification-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .notification-item:hover {
+    background: #f8f9fa;
+  }
+
+  .notification-item.unread {
+    background: #e8f5e8;
+  }
+
+  .notification-item.unread:hover {
+    background: #d4edda;
+  }
+
+  .notification-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.5rem;
+  }
+
+  .notification-item-title {
+    font-weight: 700;
+    color: #333;
+    font-size: 0.95rem;
+  }
+
+  .notification-item-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    white-space: nowrap;
+  }
+
+  .notification-item-message {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .notification-item-type {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+
+  .notification-item-type.order_accepted {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .notification-item-type.order_rejected {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .notification-empty {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #6c757d;
+  }
+
+  .notification-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+  }
+
+  @media (max-width: 768px) {
+    .notification-dropdown {
+      width: 90vw;
+      right: -50px;
+    }
+  }
+</style>
+
+<!-- Notification Button -->
+<div class="notification-button">
+  <button id="notificationButton" class="icon-button" aria-label="Notifications" style="text-decoration: none; color: inherit; position: relative;">
+    <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2a7 7 0 0 1 7 7v4.29l1.71 1.7a1 1 0 0 1-.71 1.71H4a1 1 0 0 1-.71-1.71L5 14.29V9a7 7 0 0 1 7-7z" fill="currentColor"/>
+      <path d="M10 20a2 2 0 1 0 4 0" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>
+    <span id="notificationBadge" class="notification-badge">0</span>
+  </button>
+
+  <!-- Notification Dropdown -->
+  <div class="notification-dropdown" id="notificationDropdown">
+    <div class="notification-header">
+      <div class="notification-title">Notifications</div>
+      <div class="notification-mark-all" id="markAllRead" style="display: none;">Mark all as read</div>
+    </div>
+    <div class="notification-list" id="notificationList">
+      <div class="notification-empty">
+        <div class="notification-empty-icon">🔔</div>
+        <div>No notifications yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal" id="notificationModal" style="display:none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+  <div class="modal-content" style="background: white; padding: 1.75rem; border-radius: 1rem; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+    <span class="close" id="closeNotificationModal" style="float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa;">&times;</span>
+    <h2 id="notificationModalTitle" style="margin-top: 0; margin-bottom: 0.75rem; font-size: 1.3rem; color: #2d5016;">Notification</h2>
+    <p id="notificationModalBody" style="margin: 0; color: #495057; white-space: pre-wrap; line-height: 1.5;"></p>
+  </div>
+</div>
+
+<script>
+  // Notification System
+  (function() {
+    const notificationButton = document.getElementById('notificationButton');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const notificationList = document.getElementById('notificationList');
+    const markAllReadBtn = document.getElementById('markAllRead');
+    const notificationModal = document.getElementById('notificationModal');
+    const notificationModalTitle = document.getElementById('notificationModalTitle');
+    const notificationModalBody = document.getElementById('notificationModalBody');
+    const closeNotificationModal = document.getElementById('closeNotificationModal');
+
+    let notifications = [];
+
+    // Toggle dropdown
+    notificationButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      notificationDropdown.classList.toggle('show');
+      if (notificationDropdown.classList.contains('show')) {
+        loadNotifications();
+      }
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!notificationDropdown.contains(e.target) && e.target !== notificationButton) {
+        notificationDropdown.classList.remove('show');
+      }
+    });
+
+    // Load notifications
+    function loadNotifications() {
+      fetch('/notifications')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            notifications = data.notifications;
+            updateNotificationBadge(data.unread_count);
+            renderNotifications();
+          }
+        })
+        .catch(error => {
+          console.error('Error loading notifications:', error);
+        });
+    }
+
+    // Update badge
+    function updateNotificationBadge(count) {
+      if (count > 0) {
+        notificationBadge.textContent = count > 99 ? '99+' : count;
+        notificationBadge.classList.add('show');
+        markAllReadBtn.style.display = 'block';
+      } else {
+        notificationBadge.classList.remove('show');
+        markAllReadBtn.style.display = 'none';
+      }
+    }
+
+    function openNotificationModal(notif) {
+      if (!notificationModal || !notificationModalTitle || !notificationModalBody) return;
+      notificationDropdown.classList.remove('show');
+      notificationModalTitle.textContent = notif.title || 'Notification';
+      notificationModalBody.textContent = notif.message || '';
+      notificationModal.style.display = 'flex';
+    }
+
+    function closeNotification() {
+      if (!notificationModal) return;
+      notificationModal.style.display = 'none';
+    }
+
+    if (closeNotificationModal && notificationModal) {
+      closeNotificationModal.addEventListener('click', closeNotification);
+    }
+
+    window.addEventListener('click', function(event) {
+      if (notificationModal && event.target === notificationModal) {
+        closeNotification();
+      }
+    });
+
+    // Render notifications
+    function renderNotifications() {
+      if (notifications.length === 0) {
+        notificationList.innerHTML = `
+          <div class="notification-empty">
+            <div class="notification-empty-icon">🔔</div>
+            <div>No notifications yet</div>
+          </div>
+        `;
+        return;
+      }
+
+      notificationList.innerHTML = notifications.map(notif => `
+        <div class="notification-item ${notif.is_read ? '' : 'unread'}" data-id="${notif.id}">
+          <div class="notification-item-header">
+            <div class="notification-item-title">${notif.title}</div>
+            <div class="notification-item-time">${formatTime(notif.created_at)}</div>
+          </div>
+          <div class="notification-item-message">${notif.message}</div>
+          <div class="notification-item-type ${notif.type}">${formatType(notif.type)}</div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.notification-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const notifId = item.dataset.id;
+          const notif = notifications.find(n => String(n.id) === String(notifId));
+          if (notif) {
+            openNotificationModal(notif);
+          }
+          markAsRead(notifId);
+        });
+      });
+    }
+
+    // Mark notification as read
+    function markAsRead(notifId) {
+      fetch(`/notifications/${notifId}/read`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          loadNotifications();
+        }
+      })
+      .catch(error => {
+        console.error('Error marking notification as read:', error);
+      });
+    }
+
+    // Mark all as read
+    markAllReadBtn.addEventListener('click', () => {
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      Promise.all(unreadIds.map(id => 
+        fetch(`/notifications/${id}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      ))
+      .then(() => {
+        loadNotifications();
+      })
+      .catch(error => {
+        console.error('Error marking all as read:', error);
+      });
+    });
+
+    // Format time
+    function formatTime(timestamp) {
+      if (!timestamp) return '';
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    // Format notification type
+    function formatType(type) {
+      const types = {
+        'order_accepted': 'Accepted',
+        'order_rejected': 'Rejected',
+        'order_shipped': 'Shipped',
+        'order_delivered': 'Delivered',
+        'general': 'Info'
+      };
+      return types[type] || type;
+    }
+
+    // Initial load
+    loadNotifications();
+
+    // Refresh every 30 seconds
+    setInterval(loadNotifications, 30000);
+  })();
+</script>

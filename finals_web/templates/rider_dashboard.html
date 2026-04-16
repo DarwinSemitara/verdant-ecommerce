@@ -1,0 +1,543 @@
+{% extends 'base_rider.html' %}
+
+{% block extra_head %}
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <style>
+    .onboarding-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+    .onboarding-content { background: white; border-radius: 20px; padding: 3rem; max-width: 600px; width: 90%; text-align: center; animation: slideIn 0.5s ease; max-height: 90vh; overflow-y: auto; }
+    @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .onboarding-title { font-size: 2rem; color: #111827; margin-bottom: 1rem; }
+    .onboarding-text { font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 2rem; }
+    .process-steps { text-align: left; margin: 2rem 0; }
+    .process-step { display: flex; align-items: center; margin-bottom: 1rem; padding: 1rem; background: #fbf5ee; border-radius: 10px; }
+    .step-icon { width: 40px; height: 40px; background: #8B5E3B; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-weight: bold; }
+    .map-setup { margin: 2rem 0; padding: 1.5rem; background: #fbf5ee; border-radius: 15px; border: 2px dashed #c28b5f; }
+    .map-container { height: 320px; border-radius: 12px; margin: 1rem 0; border: 1px solid #d1d5db; overflow: hidden; }
+    .location-input { width: 100%; padding: 1rem; border: 2px solid #ddd; border-radius: 10px; font-size: 1rem; margin-bottom: 1rem; }
+    .location-input:focus { outline: none; border-color: #c28b5f; }
+    .dashboard-header { margin-bottom: 1.5rem; }
+    .dashboard-header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; color: #111827; }
+    .dashboard-header p { font-size: 0.95rem; color: #6b7280; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: white; border-radius: 12px; padding: 1.25rem 1.5rem; border: 1px solid #e5e7eb; box-shadow: 0 6px 18px rgba(15,23,42,0.05); }
+    .stat-number { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.35rem; color: #111827; }
+    .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #6b7280; }
+    .nav-tabs { background: white; border-radius: 12px 12px 0 0; padding: 0; margin: 1.5rem 0 0 0; display: flex; overflow-x: auto; border: 1px solid #e5e7eb; border-bottom: none; }
+    .nav-tab { padding: 0.9rem 1.8rem; background: none; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; color: #6b7280; border-bottom: 3px solid transparent; transition: all 0.3s ease; white-space: nowrap; }
+    .nav-tab.active { color: #8B5E3B; border-bottom-color: #8B5E3B; background: #fdf6ee; }
+    .nav-tab:hover { color: #8B5E3B; background: #fdf6ee; }
+    .main-container { background: white; border-radius: 0 0 12px 12px; min-height: 480px; box-shadow: 0 10px 30px rgba(15,23,42,0.08); border: 1px solid #e5e7eb; border-top: none; }
+    .tab-content { display: none; padding: 1.75rem 1.75rem 2rem; }
+    .tab-content.active { display: block; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+    .section-title { font-size: 1.25rem; font-weight: 600; color: #111827; }
+    .refresh-btn { background: #6b4f3c; color: white; border: none; padding: 0.45rem 0.9rem; border-radius: 999px; cursor: pointer; font-size: 0.8rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; transition: background 0.2s ease, transform 0.1s ease; }
+    .refresh-btn:hover { background: #5a3f30; transform: translateY(-1px); }
+    .order-item { background: #ffffff; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; box-shadow: 0 8px 18px rgba(15,23,42,0.04); display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .order-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.4rem; }
+    .order-id { font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: #6b7280; font-weight: 600; }
+    .order-amount { font-weight: 600; color: #a66a3f; font-size: 1rem; }
+    .order-details { font-size: 0.9rem; color: #4b5563; margin-bottom: 0; line-height: 1.5; }
+    .order-details-row { display: flex; gap: 0.75rem; margin-top: 0.35rem; }
+    .order-details-label { width: 90px; font-weight: 500; color: #6b7280; flex-shrink: 0; }
+    .order-details-value { color: #111827; }
+    .order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem; }
+    .btn { padding: 0.8rem 1.5rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; text-align: center; }
+    .btn-primary { background: #8B5E3B; color: white; }
+    .btn-primary:hover { background: #a06c46; color: #ffffff; }
+    .btn-success { background: #c07a45; color: white; }
+    .btn-outline-primary { background: transparent; border: 1px solid #b7791f; color: #b7791f; }
+    .btn-outline-secondary { background: transparent; border: 1px solid #8B5E3B; color: #5c4033; }
+    .btn-sm { padding: 0.5rem 1rem; font-size: 0.9rem; }
+    .status-badge { padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+    .status-assigned { background: #fef3c7; color: #92400e; }
+    .status-picking-up { background: #fde7c7; color: #92400e; }
+    .status-picked-up { background: #f3e1d5; color: #7c2d12; }
+    .status-out-for-delivery { background: #ede9fe; color: #5b21b6; }
+    .status-delivered { background: #e0f2e9; color: #166534; }
+    .empty-state { text-align: center; padding: 2rem 1.5rem; color: #6b7280; }
+    .empty-state h3 { margin-bottom: 0.35rem; color: #111827; font-size: 1.05rem; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1500; }
+    .modal.show { display: flex; align-items: center; justify-content: center; }
+    .modal-content { background: white; border-radius: 15px; padding: 2rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
+    .modal-title { font-size: 1.3rem; font-weight: 600; }
+    .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; }
+    .delivery-steps { margin: 1rem 0; display: flex; flex-direction: column; gap: 0.75rem; }
+    .step { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 999px; background: #f8f9fa; border: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    .step:hover { background: #fdf6ee; border-color: #c28b5f; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(194, 139, 95, 0.25); }
+    .step-number { width: 30px; height: 30px; border-radius: 50%; background: #f3e1d5; color: #8B5E3B; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
+    .step-label { font-size: 0.95rem; font-weight: 600; color: #8B5E3B; }
+    @media (max-width: 900px) { .order-actions { flex-direction: column; align-items: stretch; } }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="onboarding-overlay" id="onboardingOverlay">
+    <div class="onboarding-content">
+      <div id="onboardingStep1">
+        <h1 class="onboarding-title">Welcome to Verdant Rider</h1>
+        <p class="onboarding-text">As a Verdant Rider, you connect sellers and customers by delivering orders safely and efficiently.</p>
+        <div class="process-steps">
+          <div class="process-step"><div class="step-icon">1</div><div><strong>Browse Available Orders</strong><br><small>View orders that sellers have accepted and are ready for delivery.</small></div></div>
+          <div class="process-step"><div class="step-icon">2</div><div><strong>Accept Delivery Requests</strong><br><small>Select orders that match your preferred area and schedule.</small></div></div>
+          <div class="process-step"><div class="step-icon">3</div><div><strong>Pick Up from Seller</strong><br><small>Collect the order from the seller and verify the items.</small></div></div>
+          <div class="process-step"><div class="step-icon">4</div><div><strong>Deliver to Customer</strong><br><small>Complete the delivery and update the status in real time.</small></div></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="goToServiceAreaStep()">Continue</button>
+      </div>
+      <div id="onboardingStep2" style="display: none;">
+        <div class="map-setup">
+          <h3 style="color: #2E8B57; margin-bottom: 1rem;">Set Your Service Area</h3>
+          <p style="margin-bottom: 1rem; color: #666;">Pin your current location or service area on the map. We will use this to show nearby delivery opportunities.</p>
+          <input type="text" id="locationInput" class="location-input" placeholder="For example: Quezon City, Cebu City, Davao City">
+          <div id="map" class="map-container"></div>
+          <button class="btn btn-primary w-100 mt-2" onclick="saveLocationAndContinue()">Save Location & Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rider-dashboard">
+    <div class="dashboard-header">
+      <h1>Rider Dashboard</h1>
+      <p>Manage your deliveries and track your progress</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-number" id="availableCount">0</div><div class="stat-label">Available Orders</div></div>
+      <div class="stat-card"><div class="stat-number" id="currentCount">0</div><div class="stat-label">Active Deliveries</div></div>
+      <div class="stat-card"><div class="stat-number" id="historyCount">0</div><div class="stat-label">Completed Deliveries</div></div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="available" onclick="switchTab('available', this)">Available Orders</button>
+      <button class="nav-tab" data-tab="current" onclick="switchTab('current', this)">Current Deliveries</button>
+      <button class="nav-tab" data-tab="history" onclick="switchTab('history', this)">Delivery History</button>
+    </div>
+    <div class="main-container">
+      <div id="availableTab" class="tab-content active">
+        <div class="section-header"><h2 class="section-title">Available Orders</h2><button class="refresh-btn" onclick="loadAvailableOrders()">Refresh</button></div>
+        <div id="availableOrders"><div class="empty-state"><h3>Waiting for delivery requests</h3><p>Available delivery requests will appear here</p></div></div>
+      </div>
+      <div id="currentTab" class="tab-content">
+        <div class="section-header"><h2 class="section-title">Current Deliveries</h2><button class="refresh-btn" onclick="loadCurrentDeliveries()">Refresh</button></div>
+        <div id="currentDeliveries"><div class="empty-state"><h3>No active deliveries</h3><p>Your accepted orders will appear here</p></div></div>
+      </div>
+      <div id="historyTab" class="tab-content">
+        <div class="section-header"><h2 class="section-title">Delivery History</h2><button class="refresh-btn" onclick="loadDeliveryHistory()">Refresh</button></div>
+        <div id="deliveryHistory"><div class="empty-state"><h3>No completed deliveries</h3><p>Your delivery history will appear here</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="deliveryModal">
+    <div class="modal-content">
+      <div class="modal-header"><h3 class="modal-title">Delivery Details</h3><button class="close-btn" onclick="closeDeliveryModal()">&times;</button></div>
+      <div id="deliveryModalContent"></div>
+    </div>
+  </div>
+  <div class="modal" id="routeModal">
+    <div class="modal-content">
+      <div class="modal-header"><h3 class="modal-title">Delivery Route</h3><button class="close-btn" onclick="closeRouteModal()">&times;</button></div>
+      <div id="routeModalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    window.riderIsApproved = {{ 'true' if is_approved else 'false' }};
+    let currentOrderId = null;
+    let map = null;
+    let marker = null;
+    let riderLocation = null;
+    let isFirstVisit = true;
+    const riderKey = '{{ session.get("username", "") }}';
+    const LOCATION_KEY = riderKey ? `rider_location_${riderKey}` : 'rider_location';
+    const ONBOARD_KEY = riderKey ? `rider_onboarding_completed_${riderKey}` : 'rider_onboarding_completed';
+
+    function checkOnboardingStatus() {
+      const hasCompletedOnboarding = localStorage.getItem(ONBOARD_KEY) === 'true';
+      const savedLocation = localStorage.getItem(LOCATION_KEY);
+      if (hasCompletedOnboarding && savedLocation) {
+        isFirstVisit = false;
+        hideOnboarding();
+        displaySavedLocation();
+        loadDashboardData();
+      } else {
+        isFirstVisit = true;
+        showOnboarding();
+      }
+    }
+    function showOnboarding() {
+      document.getElementById('onboardingOverlay').style.display = 'flex';
+      document.getElementById('onboardingStep1').style.display = 'block';
+      document.getElementById('onboardingStep2').style.display = 'none';
+    }
+    function hideOnboarding() {
+      document.getElementById('onboardingOverlay').style.display = 'none';
+    }
+    function goToServiceAreaStep() {
+      document.getElementById('onboardingStep1').style.display = 'none';
+      document.getElementById('onboardingStep2').style.display = 'block';
+      initializeMap();
+    }
+    function reverseGeocodeAndFill(lat, lng, locationInput) {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+      fetch(url, { headers: { 'Accept': 'application/json' } })
+        .then(response => response.json())
+        .then(data => {
+          if (!data || !data.address) return;
+          const addr = data.address;
+          const city = addr.city || addr.town || addr.village || addr.municipality || addr.county;
+          const region = addr.state || addr.region || '';
+          let label = '';
+          if (city && region) label = `${city}, ${region}`;
+          else if (city) label = city;
+          else if (region) label = region;
+          else if (data.display_name) label = data.display_name.split(',').slice(0, 2).join(', ');
+          if (label) {
+            locationInput.value = label;
+            riderLocation.address = label;
+          }
+        })
+        .catch(() => {});
+    }
+    function initializeMap() {
+      const locationInput = document.getElementById('locationInput');
+      const defaultCoords = [14.5995, 120.9842];
+      const savedLocationRaw = localStorage.getItem(LOCATION_KEY);
+      let startCoords = defaultCoords;
+
+      if (savedLocationRaw) {
+        try {
+          const savedObj = JSON.parse(savedLocationRaw);
+          if (savedObj && typeof savedObj.lat === 'number' && typeof savedObj.lng === 'number') {
+            startCoords = [savedObj.lat, savedObj.lng];
+          }
+        } catch (e) {}
+      }
+
+      function ensureMap(centerCoords) {
+        if (!map) {
+          map = L.map('map').setView(centerCoords, 12);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
+          marker = L.marker(centerCoords, { draggable: true }).addTo(map);
+          map.on('click', function (e) {
+            marker.setLatLng(e.latlng);
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            riderLocation = { lat: lat, lng: lng, address: locationInput.value || '' };
+            reverseGeocodeAndFill(lat, lng, locationInput);
+          });
+          marker.on('dragend', function (e) {
+            const latlng = e.target.getLatLng();
+            riderLocation = { lat: latlng.lat, lng: latlng.lng, address: locationInput.value || '' };
+            reverseGeocodeAndFill(latlng.lat, latlng.lng, locationInput);
+          });
+        } else {
+          map.setView(centerCoords, 12);
+          marker.setLatLng(centerCoords);
+        }
+        riderLocation = { lat: centerCoords[0], lng: centerCoords[1], address: locationInput.value || 'Default service area' };
+      }
+
+      if (navigator.geolocation && !savedLocationRaw) {
+        navigator.geolocation.getCurrentPosition(
+          function (position) {
+            const userCoords = [position.coords.latitude, position.coords.longitude];
+            ensureMap(userCoords);
+            riderLocation = { lat: userCoords[0], lng: userCoords[1], address: locationInput.value || 'Current GPS location' };
+            reverseGeocodeAndFill(userCoords[0], userCoords[1], locationInput);
+          },
+          function () {
+            ensureMap(startCoords);
+          },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 600000 }
+        );
+      } else {
+        ensureMap(startCoords);
+      }
+    }
+    function saveLocationAndContinue() {
+      const locationInputVal = document.getElementById('locationInput').value.trim();
+      if (!locationInputVal || locationInputVal.length < 3) {
+        alert('Please enter your location first.');
+        return;
+      }
+      if (!riderLocation) {
+        riderLocation = { lat: 14.5995, lng: 120.9842, address: locationInputVal };
+      }
+      localStorage.setItem(LOCATION_KEY, JSON.stringify(riderLocation));
+      localStorage.setItem(ONBOARD_KEY, 'true');
+      displaySavedLocation();
+      hideOnboarding();
+      if (isFirstVisit) {
+        setTimeout(() => {
+          if (typeof showNotification === 'function') {
+            showNotification('Your service area has been saved. You can now start accepting delivery orders.', 'success', 2000);
+          } else {
+            alert('Your service area has been saved. You can now start accepting delivery orders.');
+          }
+        }, 400);
+      }
+      loadDashboardData();
+    }
+    function displaySavedLocation() {
+      const savedLocation = localStorage.getItem(LOCATION_KEY);
+      if (savedLocation) {
+        riderLocation = JSON.parse(savedLocation);
+      }
+    }
+    function switchTab(tabName, sourceElement) {
+      const tabButtons = document.querySelectorAll('.nav-tab');
+      tabButtons.forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      if (sourceElement && sourceElement.classList.contains('nav-tab')) {
+        sourceElement.classList.add('active');
+      } else {
+        const targetTabButton = document.querySelector(`.nav-tab[data-tab="${tabName}"]`);
+        if (targetTabButton) targetTabButton.classList.add('active');
+      }
+      const contentEl = document.getElementById(tabName + 'Tab');
+      if (contentEl) contentEl.classList.add('active');
+      switch(tabName) {
+        case 'available': loadAvailableOrders(); break;
+        case 'current': loadCurrentDeliveries(); break;
+        case 'history': loadDeliveryHistory(); break;
+      }
+    }
+    function loadAvailableOrders() {
+      fetch('/rider/available-orders')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('availableOrders');
+          const countBadge = document.getElementById('availableCount');
+          if (data.success && data.orders.length > 0) {
+            countBadge.textContent = data.orders.length;
+            container.innerHTML = data.orders.map(order => `
+              <div class="order-item">
+                <div class="order-main">
+                  <div class="order-header">
+                    <span class="order-id">Order ID ${order.public_id || order.id}</span>
+                    <span class="order-amount">₱${order.total_amount.toFixed(2)}</span>
+                  </div>
+                  <div class="order-details">
+                    <div class="order-details-row"><div class="order-details-label">Customer</div><div class="order-details-value">${order.customer_name}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Seller</div><div class="order-details-value">${order.seller_name}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Seller Coords</div><div class="order-details-value">${order.seller_latitude != null ? order.seller_latitude : 'N/A'}, ${order.seller_longitude != null ? order.seller_longitude : 'N/A'}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Items</div><div class="order-details-value">${order.product_names}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Address</div><div class="order-details-value">${order.delivery_address}</div></div>
+                  </div>
+                </div>
+                <div class="order-actions">
+                  <button class="btn btn-success btn-sm"
+                          onclick="acceptOrder(this)"
+                          data-order-id="${order.id}"
+                          data-seller="${order.seller_name}"
+                          data-public-id="${order.public_id || order.id}">Accept Delivery</button>
+                </div>
+              </div>`).join('');
+          } else {
+            countBadge.textContent = '0';
+            container.innerHTML = `<div class="empty-state"><h3>No orders available</h3><p>New delivery requests will appear here</p></div>`;
+          }
+        })
+        .catch(error => { console.error('Error loading available orders:', error); });
+    }
+    function loadCurrentDeliveries() {
+      fetch('/rider/my-deliveries')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('currentDeliveries');
+          const countBadge = document.getElementById('currentCount');
+          if (data.success && data.deliveries.length > 0) {
+            countBadge.textContent = data.deliveries.length;
+            container.innerHTML = data.deliveries.map(delivery => `
+              <div class="order-item">
+                <div class="order-main">
+                  <div class="order-header">
+                    <span class="order-id">Order ID ${delivery.public_id || delivery.id}</span>
+                    <span class="status-badge status-${delivery.delivery_status}">${delivery.delivery_status.replace('_', ' ')}</span>
+                  </div>
+                  <div class="order-details">
+                    <div class="order-details-row"><div class="order-details-label">Customer</div><div class="order-details-value">${delivery.customer_name}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Phone</div><div class="order-details-value">${delivery.customer_phone || 'Not provided'}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Address</div><div class="order-details-value">${delivery.delivery_address}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Seller Coords</div><div class="order-details-value">${delivery.seller_latitude != null ? delivery.seller_latitude : 'N/A'}, ${delivery.seller_longitude != null ? delivery.seller_longitude : 'N/A'}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Items</div><div class="order-details-value">${delivery.items}</div></div>
+                  </div>
+                </div>
+                <div class="order-actions"><button class="btn btn-primary btn-sm" onclick="manageDelivery('${delivery.id}')">Manage Delivery</button></div>
+              </div>`).join('');
+          } else {
+            countBadge.textContent = '0';
+            container.innerHTML = `<div class="empty-state"><h3>No active deliveries</h3><p>Your accepted orders will appear here</p></div>`;
+          }
+        })
+        .catch(error => { console.error('Error loading current deliveries:', error); });
+    }
+    function loadDeliveryHistory() {
+      fetch('/rider/delivery-history')
+        .then(response => response.json())
+        .then(data => {
+          const container = document.getElementById('deliveryHistory');
+          const countBadge = document.getElementById('historyCount');
+          if (data.success && data.history.length > 0) {
+            countBadge.textContent = data.history.length;
+            container.innerHTML = data.history.map(delivery => `
+              <div class="order-item">
+                <div class="order-main">
+                  <div class="order-header">
+                    <span class="order-id">Order ID ${delivery.public_id || delivery.id}</span>
+                    <span class="order-amount">₱${delivery.total_amount.toFixed(2)}</span>
+                  </div>
+                  <div class="order-details">
+                    <div class="order-details-row"><div class="order-details-label">Customer</div><div class="order-details-value">${delivery.customer_name}</div></div>
+                    <div class="order-details-row"><div class="order-details-label">Delivered</div><div class="order-details-value">${new Date(delivery.delivered_at).toLocaleDateString()}</div></div>
+                  </div>
+                </div>
+              </div>`).join('');
+          } else {
+            countBadge.textContent = '0';
+            container.innerHTML = `<div class="empty-state"><h3>No completed deliveries</h3><p>Your delivery history will appear here</p></div>`;
+          }
+        })
+        .catch(error => { console.error('Error loading delivery history:', error); });
+    }
+    function acceptOrder(source) {
+      if (!window.riderIsApproved) {
+        alert('Your rider application is pending approval. You cannot accept deliveries yet.');
+        return;
+      }
+      // Support both legacy call with ID and new call with element carrying dataset
+      let orderId = null, sellerUsername = null, publicId = null;
+      if (typeof source === 'object' && source && source.dataset) {
+        orderId = source.dataset.orderId;
+        sellerUsername = source.dataset.seller || null;
+        publicId = source.dataset.publicId || orderId;
+      } else {
+        orderId = source;
+      }
+
+      if (!confirm('Accept this order for delivery?')) return;
+      fetch(`/rider/accept-order/${orderId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (typeof showNotification === 'function') {
+              showNotification('Order accepted! You can now manage the delivery.', 'success', 2000);
+            } else {
+              alert('Order accepted! You can now manage the delivery.');
+            }
+            // Fire-and-forget auto-message to seller
+            if (sellerUsername) {
+              const text = `Hi! I’ve accepted order ${publicId}. I will pick it up soon.`;
+              fetch('/api/messages/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiver_username: sellerUsername, message_text: text })
+              }).catch(() => {});
+            }
+            loadAvailableOrders();
+            loadCurrentDeliveries();
+          } else {
+            const msg = data.message || 'Failed to accept order';
+            if (typeof showNotification === 'function') {
+              showNotification(msg, 'error', 2000);
+            } else {
+              alert(msg);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error accepting order:', error);
+          const msg = 'An error occurred while accepting the order';
+          if (typeof showNotification === 'function') {
+            showNotification(msg, 'error', 2000);
+          } else {
+            alert(msg);
+          }
+        });
+    }
+    function manageDelivery(orderId) {
+      currentOrderId = orderId;
+      const modalContent = `
+        <div class="delivery-steps">
+          <h4 style="margin-bottom:0.75rem;">Update Delivery Status:</h4>
+          <div class="step" onclick="updateDeliveryStatus('out_for_delivery')">
+            <div class="step-number">1</div>
+            <span class="step-label">Out for delivery</span>
+          </div>
+          <div class="step" onclick="updateDeliveryStatus('delivered')">
+            <div class="step-number">2</div>
+            <span class="step-label">Delivered to customer</span>
+          </div>
+        </div>
+        <div style="margin-top: 1rem;">
+          <label for="deliveryNotes">Notes (optional):</label>
+          <textarea id="deliveryNotes" rows="3" style="width: 100%; margin-top: 0.5rem; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;" placeholder="Add any delivery notes..."></textarea>
+        </div>`;
+      document.getElementById('deliveryModalContent').innerHTML = modalContent;
+      document.getElementById('deliveryModal').classList.add('show');
+    }
+    function updateDeliveryStatus(status) {
+      if (!window.riderIsApproved) {
+        alert('Your rider application is pending approval. You cannot update delivery statuses yet.');
+        return;
+      }
+      const notes = prompt(status === 'delivered' ? 'Add any delivery notes (optional):' : 'Add any notes for this status change (optional):');
+      fetch(`/rider/update-delivery-status/${currentOrderId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: status, notes: notes }) })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (typeof showNotification === 'function') {
+              showNotification('Delivery status updated successfully!', 'success', 2000);
+            } else {
+              alert('Delivery status updated successfully!');
+            }
+            closeDeliveryModal();
+            loadCurrentDeliveries();
+            if (status === 'delivered') { loadDeliveryHistory(); }
+          } else {
+            const msg = data.message || 'Failed to update status';
+            if (typeof showNotification === 'function') {
+              showNotification(msg, 'error', 2000);
+            } else {
+              alert(msg);
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error updating delivery status:', error);
+          const msg = 'An error occurred while updating status';
+          if (typeof showNotification === 'function') {
+            showNotification(msg, 'error', 2000);
+          } else {
+            alert(msg);
+          }
+        });
+    }
+    function closeDeliveryModal() { document.getElementById('deliveryModal').classList.remove('show'); currentOrderId = null; }
+    function closeRouteModal() { document.getElementById('routeModal').classList.remove('show'); }
+    document.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) { e.target.classList.remove('show'); } });
+    function loadDashboardData() { loadAvailableOrders(); loadCurrentDeliveries(); loadDeliveryHistory(); }
+    document.addEventListener('DOMContentLoaded', function() {
+      checkOnboardingStatus();
+      setInterval(() => {
+        const overlay = document.getElementById('onboardingOverlay');
+        if (!overlay || overlay.style.display === 'none') {
+          loadAvailableOrders();
+          loadCurrentDeliveries();
+        }
+      }, 30000);
+    });
+  </script>
+{% endblock %}

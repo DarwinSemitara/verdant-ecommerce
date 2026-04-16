@@ -1,0 +1,641 @@
+{% extends 'base_user.html' %}
+
+{% block content %}
+<style>
+    .orders-page {
+      max-width: 1800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .orders-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .orders-header h1 {
+      color: #0d6efd;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .filter-tab {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid #e9ecef;
+      border-radius: 0.5rem;
+      background: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .filter-tab:hover {
+      border-color: #0d6efd;
+      color: #0d6efd;
+    }
+
+    .filter-tab.active {
+      background: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+
+    .orders-container {
+      background: #f9fafb;
+      border-radius: 1.5rem;
+      box-shadow: 0 18px 45px rgba(15,23,42,0.14);
+      padding: 2rem 2.25rem;
+      border: 1px solid rgba(148,163,184,0.25);
+    }
+
+    .order-card {
+      border-radius: 1rem;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px rgba(15,23,42,0.14);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .order-id {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    .order-status {
+      padding: 0.35rem 0.9rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .order-status.pending {
+      background: #fff7ed;
+      color: #c05621;
+    }
+
+    .order-status.accepted {
+      background: #ecfdf5;
+      color: #15803d;
+    }
+
+    .order-status.rejected {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .order-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      font-size: 0.85rem;
+      color: #4b5563;
+      margin-bottom: 1.25rem;
+    }
+
+    .order-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+
+    .order-meta-label {
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .order-meta-value {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .order-items {
+      margin-bottom: 1.25rem;
+    }
+
+    .order-items-title {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .order-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 1rem;
+      padding: 0.85rem 1rem;
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      margin-bottom: 0.6rem;
+      align-items: center;
+    }
+
+    .order-item-image {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      background: white;
+    }
+
+    .order-item-name {
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.15rem;
+    }
+
+    .order-item-quantity {
+      color: #6b7280;
+      font-size: 0.85rem;
+    }
+
+    .order-item-price {
+      font-weight: 700;
+      color: #0f766e;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .btn-accept,
+    .btn-reject {
+      background: #ffffff;
+      color: #111827;
+      padding: 0.6rem 1.3rem;
+      border: 1px solid #d1d5db;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn-accept:hover {
+      background: #16a34a;
+      color: #ffffff;
+      border-color: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .btn-reject:hover {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .rejection-reason {
+      background: #f8d7da;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      border-left: 4px solid #dc3545;
+    }
+
+    .rejection-reason-label {
+      font-weight: 700;
+      color: #721c24;
+      margin-bottom: 0.5rem;
+    }
+
+    .rejection-reason-text {
+      color: #721c24;
+    }
+
+    .no-orders {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6c757d;
+    }
+
+    .no-orders h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #2d5016;
+    }
+
+    /* Rejection Modal */
+    .rejection-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rejection-modal.show {
+      display: flex !important;
+    }
+
+    .rejection-modal-content {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .rejection-modal-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2d5016;
+      margin-bottom: 1.5rem;
+    }
+
+    .rejection-modal-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .rejection-modal-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 0.75rem;
+      border: 2px solid #e9ecef;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 1.5rem;
+    }
+
+    .rejection-modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    .btn-cancel {
+      background: #6c757d;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-cancel:hover {
+      background: #5a6268;
+    }
+  </style>
+
+  <div class="orders-page">
+    <div class="orders-header">
+      <h1>My Orders</h1>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All Orders</button>
+      <button class="filter-tab" data-filter="pending">Pending</button>
+      <button class="filter-tab" data-filter="accepted">Accepted</button>
+      <button class="filter-tab" data-filter="rejected">Rejected</button>
+    </div>
+
+    <div class="orders-container">
+      {% if error_message %}
+        <div class="error-message" style="background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+          <h3>Error Loading Orders</h3>
+          <p>{{ error_message }}</p>
+          <p>Please try refreshing the page or contact support if the issue persists.</p>
+        </div>
+      {% endif %}
+      
+      {% if orders and orders|length > 0 %}
+        <div id="ordersDisplay">
+          {% for order in orders %}
+          <div class="order-card {{ order.status }}" data-status="{{ order.status }}">
+            <div class="order-header">
+              <div class="order-id">Order ID #{{ order.id|public_order_id }}</div>
+              <div class="order-status {{ order.status }}">{{ order.status }}</div>
+            </div>
+
+            <div class="order-meta-row">
+              <div class="order-meta-item">
+                <span class="order-meta-label">Customer:</span>
+                <span class="order-meta-value">{{ order.customer_username }}</span>
+              </div>
+              <div class="order-meta-item">
+                <span class="order-meta-label">Received:</span>
+                <span class="order-meta-value">{{ order.order_date.strftime('%b %d, %Y %I:%M %p') if order.order_date else 'N/A' }}</span>
+              </div>
+              <div class="order-meta-item" style="flex: 1 1 auto; min-width: 200px;">
+                <span class="order-meta-label">Address:</span>
+                <span class="order-meta-value">{{ order.shipping_address }}</span>
+              </div>
+              <div class="order-meta-item">
+                <span class="order-meta-label">Rider:</span>
+                <span class="order-meta-value">{{ order.rider_username or '—' }}</span>
+              </div>
+            </div>
+
+            <div class="order-items">
+              <div class="order-items-title">Order Items</div>
+              {% for item in order['items'] %}
+              <div class="order-item">
+                {% if item.image %}
+                  <img src="{{ url_for('static', filename='uploads/products/' + item.image) }}" alt="{{ item.name }}" class="order-item-image">
+                {% else %}
+                  <div class="order-item-image" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                    <svg style="width: 40px; height: 40px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                      <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                    </svg>
+                  </div>
+                {% endif %}
+                <div>
+                  <div class="order-item-name">{{ item.name }}</div>
+                  <div class="order-item-quantity">Quantity: {{ item.quantity }}</div>
+                </div>
+                <div class="order-item-price">₱{{ '%.2f'|format(item.total_price) }}</div>
+              </div>
+              {% endfor %}
+            </div>
+
+            {% if order.status == 'pending' %}
+            <div class="order-actions">
+              <button class="btn-accept" onclick="acceptOrder('{{ order.id }}')">Accept Order</button>
+              <button class="btn-reject" onclick="showRejectModal('{{ order.id }}')">Reject Order</button>
+            </div>
+            {% elif order.status == 'rejected' and order.rejection_reason %}
+            <div class="rejection-reason">
+              <div class="rejection-reason-label">Rejection Reason:</div>
+              <div class="rejection-reason-text">{{ order.rejection_reason }}</div>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="no-orders">
+          <h2>No Orders Yet</h2>
+          <p>Orders from customers will appear here.</p>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <!-- Rejection Modal -->
+  <div class="rejection-modal" id="rejectionModal">
+    <div class="rejection-modal-content">
+      <div class="rejection-modal-title">Reject Order</div>
+      <label class="rejection-modal-label">Rejection Reason (Optional)</label>
+      <textarea class="rejection-modal-textarea" id="rejectionReason" placeholder="Enter reason for rejection..."></textarea>
+      <div class="rejection-modal-actions">
+        <button class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+        <button class="btn-reject" onclick="confirmReject()">Confirm Rejection</button>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <script>
+    // GLOBAL FUNCTIONS - Must be in global scope for onclick to work
+    
+    // Make functions explicitly global by attaching to window
+    let lastAcceptedOrderId = null;
+
+    window.acceptOrder = function(orderId) {
+      console.log('ACCEPT BUTTON CLICKED - Order ID:', orderId);
+      console.log('Current URL:', window.location.href);
+      console.log('Session info available:', !!document.cookie);
+      
+      lastAcceptedOrderId = orderId;
+
+      if (!confirm('Accept this order? Stock will be automatically updated.')) {
+        return;
+      }
+
+      console.log('Sending accept request to:', `/seller/order/${orderId}/accept`);
+
+      fetch(`/seller/order/${orderId}/accept`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+          const msg = 'Order accepted. Stock updated and riders can now see this order.';
+          if (typeof showNotification === 'function') {
+            showNotification(msg, 'success', 2000);
+          } else {
+            alert(msg);
+          }
+          setTimeout(() => { location.reload(); }, 2000);
+        } else {
+          const errMsg = data.message || 'Failed to accept order';
+          if (typeof showNotification === 'function') {
+            showNotification(errMsg, 'error', 2000);
+          } else {
+            alert(errMsg);
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error accepting order:', error);
+        const errMsg = 'An error occurred: ' + error.message;
+        if (typeof showNotification === 'function') {
+          showNotification(errMsg, 'error', 2000);
+        } else {
+          alert(errMsg);
+        }
+      });
+    };
+
+    // Reject order modal
+    let currentRejectOrderId = null;
+
+    window.showRejectModal = function(orderId) {
+      console.log('REJECT BUTTON CLICKED - Order ID:', orderId);
+      console.log('Modal element exists:', !!document.getElementById('rejectionModal'));
+      currentRejectOrderId = orderId;
+      document.getElementById('rejectionModal').classList.add('show');
+      document.getElementById('rejectionReason').value = '';
+    };
+
+    window.closeRejectModal = function() {
+      console.log('Closing reject modal');
+      document.getElementById('rejectionModal').classList.remove('show');
+      currentRejectOrderId = null;
+    };
+
+    window.confirmReject = function() {
+      console.log('Confirm reject for order ID:', currentRejectOrderId);
+      if (!currentRejectOrderId) return;
+
+      const reason = document.getElementById('rejectionReason').value.trim();
+      console.log('Rejection reason:', reason);
+
+      console.log('Sending reject request to:', `/seller/order/${currentRejectOrderId}/reject`);
+
+      fetch(`/seller/order/${currentRejectOrderId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: reason })
+      })
+      .then(response => {
+        console.log('Reject response status:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Reject response data:', data);
+        if (data.success) {
+          alert('Order rejected. Customer has been notified.');
+          closeRejectModal();
+          location.reload();
+        } else {
+          alert(data.message || 'Failed to reject order');
+        }
+      })
+      .catch(error => {
+        console.error('Error rejecting order:', error);
+        alert('An error occurred. Please try again.');
+      });
+    };
+
+    // Close modal on outside click
+    document.getElementById('rejectionModal').addEventListener('click', (e) => {
+      if (e.target.id === 'rejectionModal') {
+        closeRejectModal();
+      }
+    });
+
+    // No separate accept-success modal; feedback is provided via toast notifications.
+
+    // Test button functionality on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Page loaded, checking for buttons...');
+      const acceptButtons = document.querySelectorAll('.btn-accept');
+      const rejectButtons = document.querySelectorAll('.btn-reject');
+      
+      console.log('Found accept buttons:', acceptButtons.length);
+      console.log('Found reject buttons:', rejectButtons.length);
+      
+      // Add click event listeners as backup
+      acceptButtons.forEach((button, index) => {
+        console.log('Setting up accept button', index);
+        button.addEventListener('click', function() {
+          console.log('Accept button clicked via event listener');
+        });
+      });
+      
+      rejectButtons.forEach((button, index) => {
+        console.log('Setting up reject button', index);
+        button.addEventListener('click', function() {
+          console.log('Reject button clicked via event listener');
+        });
+      });
+    });
+
+    // Test that functions are defined
+    console.log('Functions defined:', {
+      acceptOrder: typeof window.acceptOrder,
+      showRejectModal: typeof window.showRejectModal,
+      closeRejectModal: typeof window.closeRejectModal,
+      confirmReject: typeof window.confirmReject
+    });
+
+    // DOM initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      // Profile dropdown
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+
+      if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          profileMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => {
+          profileMenu.classList.remove('show');
+        });
+      }
+
+      // Filter tabs
+      const filterTabs = document.querySelectorAll('.filter-tab');
+      const orderCards = document.querySelectorAll('.order-card');
+
+      filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Update active tab
+          filterTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const filter = tab.dataset.filter;
+
+          // Filter orders
+          orderCards.forEach(card => {
+            if (filter === 'all' || card.dataset.status === filter) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+    });
+  </script>
+{% endblock %}

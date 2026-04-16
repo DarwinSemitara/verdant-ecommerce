@@ -1,0 +1,46 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="admin-card-grid">
+  <div class="admin-card">
+    <div class="admin-card-label">Pending applications</div>
+    <div class="admin-card-value">{{ pending_count }}</div>
+    <div class="admin-card-caption">Awaiting review</div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-label">Approved sellers</div>
+    <div class="admin-card-value">{{ approved_count }}</div>
+    <div class="admin-card-caption">Active stores</div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-label">Total applications</div>
+    <div class="admin-card-value">{{ total_count }}</div>
+    <div class="admin-card-caption">All time</div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-card-label">Approval rate</div>
+    <div class="admin-card-value">{{ '%.1f'|format(approval_rate or 0) }}%</div>
+    <div class="admin-card-caption">Approved vs all</div>
+  </div>
+</div>
+
+<section class="mt-3">
+  <div class="admin-placeholder-row">
+    <div class="admin-placeholder-card">
+      <div class="admin-placeholder-title">Admin overview widgets</div>
+      <div>Placeholder area for future analytics such as total revenue, order volume, or user activity.</div>
+    </div>
+    <div class="admin-placeholder-card">
+      <div class="admin-placeholder-title">Issue &amp; report insights</div>
+      <div>Placeholder for charts or lists related to issue reports and marketplace violations.</div>
+    </div>
+    <div class="admin-placeholder-card">
+      <div class="admin-placeholder-title">System health</div>
+      <div>Placeholder for system status, queues, and platform notifications.</div>
+    </div>
+  </div>
+  <div class="admin-link-subtle mt-3">
+    Use the sidebar to open <a href="{{ url_for('admin_seller_applications') }}">Seller applications</a> or upcoming Notifications tools.
+  </div>
+</section>
+{% endblock %}

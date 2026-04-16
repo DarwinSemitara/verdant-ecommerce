@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile - Verdant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%);
+      min-height: 100vh;
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-menu-item {
+      display: block;
+      padding: 0.875rem 1.25rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    /* Profile Page Specific Styles */
+    .main-content {
+      max-width: 1800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .profile-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0;
+    }
+
+    .profile-header {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      border: 1px solid rgba(45, 80, 22, 0.1);
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2d5016, #4a7c23);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 4px solid #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-initials {
+      font-size: 3rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .profile-info h1 {
+      margin: 0 0 0.5rem 0;
+      color: #2d5016;
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .profile-email {
+      color: #6c757d;
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem 0;
+    }
+
+    .profile-join-date {
+      color: #95a5a6;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    .profile-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+
+    .profile-section {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .profile-section h2 {
+      color: #2d5016;
+      margin: 0 0 1.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #f1f3f5;
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .info-item {
+      background: #f8f9fa;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      border-left: 4px solid #2d5016;
+    }
+
+    .info-label {
+      display: block;
+      color: #6c757d;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-weight: 600;
+      color: #2c3e50;
+      font-size: 1.1rem;
+    }
+
+    .edit-profile-btn {
+      background: linear-gradient(135deg, #2d5016, #4a7c23);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 1.5rem;
+      width: 100%;
+    }
+
+    .edit-profile-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .profile-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .profile-container {
+        padding: 0 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="has-main-header">
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('homepage') }}" class="nav-logo">Verdant</a>
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('cart') }}" class="icon-button" aria-label="Cart" style="text-decoration: none; color: inherit;" id="cartButton">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
+            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <span id="cartCount" class="badge">0</span>
+        </a>
+        {% include 'notification_component.html' %}
+        <a href="{{ url_for('user_messages') }}" class="icon-button" aria-label="Messages" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 5h16v10H6l-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <button id="helpButton" class="icon-button" aria-label="Help">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1" fill="currentColor"/>
+          </svg>
+          <span>Help</span>
+        </button>
+        <div class="profile-dropdown">
+          <button class="profile-btn" aria-label="Profile" id="profileButton">
+            {% if user.profile_picture %}
+              <img alt="Profile" src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" style="width: 100%; height: 100%; object-fit: cover;" />
+            {% else %}
+              <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+            {% endif %}
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
+            <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
+            <div class="profile-menu-divider"></div>
+            <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+              <button type="submit" class="profile-menu-item logout">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <div class="profile-container" data-latitude="{{ user.latitude }}" data-longitude="{{ user.longitude }}">
+      <div class="profile-header">
+        <div class="profile-avatar">
+          {% if user.profile_picture %}
+            <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile Picture">
+          {% else %}
+            <div class="profile-initials">
+              {{ user.username[0]|upper }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="profile-info">
+          <h1>{{ user.username }}</h1>
+          <p class="profile-email">{{ user.email }}</p>
+          <p class="profile-join-date">Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}</p>
+        </div>
+      </div>
+
+      <div class="profile-content">
+        <div class="profile-section">
+          <h2>Account Information</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Username</span>
+              <span class="info-value">{{ user.username }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email Address</span>
+              <span class="info-value">{{ user.email }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Phone Number</span>
+              <span class="info-value">{{ user.phone or 'Not set' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Account Status</span>
+              <span class="info-value status-active">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h2>Home Address</h2>
+          <div class="address-section">
+            <div class="info-item">
+              <span class="info-label">Current Address</span>
+              <span class="info-value">{{ user.address or 'No address set' }}</span>
+            </div>
+            <div class="map-container">
+              <div id="profileMap" class="map-placeholder"></div>
+              <div class="map-controls">
+                <button type="button" id="getCurrentLocationBtn" class="btn btn-outline-primary btn-sm">
+                  📍 Use Current Location
+                </button>
+                <button type="button" id="updateLocationBtn" class="btn btn-success btn-sm">
+                  📌 Update Location
+                </button>
+              </div>
+              <div id="locationStatus" class="location-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h2>Shopping Activity</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Total Orders</span>
+              <span class="info-value">{{ user.total_orders or 0 }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Delivered Orders</span>
+              <span class="info-value">{{ user.delivered_orders or 0 }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Cart Items</span>
+              <span class="info-value" id="profileCartCount">Loading...</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Member Since</span>
+              <span class="info-value">{{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<style>
+.profile-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-initials {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #2d5016;
+}
+
+.profile-info h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 2.2rem;
+}
+
+.profile-email {
+  color: #6c757d;
+  margin: 0.5rem 0;
+}
+
+.profile-join-date {
+  color: #95a5a6;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.profile-section {
+  margin-bottom: 3rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.profile-section h2 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f5;
+  font-size: 1.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  background: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+}
+
+.info-label {
+  display: block;
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.info-value {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.status-inactive {
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+/* Enhanced Profile Styling */
+.profile-section {
+  margin-bottom: 2rem;
+  background: #fff;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid rgba(45, 80, 22, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.profile-section h2 {
+  color: #2d5016;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f5;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-section h2::before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #2d5016, #4a7c23);
+  border-radius: 2px;
+}
+
+.address-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.map-container {
+  background: #f8f9fa;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #e9ecef;
+}
+
+#profileMap {
+  height: 300px;
+  background: #e9ecef;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+#profileMap.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.map-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.map-controls button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.map-controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.location-status {
+  font-size: 0.875rem;
+  color: #6c757d;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: #f8f9fa;
+  border-left: 3px solid #2d5016;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.location-status.success {
+  color: #155724;
+  background: #d4edda;
+  border-left-color: #28a745;
+}
+
+.location-status.error {
+  color: #721c24;
+  background: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.info-item {
+  background: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  border-left: 4px solid #2d5016;
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.status-active {
+  color: #28a745;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-active::before {
+  content: '●';
+  color: #28a745;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .profile-avatar {
+    margin: 0 auto;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+  <!-- Help modal -->
+  <div class="modal" id="helpModal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeHelpModal">&times;</span>
+      <h2>Help & FAQs</h2>
+      <div class="info-content-placeholder">This is a placeholder. FAQs coming soon.</div>
+    </div>
+  </div>
+
+  {% include 'footer_verdant.html' %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Cart button
+      const cartButton = document.getElementById('cartButton');
+      if (cartButton) {
+        cartButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.href = "{{ url_for('cart') }}";
+        });
+      }
+
+      // Help modal
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const closeHelpModal = document.getElementById('closeHelpModal');
+
+      if (helpButton && helpModal && closeHelpModal) {
+        helpButton.addEventListener('click', () => {
+          helpModal.style.display = 'flex';
+        });
+
+        closeHelpModal.addEventListener('click', () => {
+          helpModal.style.display = 'none';
+        });
+      }
+
+      // Profile dropdown
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+
+      if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          profileMenu.classList.toggle('show');
+        });
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener('click', (e) => {
+        if (helpModal && e.target === helpModal) helpModal.style.display = 'none';
+        if (profileButton && profileMenu && !profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove('show');
+        }
+      });
+
+      // Load cart count
+      fetch('{{ url_for("get_cart_count") }}')
+        .then(response => response.json())
+        .then(data => {
+          const cartCount = document.getElementById('cartCount');
+          const profileCartCount = document.getElementById('profileCartCount');
+          
+          if (cartCount) {
+            if (data.cart_count > 0) {
+              cartCount.textContent = data.cart_count;
+              cartCount.style.display = 'flex';
+            } else {
+              cartCount.style.display = 'none';
+            }
+          }
+          
+          if (profileCartCount) {
+            profileCartCount.textContent = data.cart_count || '0';
+          }
+        });
+
+      // Location functionality
+      const profileMap = document.getElementById('profileMap');
+      const getCurrentLocationBtn = document.getElementById('getCurrentLocationBtn');
+      const updateLocationBtn = document.getElementById('updateLocationBtn');
+      const locationStatus = document.getElementById('locationStatus');
+
+      let currentMarker = null;
+      let map = null;
+      let userLatitude = null;
+      let userLongitude = null;
+
+      // Set user coordinates from data attributes
+      const profileData = document.querySelector('.profile-container');
+      if (profileData) {
+        userLatitude = profileData.dataset.latitude ? parseFloat(profileData.dataset.latitude) : null;
+        userLongitude = profileData.dataset.longitude ? parseFloat(profileData.dataset.longitude) : null;
+      }
+
+      // Initialize map
+      function initializeMap() {
+        if (!profileMap) return;
+
+        // Create a simple map placeholder (you can integrate with real map services like Leaflet)
+        profileMap.innerHTML = `
+          <div style="text-align: center; padding: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🗺️</div>
+            <div>Interactive Map</div>
+            <div style="font-size: 0.875rem; color: #6c757d; margin-top: 0.5rem;">
+              Click on the map to set your location
+            </div>
+          </div>
+        `;
+
+        // Add click event for location selection
+        profileMap.addEventListener('click', function(e) {
+          const rect = profileMap.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // Simulate location selection (in real implementation, this would convert to coordinates)
+          const lat = 14.5995 + (y / rect.height) * 0.1; // Mock coordinates around Manila
+          const lng = 120.9842 + (x / rect.width) * 0.1;
+          
+          setMapLocation(lat, lng);
+        });
+
+        // Show existing location if available
+        if (userLatitude && userLongitude) {
+          showLocationOnMap(userLatitude, userLongitude);
+        }
+      }
+
+      function setMapLocation(lat, lng) {
+        userLatitude = lat;
+        userLongitude = lng;
+        
+        // Update map visual
+        if (profileMap) {
+          profileMap.innerHTML = `
+            <div style="text-align: center; padding: 2rem; position: relative;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+              <div>Location Selected</div>
+              <div style="font-size: 0.875rem; color: #2d5016; margin-top: 0.5rem;">
+                Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}
+              </div>
+            </div>
+          `;
+        }
+        
+        updateLocationStatus('Location selected. Click "Update Location" to save.', 'success');
+      }
+
+      function showLocationOnMap(lat, lng) {
+        if (profileMap) {
+          profileMap.innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+              <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+              <div>Current Location</div>
+              <div style="font-size: 0.875rem; color: #2d5016; margin-top: 0.5rem;">
+                Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      function updateLocationStatus(message, type = '') {
+        if (locationStatus) {
+          locationStatus.textContent = message;
+          locationStatus.className = 'location-status ' + type;
+        }
+      }
+
+      // Get current location
+      if (getCurrentLocationBtn) {
+        getCurrentLocationBtn.addEventListener('click', function() {
+          if (!navigator.geolocation) {
+            updateLocationStatus('Geolocation is not supported by your browser.', 'error');
+            return;
+          }
+
+          updateLocationStatus('Getting your current location...');
+          profileMap.classList.add('loading');
+
+          navigator.geolocation.getCurrentPosition(
+            function(position) {
+              profileMap.classList.remove('loading');
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              
+              setMapLocation(lat, lng);
+              updateLocationStatus('Current location detected. Click "Update Location" to save.', 'success');
+            },
+            function(error) {
+              profileMap.classList.remove('loading');
+              let errorMessage = 'Unable to get your location.';
+              
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = 'Location access denied. Please enable location services.';
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = 'Location information is unavailable.';
+                  break;
+                case error.TIMEOUT:
+                  errorMessage = 'Location request timed out.';
+                  break;
+              }
+              
+              updateLocationStatus(errorMessage, 'error');
+            }
+          );
+        });
+      }
+
+      // Update location in database
+      if (updateLocationBtn) {
+        updateLocationBtn.addEventListener('click', function() {
+          if (!userLatitude || !userLongitude) {
+            updateLocationStatus('Please select a location first by clicking on the map or using current location.', 'error');
+            return;
+          }
+
+          updateLocationStatus('Updating your location...');
+          updateLocationBtn.disabled = true;
+
+          fetch('/api/update_location', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              latitude: userLatitude,
+              longitude: userLongitude
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            updateLocationBtn.disabled = false;
+            
+            if (data.success) {
+              updateLocationStatus('Location updated successfully!', 'success');
+              // Update address display if returned
+              if (data.address) {
+                const addressElement = document.querySelector('.info-value');
+                if (addressElement && addressElement.textContent.includes('No address set')) {
+                  addressElement.textContent = data.address;
+                }
+              }
+            } else {
+              updateLocationStatus(data.message || 'Failed to update location.', 'error');
+            }
+          })
+          .catch(error => {
+            updateLocationBtn.disabled = false;
+            updateLocationStatus('Error updating location. Please try again.', 'error');
+            console.error('Location update error:', error);
+          });
+        });
+      }
+
+      // Initialize map on page load
+      initializeMap();
+    });
+  </script>
+</body>
+</html>

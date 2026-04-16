@@ -1,0 +1,76 @@
+<footer class="site-footer">
+  <style>
+    .footer-social .social-link svg path,
+    .footer-social .social-link svg circle {
+      fill: #ffffff;
+      transition: fill 0.2s ease;
+    }
+    .footer-social .social-facebook:hover svg path,
+    .footer-social .social-facebook:hover svg circle { fill: #1877F2; }
+    .footer-social .social-instagram:hover svg path,
+    .footer-social .social-instagram:hover svg circle { fill: #F77737; }
+    .footer-social .social-github:hover svg path,
+    .footer-social .social-github:hover svg circle { fill: #000000; }
+  </style>
+  <div class="footer-inner">
+    <div style="font-size: 1.4rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.9;">Verdant</div>
+    <div style="margin-top: 0.35rem; font-size: 0.95rem; opacity: 0.85;">Home &amp; Garden Learning Marketplace</div>
+  </div>
+  <section class="site-info">
+    <div class="footer-columns">
+      <div class="footer-column footer-about">
+        <h3>About</h3>
+        <p>
+          Verdant is an educational e-commerce project that simulates a home and garden marketplace.
+          It is designed to help students practice real-world web development concepts while exploring
+          how digital platforms can support greener, more sustainable living.
+        </p>
+        <p>
+          This site showcases core marketplace flows &mdash; browsing products, managing carts and orders,
+          messaging between buyers, sellers, and riders, and handling notifications &mdash; all within a
+          sandbox environment where no real payments or deliveries take place.
+        </p>
+      </div>
+      <div class="footer-column footer-developers">
+        <h3>Developers</h3>
+        <ul>
+          <li>Darwin Jeff Semitara &mdash; Fullstack Developer</li>
+          <li>Abram Jhosph Saunar &mdash; Front-end Developer</li>
+          <li>Althea Ruth Isla &mdash; Front-end Developer</li>
+          <li>Daliah Espiritu &mdash; Front-end Developer</li>
+        </ul>
+      </div>
+      <div class="footer-column footer-links">
+        <h3>Links &amp; Contacts</h3>
+        <ul class="footer-links-list">
+          <li><a href="{{ url_for('guest_home') }}">Browse as guest</a></li>
+          <li><a href="{{ url_for('login_page') }}">Login or Sign Up</a></li>
+          <li>
+            <div class="footer-social" style="display:flex; gap: 0.75rem; align-items:center;">
+              <a href="https://www.facebook.com/darwinjeff.semitaraii.5" target="_blank" rel="noopener" aria-label="Facebook" class="social-link social-facebook" style="display:inline-flex; width:28px; height:28px; align-items:center; justify-content:center;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.675 0h-21.35C.597 0 0 .597 0 1.325v21.351C0 23.403.597 24 1.325 24h11.495v-9.294H9.691V11.01h3.129V8.414c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.794.143v3.24l-1.918.001c-1.504 0-1.796.715-1.796 1.763v2.313h3.59l-.467 3.696h-3.123V24h6.116C23.403 24 24 23.403 24 22.676V1.325C24 .597 23.403 0 22.675 0z"/>
+                </svg>
+              </a>
+              <a href="https://www.instagram.com/d.rwnnn" target="_blank" rel="noopener" aria-label="Instagram" class="social-link social-instagram" style="display:inline-flex; width:28px; height:28px; align-items:center; justify-content:center;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.35 3.608 1.325.975.975 1.263 2.242 1.325 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.35 2.633-1.325 3.608-.975.975-2.242 1.263-3.608 1.325-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.35-3.608-1.325-.975-.975-1.263-2.242-1.325-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.35-2.633 1.325-3.608C4.533 1.567 5.8 1.279 7.166 1.217 8.432 1.16 8.812 1.148 12 1.148m0-1.148C8.741 0 8.332.013 7.052.072 5.773.131 4.665.363 3.678 1.35 2.69 2.337 2.458 3.445 2.399 4.724 2.34 6.004 2.327 6.413 2.327 9.672v4.656c0 3.259.013 3.668.072 4.948.059 1.279.291 2.387 1.279 3.374.987.987 2.095 1.219 3.374 1.279 1.279.059 1.688.072 4.948.072s3.668-.013 4.948-.072c1.279-.059 2.387-.291 3.374-1.279.987-.987 1.219-2.095 1.279-3.374.059-1.279.072-1.688.072-4.948s-.013-3.668-.072-4.948c-.059-1.279-.291-2.387-1.279-3.374C20.387.363 19.279.131 18 .072 16.719.013 16.31 0 13.051 0H10.949C7.69 0 7.281.013 6 .072 4.721.131 3.613.363 2.626 1.35 1.638 2.337 1.406 3.445 1.347 4.724 1.288 6.004 1.275 6.413 1.275 9.672v4.656c0 3.259.013 3.668.072 4.948.059 1.279.291 2.387 1.279 3.374.987.987 2.095 1.219 3.374 1.279 1.279.059 1.688.072 4.948.072s3.668-.013 4.948-.072c1.279-.059 2.387-.291 3.374-1.279.987-.987 1.219-2.095 1.279-3.374.059-1.279.072-1.688.072-4.948s-.013-3.668-.072-4.948c-.059-1.279-.291-2.387-1.279-3.374C20.387.363 19.279.131 18 .072 16.719.013 16.31 0 13.051 0H10.949z"/>
+                  <circle cx="12" cy="12" r="3.2"/>
+                </svg>
+              </a>
+              <a href="https://github.com/DarwinSemitara" target="_blank" rel="noopener" aria-label="GitHub" class="social-link social-github" style="display:inline-flex; width:28px; height:28px; align-items:center; justify-content:center;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="#ffffff" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 .5C5.73.5.9 5.33.9 11.6c0 4.88 3.17 9.02 7.57 10.48.55.1.75-.24.75-.53 0-.26-.01-1.12-.02-2.03-3.08.67-3.73-1.32-3.73-1.32-.5-1.27-1.22-1.61-1.22-1.61-.99-.68.08-.66.08-.66 1.09.08 1.66 1.11 1.66 1.11.98 1.66 2.57 1.18 3.2.9.1-.71.38-1.18.69-1.45-2.46-.28-5.05-1.23-5.05-5.5 0-1.22.44-2.22 1.16-3.01-.12-.28-.5-1.4.11-2.91 0 0 .95-.3 3.12 1.15.9-.25 1.86-.38 2.82-.38.96 0 1.92.13 2.82.38 2.17-1.45 3.12-1.15 3.12-1.15.61 1.51.23 2.63.11 2.91.72.79 1.16 1.79 1.16 3.01 0 4.28-2.6 5.21-5.07 5.49.39.34.74 1.02.74 2.06 0 1.48-.01 2.67-.01 3.03 0 .29.2.64.76.53 4.39-1.47 7.56-5.6 7.56-10.48C23.1 5.33 18.27.5 12 .5z"/>
+                </svg>
+              </a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <p class="disclaimer">
+      Verdant is a student project created for learning purposes only. All products, orders, and
+      interactions in this environment are demonstrations and not part of a real commercial service.
+    </p>
+  </section>
+</footer>
