@@ -30,7 +30,7 @@
   <!-- Header / Hero -->
   <div class="store-hero mb-5">
     {% if store and store.cover_photo %}
-      <img class="cover w-100" src="{{ url_for('static', filename='uploads/store/' ~ store.cover_photo) }}" alt="Cover" onclick="document.getElementById('coverPhotoInput').click()" />
+      <img class="cover w-100" src="{{ img(store.cover_photo, 'store') }}" alt="Cover" onclick="document.getElementById('coverPhotoInput').click()" />
     {% else %}
       <div class="cover-placeholder" onclick="document.getElementById('coverPhotoInput').click()">
         <div class="text-center">
@@ -45,7 +45,7 @@
 
     <div class="avatar-container">
       {% if store and store.store_profile %}
-        <img class="avatar" src="{{ url_for('static', filename='uploads/store/' ~ store.store_profile) }}" alt="Logo" onclick="document.getElementById('storeProfileInput').click()" />
+        <img class="avatar" src="{{ img(store.store_profile, 'store') }}" alt="Logo" onclick="document.getElementById('storeProfileInput').click()" />
       {% else %}
         <div class="avatar d-flex align-items-center justify-content-center" onclick="document.getElementById('storeProfileInput').click()">
           <i class="bi bi-shop fs-2 text-muted"></i>
@@ -123,7 +123,7 @@
             </div>
             {% endif %}
             {% if p.image %}
-              <img src="{{ url_for('static', filename='uploads/products/' ~ p.image) }}" class="card-img-top product-img" alt="{{ p.name }}">
+              <img src="{{ img(p.image) }}" class="card-img-top product-img" alt="{{ p.name }}">
             {% else %}
               <div class="card-img-top product-img d-flex align-items-center justify-content-center bg-light">
                 <i class="bi bi-image text-muted fs-1"></i>
@@ -352,6 +352,11 @@
             </div>
             <div id="v2VariationsSection" class="d-none">
               <h6 class="fw-semibold mb-3">Add Variations</h6>
+              <div class="mb-3">
+                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="v2VariationProductName" name="product_name" placeholder="e.g., Monstera Plant">
+                <small class="text-muted">The main product name that all variations belong to.</small>
+              </div>
               <p class="text-muted small">Add each variation with its name and image</p>
               <div id="v2VariationsList"></div>
               <button type="button" class="btn btn-outline-info btn-sm" id="v2AddVariationBtn">
@@ -782,7 +787,7 @@ function showSellerProductModal(card) {
   function renderModal(variation) {
     const isOutOfStock = parseInt(variation.stock) <= 0;
     const imageHtml = variation.image && variation.image !== 'null'
-      ? `<img src="/static/uploads/products/${variation.image}" alt="${variation.name}" style="width: 100%; height: 280px; object-fit: cover; border-radius: 0.5rem; display: block;">`
+      ? `<img src="${variation.image.startsWith('http') ? variation.image : '/static/uploads/products/' + variation.image}" alt="${variation.name}" style="width: 100%; height: 280px; object-fit: cover; border-radius: 0.5rem; display: block;">`
       : `<div style="width: 100%; height: 280px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 0.5rem; border: 2px dashed #dee2e6;">
            <i class="bi bi-image text-muted" style="font-size: 4rem;"></i>
          </div>`;

@@ -261,7 +261,7 @@
           <div class="profile-dropdown">
             <button class="profile-btn" aria-label="Profile" id="profileButton">
               {% if session.get('profile_picture') %}
-                <img alt="Profile" src="{{ url_for('static', filename='uploads/profiles/' + session.get('profile_picture')) }}" style="width: 100%; height: 100%; object-fit: cover;" />
+                <img alt="Profile" src="{{ img(session.get('profile_picture'), 'profiles') }}" style="width: 100%; height: 100%; object-fit: cover;" />
               {% else %}
                 <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
               {% endif %}
@@ -294,20 +294,20 @@
         <div class="product-image-section">
           {% if images and images|length > 0 %}
             <div class="product-main-image-wrap">
-              <img id="mainProductImage" class="product-main-image" src="{{ url_for('static', filename='uploads/products/' ~ images[0].filename) }}" alt="{{ product.name }}">
+              <img id="mainProductImage" class="product-main-image" src="{{ img(images[0].filename) }}" alt="{{ product.name }}">
             </div>
             {% if images|length > 1 %}
             <div class="thumbnail-strip">
-              {% for img in images %}
-                <button type="button" class="thumb-button {% if loop.index0 == 0 %}active{% endif %}" data-image="{{ url_for('static', filename='uploads/products/' ~ img.filename) }}">
-                  <img src="{{ url_for('static', filename='uploads/products/' ~ img.filename) }}" alt="{{ product.name }} image {{ loop.index }}">
+              {% for pimg in images %}
+                <button type="button" class="thumb-button {% if loop.index0 == 0 %}active{% endif %}" data-image="{{ img(pimg.filename) }}">
+                  <img src="{{ img(pimg.filename) }}" alt="{{ product.name }} image {{ loop.index }}">
                 </button>
               {% endfor %}
             </div>
             {% endif %}
           {% elif product.image %}
             <div class="product-main-image-wrap">
-              <img id="mainProductImage" class="product-main-image" src="{{ url_for('static', filename='uploads/products/' ~ product.image) }}" alt="{{ product.name }}">
+              <img id="mainProductImage" class="product-main-image" src="{{ img(product.image) }}" alt="{{ product.name }}">
             </div>
           {% else %}
             <div style="width: 100%; height: 500px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -332,7 +332,7 @@
                    data-variation-stock="{{ variation.stock }}"
                    data-variation-image="{{ variation.image }}">
                 {% if variation.image %}
-                  <img src="{{ url_for('static', filename='uploads/products/' ~ variation.image) }}" alt="{{ variation.name }}" class="variation-image">
+                  <img src="{{ img(variation.image) }}" alt="{{ variation.name }}" class="variation-image">
                 {% else %}
                   <div class="variation-image" style="display: flex; align-items: center; justify-content: center;">
                     <svg style="width: 30px; height: 30px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -358,7 +358,7 @@
           <div class="seller-info">
             <a href="{{ url_for('public_store', seller_username=product.seller_username) }}" class="seller-avatar-link">
               {% if product.store_profile %}
-                <img src="{{ url_for('static', filename='uploads/store/' ~ product.store_profile) }}" alt="Store" class="seller-avatar">
+                <img src="{{ img(product.store_profile, 'store') }}" alt="Store" class="seller-avatar">
               {% else %}
                 <div class="seller-avatar">
                   <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="currentColor">
@@ -898,7 +898,7 @@
           }
 
           if (mainImage && varImage) {
-            mainImage.src = '/static/uploads/products/' + varImage;
+            mainImage.src = varImage.startsWith('http') ? varImage : '/static/uploads/products/' + varImage;
           }
         });
       });

@@ -34,7 +34,18 @@ from checkout_routes import register_checkout_routes
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-app.secret_key = 'your_secret_key_here'  
+app.secret_key = 'your_secret_key_here'
+
+# ── Jinja2 helper: render image URL whether it's a Cloudinary URL or legacy filename ──
+def _img(path, folder='products'):
+    """Return a usable image src from either a full URL or a legacy filename."""
+    if not path:
+        return ''
+    if str(path).startswith('http'):
+        return path  # Already a full Cloudinary/external URL
+    return f"/static/uploads/{folder}/{path}"  # Legacy local file
+
+app.jinja_env.globals['img'] = _img  
 
 # Uploads config
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
@@ -2575,6 +2586,7 @@ def add_product_v2():
             # Create parent product
             parent_product_data = {
                 'seller_username': session['username'],
+                'product_name': request.form.get('product_name', ''),
                 'main_category': main_category,
                 'subcategory': subcategory,
                 'has_variations': True,

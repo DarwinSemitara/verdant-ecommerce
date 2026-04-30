@@ -104,7 +104,7 @@
     <li>
       Business permit / DTI registration:
       {% if application.business_permit %}
-        <a href="{{ url_for('static', filename='uploads/documents/' ~ application.business_permit) }}" target="_blank">View file</a>
+        <a href="{{ application.business_permit if application.business_permit.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.business_permit) }}" target="_blank">View file</a>
       {% else %}
         <span class="text-muted">Not provided</span>
       {% endif %}
@@ -112,7 +112,7 @@
     <li>
       Valid ID:
       {% if application.valid_id %}
-        <a href="{{ url_for('static', filename='uploads/documents/' ~ application.valid_id) }}" target="_blank">View file</a>
+        <a href="{{ application.valid_id if application.valid_id.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.valid_id) }}" target="_blank">View file</a>
       {% else %}
         <span class="text-muted">Not provided</span>
       {% endif %}

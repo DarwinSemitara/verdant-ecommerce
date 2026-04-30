@@ -40,7 +40,7 @@
             <input id="images" type="file" name="images" class="form-control" accept="image/*" multiple>
             {% if product.image %}
               <div class="mt-2">
-                <img src="{{ url_for('static', filename='uploads/' ~ product.image) }}" alt="Current image" class="img-fluid rounded" style="max-height: 160px;">
+                <img src="{{ img(product.image, 'products') }}" alt="Current image" class="img-fluid rounded" style="max-height: 160px;">
               </div>
             {% endif %}
           </div>

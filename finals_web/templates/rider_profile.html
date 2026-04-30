@@ -17,7 +17,7 @@
         <div class="card-body text-center py-4">
           <div class="mb-3">
             {% if user.profile_picture %}
-              <img src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) }}" alt="Profile" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;">
+              <img src="{{ img(user.profile_picture, 'profiles') }}" alt="Profile" class="rounded-circle" style="width:96px;height:96px;object-fit:cover;">
             {% else %}
               <div class="rounded-circle d-inline-flex align-items-center justify-content-center" style="width:96px;height:96px;background:#e5d3bf;color:#111827;font-weight:600;font-size:1.8rem;">
                 {{ user.username[0]|upper if user.username }}

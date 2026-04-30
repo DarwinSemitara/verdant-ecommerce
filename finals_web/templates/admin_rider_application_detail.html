@@ -66,7 +66,7 @@
         <dt class="text-muted">License image</dt>
         <dd class="text-white mb-0">
           {% if application.license_image %}
-            <a href="{{ url_for('static', filename='uploads/documents/' ~ application.license_image) }}" target="_blank">View file</a>
+            <a href="{{ application.license_image if application.license_image.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.license_image) }}" target="_blank">View file</a>
           {% else %}
             <span class="text-muted">Not provided</span>
           {% endif %}

@@ -78,7 +78,7 @@
       <a href="javascript:history.back()" class="back-link">← Back</a>
       <div class="store-hero">
         {% if store.cover_photo %}
-          <img src="{{ url_for('static', filename='uploads/store/' ~ store.cover_photo) }}" alt="Store cover" class="store-cover" />
+          <img src="{{ img(store.cover_photo, 'store') }}" alt="Store cover" class="store-cover" />
         {% else %}
           <div class="store-cover-placeholder">Explore items from this seller's store.</div>
         {% endif %}
@@ -86,7 +86,7 @@
         <div class="store-avatar-wrap">
           <div class="store-avatar">
             {% if store.store_profile %}
-              <img src="{{ url_for('static', filename='uploads/store/' ~ store.store_profile) }}" alt="Store logo" />
+              <img src="{{ img(store.store_profile, 'store') }}" alt="Store logo" />
             {% else %}
               <div class="store-avatar-placeholder">
                 <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
@@ -116,7 +116,7 @@
               {% for p in products %}
               <div class="product-card {% if loop.index > 8 %}is-extra{% endif %}" data-product-url="{{ url_for('product_detail', product_id=p.id) }}" onclick="window.location.href=this.dataset.productUrl">
                 {% if p.image %}
-                  <img src="{{ url_for('static', filename='uploads/products/' ~ p.image) }}" alt="{{ p.name }}" />
+                  <img src="{{ img(p.image) }}" alt="{{ p.name }}" />
                 {% else %}
                   <div class="product-image-placeholder">
                     <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor">

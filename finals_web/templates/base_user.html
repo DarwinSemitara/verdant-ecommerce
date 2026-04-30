@@ -462,9 +462,9 @@
         <div class="profile-dropdown">
           <button class="profile-btn" aria-label="Profile" id="sellerProfileButton">
             {% if session.get('store_profile') %}
-              <img alt="Profile" src="{{ url_for('static', filename='uploads/store/' + session.get('store_profile')) }}" />
+              <img alt="Profile" src="{{ img(session.get('store_profile'), 'store') }}" />
             {% elif session.get('profile_picture') %}
-              <img alt="Profile" src="{{ url_for('static', filename='uploads/profiles/' + session.get('profile_picture')) }}" />
+              <img alt="Profile" src="{{ img(session.get('profile_picture'), 'profiles') }}" />
             {% else %}
               <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
             {% endif %}

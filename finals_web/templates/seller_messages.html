@@ -171,7 +171,9 @@
         // Handle profile picture URL
         if (conv.profile_picture) {
           // Construct the full URL for the profile picture
-          profileImg.src = `/static/uploads/profiles/${conv.profile_picture}`;
+          profileImg.src = conv.profile_picture && conv.profile_picture.startsWith('http') 
+            ? conv.profile_picture 
+            : `/static/uploads/profiles/${conv.profile_picture}`;
         } else {
           profileImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=32`;
         }

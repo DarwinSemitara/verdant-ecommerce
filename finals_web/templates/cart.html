@@ -460,7 +460,7 @@
         <div class="profile-dropdown">
           <button class="profile-btn" aria-label="Profile" id="profileButton">
             {% if profile_picture %}
-              <img alt="Profile" src="{{ url_for('static', filename='uploads/profiles/' + profile_picture) }}" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img alt="Profile" src="{{ img(profile_picture, 'profiles') }}" style="width: 100%; height: 100%; object-fit: cover;" />
             {% else %}
               <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
             {% endif %}
@@ -502,7 +502,7 @@
               <input type="checkbox" class="cart-item-checkbox" data-cart-id="{{ item.id }}" data-price="{{ item.price }}" data-quantity="{{ item.quantity }}">
               
               {% if item.image %}
-                <img src="{{ url_for('static', filename='uploads/products/' ~ item.image) }}" alt="{{ item.name }}" class="cart-item-image">
+                <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image">
               {% else %}
                 <div class="cart-item-image" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
                   <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
