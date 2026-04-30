@@ -541,11 +541,9 @@
 
                 {# Date label #}
                 {% if item.created_at %}
-                  {% set today = now().strftime('%Y-%m-%d') %}
-                  {% set yesterday = (now() - timedelta(days=1)).strftime('%Y-%m-%d') %}
-                  {% if item_date == today %}
+                  {% if item_date == today_str %}
                     {% set date_label = 'Today' %}
-                  {% elif item_date == yesterday %}
+                  {% elif item_date == yesterday_str %}
                     {% set date_label = 'Yesterday' %}
                   {% else %}
                     {% set date_label = item.created_at.strftime('%B %d, %Y') %}

@@ -1436,10 +1436,16 @@ def cart():
                 'item_total': item_total,
                 'specifications': variation_data.get('variation_name', variation_data.get('name', '')) if variation_id else '',
                 'all_variations': all_variations,
-                'created_at': cart_data.get('created_at'),
+                'created_at': cart_data.get('created_at').replace(tzinfo=None) if cart_data.get('created_at') else None,
             })
         
-        return render_template('cart.html', profile_picture=profile_picture, cart_items=cart_items, total=total, shipping_address=shipping_address, now=datetime.now, timedelta=timedelta)
+        from datetime import datetime as dt, timedelta as td
+        now_dt = dt.now()
+        yesterday_dt = now_dt - td(days=1)
+        today_str = now_dt.strftime('%Y-%m-%d')
+        yesterday_str = yesterday_dt.strftime('%Y-%m-%d')
+
+        return render_template('cart.html', profile_picture=profile_picture, cart_items=cart_items, total=total, shipping_address=shipping_address, today_str=today_str, yesterday_str=yesterday_str)
         
     except Exception as e:
         print(f"Error loading cart: {e}")
