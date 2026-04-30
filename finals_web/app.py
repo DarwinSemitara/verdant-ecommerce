@@ -1296,12 +1296,25 @@ def update_cart_quantity_route(cart_item_id):
         if cart_data.get('user_id') != user_id:
             return {'success': False, 'message': 'Unauthorized'}, 403
         
-        # Check product stock
-        product = get_product_by_id(cart_data.get('product_id'))
-        if not product:
-            return {'success': False, 'message': 'Product not found'}, 404
-        
-        stock = product.get('stock', 0)
+        # Check product stock — check both v2 and variations
+        product_id = cart_data.get('product_id')
+        variation_id = cart_data.get('variation_id')
+
+        from firestore_db import products_v2_ref, product_variations_ref as pv_ref
+        if variation_id:
+            var_doc = pv_ref.document(variation_id).get()
+            if not var_doc.exists:
+                return {'success': False, 'message': 'Variation not found'}, 404
+            stock = var_doc.to_dict().get('stock', 0)
+        else:
+            prod_doc = products_v2_ref.document(product_id).get()
+            if not prod_doc.exists:
+                # fallback to old collection
+                product = get_product_by_id(product_id)
+                stock = product.get('stock', 0) if product else 0
+            else:
+                stock = prod_doc.to_dict().get('stock', 0)
+
         if new_quantity > stock:
             return {'success': False, 'message': f'Only {stock} items available in stock'}, 400
         
