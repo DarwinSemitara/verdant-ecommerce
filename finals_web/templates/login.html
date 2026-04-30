@@ -3,20 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home & Garden - Login</title>
+  <title>Verdant - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
   <style>
-    /* Disable global zoom for login page and make it span full viewport */
-    html {
+    html, body {
       zoom: 1 !important;
-      transform: none !important;
-      width: 100% !important;
-      height: 100% !important;
-    }
-    
-    body {
       transform: none !important;
       width: 100% !important;
       height: 100% !important;
@@ -24,137 +20,195 @@
       padding: 0 !important;
       overflow-x: hidden !important;
     }
-    
     .login-body {
       width: 100vw !important;
-      height: 100vh !important;
-    }
-    
-    .login-main {
-      width: 100vw !important;
-      height: 100vh !important;
       min-height: 100vh !important;
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
-    
-    .login-container {
-      transform: none !important;
+    /* New centered card layout */
+    .login-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      width: 100%;
+      max-width: 400px;
+      padding: 48px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .login-card .verdant-title {
+      font-family: 'Rubik Bubbles', cursive;
+      font-size: 52px;
+      color: #2d5016;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      line-height: 1;
+      text-align: center;
+    }
+    .login-card .verdant-sub {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: #6b7280;
+      margin-bottom: 36px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .login-card form {
+      width: 100%;
+    }
+    .login-card form h2 {
+      display: none;
+    }
+    .login-card label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    .login-card input[type="text"],
+    .login-card input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-card input:focus {
+      border-color: #2d5016;
+      box-shadow: 0 0 0 3px rgba(45,80,22,0.1);
+    }
+    .login-card .password-input-container {
+      position: relative;
+    }
+    .login-card .password-input-container input {
+      padding-right: 44px;
+    }
+    .login-card .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9ca3af;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    .login-card .loginbutton {
+      width: 100%;
+      padding: 13px;
+      background: #2d5016;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .login-card .loginbutton:hover {
+      background: #1a3d0a;
+      transform: translateY(-1px);
+    }
+    .login-card .signup-text {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 16px;
+      margin-bottom: 0;
+    }
+    .login-card .signup-link {
+      color: #2d5016;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .login-card .signup-link:hover { text-decoration: underline; }
+    .login-card .forgot-password {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 10px;
+      text-decoration: none;
+    }
+    .login-card .forgot-password:hover { color: #2d5016; }
+    .login-card .back-to-guest-home {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 6px;
+      text-decoration: none;
+    }
+    .login-card .back-to-guest-home:hover { color: #2d5016; }
+    /* Error message */
+    #loginErrorMsg {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+    @media (max-width: 480px) {
+      .login-card {
+        max-width: 100%;
+        margin: 16px;
+        padding: 36px 24px 32px;
+      }
     }
   </style>
 </head>
 <body class="login-body">
-  <!-- FLOATING LOGIN CONTAINER -->
-  <main class="login-main">
-    <div class="login-container">
-      <div class="login-inner">
-        <div class="login-left">
-          <div class="left-brand" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
-            <div style="text-align:center; line-height:1;">
-              <div style="font-size:72px; font-weight:900; letter-spacing:0.15em; text-transform:uppercase; background: linear-gradient(135deg, #065f46 0%, #16a34a 50%, #6ee7b7 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color: transparent; text-shadow: 0 8px 30px rgba(6,95,70,0.25);">
-                VERDANT
-              </div>
-              <div style="margin-top:10px; color:#065f46; font-weight:700; letter-spacing:0.2em;">
-                 sustainable • local • green 
-              </div>
-            </div>
-          </div>
-        </div>
+  <!-- CENTERED LOGIN CARD -->
+  <div class="login-card">
+    <!-- Verdant title using Rubik Bubbles font -->
+    <div class="verdant-title">VERDANT</div>
+    <div class="verdant-sub">sustainable • local • green</div>
 
-  <!-- Override forgot password to use username instead of email -->
-  <script>
-    (function() {
-      function bindUsernameForgot() {
-        var message = document.getElementById('forgotMessage');
-        var sendBtn = document.getElementById('sendOtpButton');
-        if (!sendBtn) return;
+    <form id="loginForm" method="POST" action="{{ url_for('handle_login') }}">
+      <h2>Login</h2>
 
-        // Replace button to remove previously bound listeners from scripts.js
-        var newBtn = sendBtn.cloneNode(true);
-        sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" placeholder="Enter username" required />
 
-        newBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          var usernameInput = document.getElementById('forgot-username');
-          if (!usernameInput || !usernameInput.value.trim()) {
-            if (message) message.textContent = 'Please enter your username.';
-            return;
-          }
-
-          fetch('/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: usernameInput.value.trim() })
-          })
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (message) message.textContent = data.message || '';
-            var stepPhone = document.getElementById('forgotStepPhone');
-            var stepCode = document.getElementById('forgotStepCode');
-            if (data && data.success && stepPhone && stepCode) {
-              stepPhone.style.display = 'none';
-              stepCode.style.display = 'block';
-            }
-          })
-          .catch(function() {
-            if (message) message.textContent = 'An error occurred while sending the verification code.';
-          });
-        }, true);
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-        bindUsernameForgot();
-        var forgotModal = document.getElementById('forgotModal');
-        if (forgotModal) {
-          var observer = new MutationObserver(function() {
-            // Rebind whenever modal visibility toggles
-            bindUsernameForgot();
-            var u = document.getElementById('forgot-username');
-            var m = document.getElementById('forgotMessage');
-            if (u) u.value = '';
-            if (m) m.textContent = '';
-          });
-          observer.observe(forgotModal, { attributes: true, attributeFilter: ['style', 'class'] });
-        }
-      });
-    })();
-  </script>
-        <div class="login-divider"></div>
-        <div class="login-right">
-          <div class="login-box">
-            <form id="loginForm" method="POST" action="{{ url_for('handle_login') }}">
-              <h2>Login</h2>
-
-              <label for="username">Username</label>
-              <input id="username" name="username" type="text" placeholder="Enter username" required />
-
-              <label for="password">Password</label>
-              <div class="password-input-container">
-                <input id="password" name="password" type="password" placeholder="Enter password" required />
-                <button type="button" class="password-toggle" onclick="togglePassword('password')">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-
-              <button class="loginbutton" type="submit">Login</button>
-
-              <p class="signup-text">
-                Don't have an account? <a href="#" class="signup-link">Sign up</a>
-              </p>
-
-              <a href="#" class="forgot-password" aria-label="Forgot password">Forgot password?</a>
-
-              <a href="{{ url_for('guest_home') }}" class="back-to-guest-home">Back to guest homepage</a>
-            </form>
-          </div>
-        </div>
+      <label for="password">Password</label>
+      <div class="password-input-container">
+        <input id="password" name="password" type="password" placeholder="Enter password" required />
+        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
       </div>
-    </div>
-  </main>
+
+      <button class="loginbutton" type="submit">Login</button>
+
+      <p class="signup-text">
+        Don't have an account? <a href="#" class="signup-link">Sign up</a>
+      </p>
+
+      <a href="#" class="forgot-password" aria-label="Forgot password">Forgot password?</a>
+      <a href="{{ url_for('guest_home') }}" class="back-to-guest-home">Back to guest homepage</a>
+    </form>
+  </div>
 
   <!-- Floating Help Button -->
   <button id="infoToggle" type="button" class="help-button help-fab" aria-label="Open help">?</button>
@@ -511,6 +565,59 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+  <!-- Override forgot password to use username instead of email -->
+  <script>
+    (function() {
+      function bindUsernameForgot() {
+        var message = document.getElementById('forgotMessage');
+        var sendBtn = document.getElementById('sendOtpButton');
+        if (!sendBtn) return;
+        var newBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+        newBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var usernameInput = document.getElementById('forgot-username');
+          if (!usernameInput || !usernameInput.value.trim()) {
+            if (message) message.textContent = 'Please enter your username.';
+            return;
+          }
+          fetch('/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: usernameInput.value.trim() })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (message) message.textContent = data.message || '';
+            var stepPhone = document.getElementById('forgotStepPhone');
+            var stepCode = document.getElementById('forgotStepCode');
+            if (data && data.success && stepPhone && stepCode) {
+              stepPhone.style.display = 'none';
+              stepCode.style.display = 'block';
+            }
+          })
+          .catch(function() {
+            if (message) message.textContent = 'An error occurred while sending the verification code.';
+          });
+        }, true);
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        bindUsernameForgot();
+        var forgotModal = document.getElementById('forgotModal');
+        if (forgotModal) {
+          var observer = new MutationObserver(function() {
+            bindUsernameForgot();
+            var u = document.getElementById('forgot-username');
+            var m = document.getElementById('forgotMessage');
+            if (u) u.value = '';
+            if (m) m.textContent = '';
+          });
+          observer.observe(forgotModal, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+      });
+    })();
+  </script>
 
   <!-- Forgot Password Modal -->
   <div class="forgot-modal" id="forgotModal">
