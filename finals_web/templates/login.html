@@ -26,12 +26,48 @@
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
+      position: relative;
+      overflow: hidden;
+      background: #022c22;
     }
-    /* New centered card layout */
+
+    /* ── Video background with slow zoom/pan effect ── */
+    .login-bg-video {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      min-width: 100vw;
+      min-height: 100vh;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%) scale(1.15);
+      object-fit: cover;
+      z-index: 0;
+      animation: videoPan 30s ease-in-out infinite alternate;
+      filter: brightness(0.45);
+    }
+
+    @keyframes videoPan {
+      0%   { transform: translate(-50%, -50%) scale(1.15) translate(0px, 0px); }
+      25%  { transform: translate(-50%, -50%) scale(1.2)  translate(-30px, -15px); }
+      50%  { transform: translate(-50%, -50%) scale(1.18) translate(20px, -25px); }
+      75%  { transform: translate(-50%, -50%) scale(1.22) translate(-15px, 20px); }
+      100% { transform: translate(-50%, -50%) scale(1.15) translate(25px, 10px); }
+    }
+
+    /* Dark overlay for readability */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(2,44,34,0.55) 0%, rgba(6,95,70,0.35) 100%);
+      z-index: 1;
+    }
+
+    /* ── Login card ── */
     .login-card {
-      background: #fff;
+      background: rgba(255,255,255,0.97);
       border-radius: 20px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.35);
       width: 100%;
       max-width: 400px;
       padding: 48px 40px 40px;
@@ -39,31 +75,31 @@
       flex-direction: column;
       align-items: center;
       position: relative;
-      z-index: 1;
+      z-index: 2;
+      backdrop-filter: blur(4px);
     }
     .login-card .verdant-title {
       font-family: 'Rubik Bubbles', cursive;
       font-size: 52px;
-      color: #2d5016;
       letter-spacing: 2px;
       margin-bottom: 4px;
       line-height: 1;
       text-align: center;
+      background: linear-gradient(135deg, #065f46 0%, #16a34a 50%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    .login-card .verdant-sub {
-      font-size: 11px;
-      letter-spacing: 3px;
-      color: #6b7280;
-      margin-bottom: 36px;
+    .login-card .login-subtitle {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 32px;
       text-align: center;
-      font-weight: 500;
+      letter-spacing: 0.3px;
     }
-    .login-card form {
-      width: 100%;
-    }
-    .login-card form h2 {
-      display: none;
-    }
+    .login-card form { width: 100%; }
+    .login-card form h2 { display: none; }
     .login-card label {
       display: block;
       font-size: 13px;
@@ -84,15 +120,11 @@
       box-sizing: border-box;
     }
     .login-card input:focus {
-      border-color: #2d5016;
-      box-shadow: 0 0 0 3px rgba(45,80,22,0.1);
+      border-color: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
     }
-    .login-card .password-input-container {
-      position: relative;
-    }
-    .login-card .password-input-container input {
-      padding-right: 44px;
-    }
+    .login-card .password-input-container { position: relative; }
+    .login-card .password-input-container input { padding-right: 44px; }
     .login-card .password-toggle {
       position: absolute;
       right: 12px;
@@ -109,7 +141,7 @@
     .login-card .loginbutton {
       width: 100%;
       padding: 13px;
-      background: #2d5016;
+      background: linear-gradient(135deg, #065f46 0%, #16a34a 100%);
       color: #fff;
       border: none;
       border-radius: 10px;
@@ -117,12 +149,9 @@
       font-weight: 600;
       cursor: pointer;
       margin-top: 24px;
-      transition: background 0.2s, transform 0.1s;
+      transition: opacity 0.2s, transform 0.1s;
     }
-    .login-card .loginbutton:hover {
-      background: #1a3d0a;
-      transform: translateY(-1px);
-    }
+    .login-card .loginbutton:hover { opacity: 0.9; transform: translateY(-1px); }
     .login-card .signup-text {
       text-align: center;
       font-size: 13px;
@@ -130,11 +159,7 @@
       margin-top: 16px;
       margin-bottom: 0;
     }
-    .login-card .signup-link {
-      color: #2d5016;
-      font-weight: 600;
-      text-decoration: none;
-    }
+    .login-card .signup-link { color: #16a34a; font-weight: 600; text-decoration: none; }
     .login-card .signup-link:hover { text-decoration: underline; }
     .login-card .forgot-password {
       display: block;
@@ -144,7 +169,7 @@
       margin-top: 10px;
       text-decoration: none;
     }
-    .login-card .forgot-password:hover { color: #2d5016; }
+    .login-card .forgot-password:hover { color: #16a34a; }
     .login-card .back-to-guest-home {
       display: block;
       text-align: center;
@@ -153,19 +178,7 @@
       margin-top: 6px;
       text-decoration: none;
     }
-    .login-card .back-to-guest-home:hover { color: #2d5016; }
-    /* Error message */
-    #loginErrorMsg {
-      background: #fef2f2;
-      color: #dc2626;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 13px;
-      margin-top: 12px;
-      text-align: center;
-      display: none;
-    }
+    .login-card .back-to-guest-home:hover { color: #16a34a; }
     @media (max-width: 480px) {
       .login-card {
         max-width: 100%;
@@ -176,11 +189,17 @@
   </style>
 </head>
 <body class="login-body">
+  <!-- Video background -->
+  <video class="login-bg-video" autoplay muted loop playsinline>
+    <source src="{{ url_for('static', filename='videos/videoframe.mp4') }}" type="video/mp4">
+  </video>
+  <!-- Dark overlay -->
+  <div class="login-overlay"></div>
+
   <!-- CENTERED LOGIN CARD -->
   <div class="login-card">
-    <!-- Verdant title using Rubik Bubbles font -->
     <div class="verdant-title">VERDANT</div>
-    <div class="verdant-sub">sustainable • local • green</div>
+    <div class="login-subtitle">Login to your account</div>
 
     <form id="loginForm" method="POST" action="{{ url_for('handle_login') }}">
       <h2>Login</h2>
