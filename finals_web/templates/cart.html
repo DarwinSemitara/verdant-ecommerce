@@ -573,9 +573,9 @@
                        onchange="onItemCheckChange(this)">
 
                 {% if item.image %}
-                  <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image">
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image" id="img-{{ item.id }}">
                 {% else %}
-                  <div class="cart-item-image" style="display:flex;align-items:center;justify-content:center;background:#f8f9fa;">
+                  <div class="cart-item-image" id="img-{{ item.id }}" style="display:flex;align-items:center;justify-content:center;background:#f8f9fa;">
                     <svg style="width:60px;height:60px;color:#dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
                       <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
@@ -593,6 +593,7 @@
                               style="font-size:0.85rem;padding:0.25rem 0.5rem;border:1px solid #dee2e6;border-radius:0.375rem;">
                         {% for v in item.all_variations %}
                           <option value="{{ v.id }}" data-price="{{ v.price }}"
+                                  data-image="{{ img(v.image) if v.image else '' }}"
                                   {% if v.id == item.variation_id %}selected{% endif %}>
                             {{ v.name }} — ₱{{ '%.2f'|format(v.price) }}
                           </option>
@@ -606,7 +607,11 @@
 
                 <div class="cart-item-quantity">
                   <button class="quantity-btn" onclick="changeQty('{{ item.id }}', -1, this)">-</button>
-                  <span class="quantity-value" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                  <input type="number" class="quantity-input" id="qty-{{ item.id }}"
+                         value="{{ item.quantity }}" min="0"
+                         data-cart-id="{{ item.id }}"
+                         onchange="onQtyInput(this)"
+                         style="width:52px;text-align:center;border:1px solid #dee2e6;border-radius:0.375rem;padding:0.25rem;font-size:0.95rem;">
                   <button class="quantity-btn" onclick="changeQty('{{ item.id }}', 1, this)">+</button>
                 </div>
 
@@ -656,80 +661,20 @@
   {% include 'footer_verdant.html' %}
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Cart button - already on cart page, so just reload
-      const cartButton = document.getElementById('cartButton');
-      if (cartButton) {
-        cartButton.addEventListener('click', () => {
-          window.location.reload();
-        });
-      }
-
-    // Help modal
-    const helpButton = document.getElementById('helpButton');
-    const helpModal = document.getElementById('helpModal');
-    const closeHelpModal = document.getElementById('closeHelpModal');
-
-    helpButton.addEventListener('click', () => {
-      helpModal.style.display = 'flex';
-    });
-
-    closeHelpModal.addEventListener('click', () => {
-      helpModal.style.display = 'none';
-    });
-
-    // Profile dropdown
-    const profileButton = document.getElementById('profileButton');
-    const profileMenu = document.getElementById('profileMenu');
-
-    profileButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      profileMenu.classList.toggle('show');
-    });
-
-    // Close dropdown when clicking outside
-    window.addEventListener('click', (e) => {
-      if (e.target === helpModal) helpModal.style.display = 'none';
-      if (!profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
-        profileMenu.classList.remove('show');
-      }
-    });
-
-    // Load cart count
-    fetch('{{ url_for("get_cart_count") }}')
-      .then(response => response.json())
-      .then(data => {
-        const cartCount = document.getElementById('cartCount');
-        if (data.cart_count > 0) {
-          cartCount.textContent = data.cart_count;
-          cartCount.style.display = 'flex';
-        } else {
-          cartCount.style.display = 'none';
-        }
-      });
-
-    // Checkbox and delete functionality
-    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-    const checkboxes = document.querySelectorAll('.cart-item-checkbox');
-
-    // Show delete button initially
-    deleteSelectedBtn.classList.add('show');
-
-    // (Main cart total is now displayed inside the checkout modal only)
+    // ── GLOBAL FUNCTIONS (called from inline HTML) ──────────────────────────
 
     function updateTotal() {
       let total = 0;
       document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
-        const row = cb.closest('.cart-item');
         const price = parseFloat(cb.dataset.price) || 0;
-        const qty = parseInt(cb.dataset.quantity) || 1;
+        const qty = parseInt(document.getElementById('qty-' + cb.dataset.cartId)?.value) || 0;
         total += price * qty;
       });
       const el = document.getElementById('cartSelectedTotal');
       if (el) el.textContent = '₱' + total.toFixed(2);
     }
 
-    // Group checkbox toggle
+    // Group checkbox — select/deselect all items in a date group
     function toggleGroupItems(groupCb) {
       const group = groupCb.dataset.group;
       document.querySelectorAll(`.cart-item-checkbox[data-group="${group}"]`).forEach(cb => {
@@ -744,18 +689,58 @@
     function onItemCheckChange(cb) {
       const row = cb.closest('.cart-item');
       if (row) row.classList.toggle('selected', cb.checked);
+      // Update group checkbox state
+      const group = cb.dataset.group;
+      const groupCb = document.querySelector(`.date-group-checkbox[data-group="${group}"]`);
+      if (groupCb) {
+        const all = document.querySelectorAll(`.cart-item-checkbox[data-group="${group}"]`);
+        groupCb.checked = Array.from(all).every(c => c.checked);
+      }
       updateTotal();
     }
 
-    // Quantity change on cart item
+    // +/- quantity buttons
     function changeQty(cartId, delta, btn) {
-      const qtyEl = document.getElementById('qty-' + cartId);
+      const input = document.getElementById('qty-' + cartId);
+      if (!input) return;
+      const currentQty = parseInt(input.value) || 1;
+      const newQty = currentQty + delta;
+      applyQtyChange(cartId, newQty);
+    }
+
+    // Typed quantity input
+    function onQtyInput(input) {
+      const cartId = input.dataset.cartId;
+      const newQty = parseInt(input.value);
+      if (isNaN(newQty)) return;
+      applyQtyChange(cartId, newQty);
+    }
+
+    function applyQtyChange(cartId, newQty) {
+      const input = document.getElementById('qty-' + cartId);
       const totalEl = document.getElementById('total-' + cartId);
       const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
-      if (!qtyEl) return;
-      const currentQty = parseInt(qtyEl.textContent) || 1;
-      const newQty = currentQty + delta;
-      if (newQty < 1) return;
+      const row = cb ? cb.closest('.cart-item') : null;
+
+      if (newQty <= 0) {
+        // Remove item from cart
+        if (!confirm('Remove this item from your cart?')) {
+          if (input) input.value = 1;
+          return;
+        }
+        fetch(`/remove_from_cart/${cartId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.success) {
+              if (row) row.remove();
+              updateTotal();
+              // Check if cart is now empty
+              if (!document.querySelector('.cart-item')) location.reload();
+            }
+          })
+          .catch(() => location.reload());
+        return;
+      }
 
       fetch(`/update_cart_quantity/${cartId}`, {
         method: 'POST',
@@ -765,410 +750,362 @@
       .then(r => r.json())
       .then(data => {
         if (data && data.success) {
-          qtyEl.textContent = newQty;
+          if (input) input.value = newQty;
           if (cb) cb.dataset.quantity = String(newQty);
-          // Update line total
           const price = cb ? parseFloat(cb.dataset.price) : 0;
           if (totalEl) totalEl.textContent = '₱' + (price * newQty).toFixed(2);
           updateTotal();
         } else {
           alert(data.message || 'Could not update quantity');
+          if (input) input.value = parseInt(cb?.dataset.quantity) || 1;
         }
       })
-      .catch(() => alert('Error updating quantity'));
+      .catch(() => { if (input) input.value = parseInt(cb?.dataset.quantity) || 1; });
     }
 
-    // Variation change in cart
-    document.querySelectorAll('.variation-select').forEach(sel => {
-      sel.addEventListener('change', function() {
-        const cartId = this.dataset.cartId;
-        const selectedOption = this.options[this.selectedIndex];
-        const newVariationId = this.value;
-        const newPrice = parseFloat(selectedOption.dataset.price) || 0;
+    // ── DOM READY ────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
 
-        fetch(`/update_cart_variation/${cartId}`, {
+      // Cart button reload
+      const cartButton = document.getElementById('cartButton');
+      if (cartButton) cartButton.addEventListener('click', () => window.location.reload());
+
+      // Help modal
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const closeHelpModal = document.getElementById('closeHelpModal');
+      if (helpButton) helpButton.addEventListener('click', () => { helpModal.style.display = 'flex'; });
+      if (closeHelpModal) closeHelpModal.addEventListener('click', () => { helpModal.style.display = 'none'; });
+
+      // Profile dropdown
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+      if (profileButton) {
+        profileButton.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('show'); });
+      }
+      window.addEventListener('click', (e) => {
+        if (helpModal && e.target === helpModal) helpModal.style.display = 'none';
+        if (profileButton && profileMenu && !profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove('show');
+        }
+      });
+
+      // Load cart count
+      fetch('{{ url_for("get_cart_count") }}')
+        .then(r => r.json())
+        .then(data => {
+          const cartCount = document.getElementById('cartCount');
+          if (cartCount) {
+            if (data.cart_count > 0) { cartCount.textContent = data.cart_count; cartCount.style.display = 'flex'; }
+            else cartCount.style.display = 'none';
+          }
+        });
+
+      // Delete selected
+      const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+      if (deleteSelectedBtn) deleteSelectedBtn.classList.add('show');
+
+      const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+      const deleteConfirmCount = document.getElementById('deleteConfirmCount');
+      const closeDeleteModal = document.getElementById('closeDeleteModal');
+      const cancelDeleteBtn = document.getElementById('cancelDelete');
+      const confirmDeleteBtn = document.getElementById('confirmDelete');
+      let pendingDeleteIds = [];
+
+      function openDeleteModal(count) {
+        if (deleteConfirmCount) deleteConfirmCount.textContent = String(count);
+        deleteConfirmModal.style.display = 'flex';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
+      function closeDelete() {
+        deleteConfirmModal.style.display = 'none';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (confirmDeleteBtn) { confirmDeleteBtn.disabled = false; confirmDeleteBtn.textContent = 'Remove'; }
+      }
+
+      if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', () => {
+          const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+          if (!selected.length) { alert('Please select items to delete'); return; }
+          pendingDeleteIds = selected.map(cb => cb.dataset.cartId);
+          openDeleteModal(selected.length);
+        });
+      }
+      if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDelete);
+      if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDelete);
+      if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', e => { if (e.target === deleteConfirmModal) closeDelete(); });
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', () => {
+          if (!pendingDeleteIds.length) { closeDelete(); return; }
+          confirmDeleteBtn.disabled = true;
+          confirmDeleteBtn.textContent = 'Removing...';
+          Promise.all(pendingDeleteIds.map(id => fetch(`/remove_from_cart/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })))
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(results => {
+              if (results.every(r => r && r.success)) {
+                if (typeof showNotification === 'function') showNotification('Selected items removed from cart', 'error');
+                setTimeout(() => location.reload(), 600);
+              } else {
+                alert('Some items could not be removed.');
+                closeDelete();
+              }
+            })
+            .catch(() => { alert('An error occurred.'); closeDelete(); });
+        });
+      }
+
+      // Variation change — update price, image, and backend
+      document.querySelectorAll('.variation-select').forEach(sel => {
+        sel.addEventListener('change', function() {
+          const cartId = this.dataset.cartId;
+          const opt = this.options[this.selectedIndex];
+          const newVariationId = this.value;
+          const newPrice = parseFloat(opt.dataset.price) || 0;
+          const newImage = opt.dataset.image || '';
+
+          fetch(`/update_cart_variation/${cartId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ variation_id: newVariationId })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.success) {
+              const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+              const row = cb ? cb.closest('.cart-item') : null;
+              if (cb) cb.dataset.price = String(newPrice);
+              if (row) {
+                const priceEl = row.querySelector('.cart-item-price');
+                if (priceEl) priceEl.textContent = '₱' + newPrice.toFixed(2);
+                const qty = parseInt(document.getElementById('qty-' + cartId)?.value) || 1;
+                const totalEl = document.getElementById('total-' + cartId);
+                if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
+                // Update image
+                const imgEl = document.getElementById('img-' + cartId);
+                if (imgEl && newImage) {
+                  if (imgEl.tagName === 'IMG') {
+                    imgEl.src = newImage;
+                  } else {
+                    // Replace placeholder div with img
+                    const newImg = document.createElement('img');
+                    newImg.src = newImage;
+                    newImg.alt = '';
+                    newImg.className = 'cart-item-image';
+                    newImg.id = 'img-' + cartId;
+                    imgEl.replaceWith(newImg);
+                  }
+                }
+              }
+              updateTotal();
+            } else {
+              alert(data.message || 'Could not update variation');
+              location.reload();
+            }
+          })
+          .catch(() => location.reload());
+        });
+      });
+
+      // Checkout modal
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      const checkoutConfirmModal = document.getElementById('checkoutConfirmModal');
+      const closeCheckoutModal = document.getElementById('closeCheckoutModal');
+      const cancelCheckout = document.getElementById('cancelCheckout');
+      const confirmCheckout = document.getElementById('confirmCheckout');
+      const checkoutItemsSummary = document.getElementById('checkoutItemsSummary');
+      let checkoutItemsData = [];
+      let checkoutCheckboxMap = {};
+
+      function renderCheckoutSummary() {
+        if (!checkoutItemsSummary) return;
+        if (!checkoutItemsData.length) { checkoutItemsSummary.innerHTML = '<div>No items selected.</div>'; return; }
+        let total = 0;
+        const linesHtml = checkoutItemsData.map(item => {
+          const lineTotal = item.price * item.quantity;
+          total += lineTotal;
+          const safeName = (item.name || 'Item').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:0.35rem 0;gap:0.75rem;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:500;">${safeName}</div>
+                <div style="font-size:0.85rem;color:#6c757d;">₱${item.price.toFixed(2)} each</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <button type="button" class="quantity-btn checkout-qty-btn-minus" data-cart-id="${item.cartId}">-</button>
+                <input type="number" class="checkout-qty-input" data-cart-id="${item.cartId}"
+                       value="${item.quantity}" min="1"
+                       style="width:48px;text-align:center;border:1px solid #dee2e6;border-radius:0.375rem;padding:0.2rem;">
+                <button type="button" class="quantity-btn checkout-qty-btn-plus" data-cart-id="${item.cartId}">+</button>
+                <span class="checkout-line-total" data-cart-id="${item.cartId}" style="font-weight:600;min-width:70px;text-align:right;">₱${lineTotal.toFixed(2)}</span>
+              </div>
+            </div>`;
+        }).join('');
+        checkoutItemsSummary.innerHTML = `
+          <div style="font-weight:600;margin-bottom:0.35rem;">${checkoutItemsData.length} item(s) selected</div>
+          <div>${linesHtml}</div>
+          <div style="border-top:1px solid #dee2e6;margin-top:0.75rem;padding-top:0.5rem;display:flex;justify-content:space-between;font-weight:600;">
+            <span>Total</span><span id="checkoutTotalAmount">₱${total.toFixed(2)}</span>
+          </div>`;
+
+        // Bind qty controls in modal
+        checkoutItemsSummary.querySelectorAll('.checkout-qty-btn-minus, .checkout-qty-btn-plus').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const cid = parseInt(this.dataset.cartId);
+            const item = checkoutItemsData.find(i => i.cartId === cid);
+            if (!item) return;
+            const delta = this.classList.contains('checkout-qty-btn-plus') ? 1 : -1;
+            const newQty = item.quantity + delta;
+            if (newQty < 1) return;
+            updateCheckoutQty(cid, newQty, item);
+          });
+        });
+        checkoutItemsSummary.querySelectorAll('.checkout-qty-input').forEach(inp => {
+          inp.addEventListener('change', function() {
+            const cid = parseInt(this.dataset.cartId);
+            const item = checkoutItemsData.find(i => i.cartId === cid);
+            if (!item) return;
+            const newQty = parseInt(this.value);
+            if (isNaN(newQty) || newQty < 1) { this.value = item.quantity; return; }
+            updateCheckoutQty(cid, newQty, item);
+          });
+        });
+      }
+
+      function updateCheckoutQty(cartId, newQty, item) {
+        fetch(`/update_cart_quantity/${cartId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ variation_id: newVariationId })
+          body: JSON.stringify({ quantity: newQty })
         })
         .then(r => r.json())
         .then(data => {
           if (data && data.success) {
-            // Update price display and checkbox data
-            const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
-            const row = cb ? cb.closest('.cart-item') : null;
-            if (cb) cb.dataset.price = String(newPrice);
-            if (row) {
-              const priceEl = row.querySelector('.cart-item-price');
-              if (priceEl) priceEl.textContent = '₱' + newPrice.toFixed(2);
-              const qty = parseInt(cb ? cb.dataset.quantity : 1);
-              const totalEl = document.getElementById('total-' + cartId);
-              if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
-            }
-            updateTotal();
-          } else {
-            alert(data.message || 'Could not update variation');
-            // Revert select
-            location.reload();
-          }
-        })
-        .catch(() => location.reload());
-      });
-    });
-    // Handle checkbox changes
-    checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', (e) => {
-        const cartItem = e.target.closest('.cart-item');
-        cartItem.classList.toggle('selected', e.target.checked);
-        updateTotal(); // Update total when checkbox changes
-      });
-    });
-
-    // Delete selected items using modal confirmation
-    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
-    const deleteConfirmCount = document.getElementById('deleteConfirmCount');
-    const closeDeleteModal = document.getElementById('closeDeleteModal');
-    const cancelDeleteBtn = document.getElementById('cancelDelete');
-    const confirmDeleteBtn = document.getElementById('confirmDelete');
-    let pendingDeleteIds = [];
-
-    function openDeleteModal(count) {
-      if (deleteConfirmCount) deleteConfirmCount.textContent = String(count);
-      deleteConfirmModal.style.display = 'flex';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeDelete() {
-      deleteConfirmModal.style.display = 'none';
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      confirmDeleteBtn.disabled = false;
-      confirmDeleteBtn.textContent = 'Remove';
-    }
-
-    deleteSelectedBtn.addEventListener('click', () => {
-      const selectedCheckboxes = Array.from(checkboxes).filter(cb => cb.checked);
-      if (selectedCheckboxes.length === 0) {
-        alert('Please select items to delete');
-        return;
-      }
-      pendingDeleteIds = selectedCheckboxes.map(cb => cb.dataset.cartId);
-      openDeleteModal(selectedCheckboxes.length);
-    });
-
-    if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDelete);
-    if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDelete);
-    if (deleteConfirmModal) {
-      deleteConfirmModal.addEventListener('click', (e) => {
-        if (e.target === deleteConfirmModal) closeDelete();
-      });
-    }
-
-    if (confirmDeleteBtn) {
-      confirmDeleteBtn.addEventListener('click', () => {
-        if (!pendingDeleteIds || !pendingDeleteIds.length) { closeDelete(); return; }
-        confirmDeleteBtn.disabled = true;
-        confirmDeleteBtn.textContent = 'Removing...';
-        Promise.all(pendingDeleteIds.map(id => fetch(`/remove_from_cart/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })))
-          .then(responses => Promise.all(responses.map(r => r.json())))
-          .then(results => {
-            const allSuccess = results.every(r => r && r.success);
-            if (allSuccess) {
-              if (typeof showNotification === 'function') {
-                showNotification('Selected items removed from cart', 'error');
-              }
-              setTimeout(() => { location.reload(); }, 600);
-            } else {
-              if (typeof showNotification === 'function') {
-                showNotification('Some items could not be removed. Please try again.', 'error');
-              } else {
-                alert('Some items could not be removed. Please try again.');
-              }
-              closeDelete();
-            }
-          })
-          .catch(err => {
-            console.error('Error removing items:', err);
-            alert('An error occurred. Please try again.');
-            closeDelete();
-          });
-      });
-    }
-
-    // Quantity updates are now handled inside the checkout modal
-
-    // Checkout confirmation modal elements
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    const checkoutConfirmModal = document.getElementById('checkoutConfirmModal');
-    const closeCheckoutModal = document.getElementById('closeCheckoutModal');
-    const cancelCheckout = document.getElementById('cancelCheckout');
-    const confirmCheckout = document.getElementById('confirmCheckout');
-    const checkoutItemsSummary = document.getElementById('checkoutItemsSummary');
-
-    let checkoutItemsData = [];
-    let checkoutCheckboxMap = {};
-
-    function renderCheckoutSummary() {
-      if (!checkoutItemsSummary) return;
-      if (!checkoutItemsData.length) {
-        checkoutItemsSummary.innerHTML = '<div>No items selected.</div>';
-        return;
-      }
-
-      let total = 0;
-      const count = checkoutItemsData.length;
-      const linesHtml = checkoutItemsData.map(item => {
-        const lineTotal = item.price * item.quantity;
-        total += lineTotal;
-        const safeName = (item.name || 'Item').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `
-          <div class="checkout-modal-line" data-cart-id="${item.cartId}" style="display:flex; justify-content:space-between; align-items:center; margin:0.35rem 0; gap:0.75rem;">
-            <div style="flex:1; min-width:0;">
-              <div style="font-weight:500;">${safeName}</div>
-              <div style="font-size:0.85rem; color:#6c757d;">₱${item.price.toFixed(2)} each</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-              <button type="button" class="quantity-btn checkout-qty-btn-minus" data-cart-id="${item.cartId}">-</button>
-              <span class="quantity-value" data-cart-id="${item.cartId}" style="min-width:32px; text-align:center;">${item.quantity}</span>
-              <button type="button" class="quantity-btn checkout-qty-btn-plus" data-cart-id="${item.cartId}">+</button>
-              <span class="checkout-line-total" data-cart-id="${item.cartId}" style="font-weight:600;">₱${lineTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      checkoutItemsSummary.innerHTML = `
-        <div style="font-weight:600; margin-bottom:0.35rem;">${count} item${count !== 1 ? 's' : ''} selected</div>
-        <div>${linesHtml}</div>
-        <div style="border-top:1px solid #dee2e6; margin-top:0.75rem; padding-top:0.5rem; display:flex; justify-content:space-between; font-weight:600;">
-          <span>Total</span>
-          <span id="checkoutTotalAmount">₱${total.toFixed(2)}</span>
-        </div>
-      `;
-    }
-
-    function openCheckoutModal() {
-      const allCheckboxes = document.querySelectorAll('.cart-item-checkbox');
-      const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
-
-      if (selectedCheckboxes.length === 0) {
-        alert('Please select items to checkout');
-        return;
-      }
-
-      checkoutItemsData = [];
-      checkoutCheckboxMap = {};
-
-      selectedCheckboxes.forEach(cb => {
-        const row = cb.closest('.cart-item');
-        if (!row) return;
-        const nameEl = row.querySelector('.cart-item-name');
-        const price = parseFloat(cb.dataset.price);
-        const qty = parseInt(cb.dataset.quantity);
-        const cartId = parseInt(cb.dataset.cartId);
-        const name = nameEl ? nameEl.textContent.trim() : 'Item';
-        checkoutItemsData.push({ cartId, name, price, quantity: qty });
-        checkoutCheckboxMap[cartId] = cb;
-      });
-
-      renderCheckoutSummary();
-
-      checkoutConfirmModal.style.display = 'flex';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeCheckout() {
-      checkoutConfirmModal.style.display = 'none';
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-    }
-
-    if (checkoutBtn && checkoutConfirmModal) {
-      checkoutBtn.addEventListener('click', openCheckoutModal);
-    }
-
-    // Support direct-buy flow: auto-select product and open modal
-    const params = new URLSearchParams(window.location.search);
-    const buyProductId = params.get('buy_product_id');
-    const autoBuyNow = params.get('buy_now') === '1';
-    if (buyProductId) {
-      const cartRows = document.querySelectorAll('.cart-item');
-      cartRows.forEach(row => {
-        const rowProductId = row.getAttribute('data-product-id');
-        const cb = row.querySelector('.cart-item-checkbox');
-        if (!cb) return;
-        if (rowProductId === buyProductId) {
-          cb.checked = true;
-          row.classList.add('selected');
-        } else {
-          cb.checked = false;
-          row.classList.remove('selected');
-        }
-      });
-
-      if (autoBuyNow && checkoutBtn) {
-        openCheckoutModal();
-      }
-    }
-
-    if (closeCheckoutModal) {
-      closeCheckoutModal.addEventListener('click', closeCheckout);
-    }
-
-    if (cancelCheckout) {
-      cancelCheckout.addEventListener('click', closeCheckout);
-    }
-
-    if (checkoutConfirmModal) {
-      checkoutConfirmModal.addEventListener('click', (e) => {
-        if (e.target === checkoutConfirmModal) {
-          closeCheckout();
-        }
-      });
-    }
-
-    if (checkoutItemsSummary) {
-      checkoutItemsSummary.addEventListener('click', (e) => {
-        const minusBtn = e.target.closest('.checkout-qty-btn-minus');
-        const plusBtn = e.target.closest('.checkout-qty-btn-plus');
-        const btn = minusBtn || plusBtn;
-        if (!btn) return;
-
-        const cartId = parseInt(btn.getAttribute('data-cart-id'));
-        if (!cartId || !checkoutItemsData.length) return;
-
-        const item = checkoutItemsData.find(it => it.cartId === cartId);
-        if (!item) return;
-
-        const change = plusBtn ? 1 : -1;
-        const newQuantity = item.quantity + change;
-        if (newQuantity < 1) {
-          alert('Quantity cannot be less than 1');
-          return;
-        }
-
-        fetch(`/update_cart_quantity/${cartId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ quantity: newQuantity })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.success) {
-            item.quantity = newQuantity;
+            item.quantity = newQty;
             const cb = checkoutCheckboxMap[cartId];
-            if (cb) {
-              cb.dataset.quantity = String(newQuantity);
-            }
+            if (cb) cb.dataset.quantity = String(newQty);
+            // Also update main cart input
+            const mainInput = document.getElementById('qty-' + cartId);
+            if (mainInput) mainInput.value = newQty;
             renderCheckoutSummary();
           } else {
-            alert((data && data.message) || 'Failed to update quantity');
+            alert(data.message || 'Failed to update quantity');
           }
         })
-        .catch(error => {
-          console.error('Error updating quantity in checkout modal:', error);
-          alert('An error occurred. Please try again.');
+        .catch(() => alert('Error updating quantity'));
+      }
+
+      function openCheckoutModal() {
+        const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+        if (!selected.length) { alert('Please select items to checkout'); return; }
+        checkoutItemsData = [];
+        checkoutCheckboxMap = {};
+        selected.forEach(cb => {
+          const row = cb.closest('.cart-item');
+          if (!row) return;
+          const nameEl = row.querySelector('.cart-item-name');
+          const price = parseFloat(cb.dataset.price);
+          const qty = parseInt(document.getElementById('qty-' + cb.dataset.cartId)?.value) || 1;
+          const cartId = parseInt(cb.dataset.cartId);
+          const name = nameEl ? nameEl.textContent.trim() : 'Item';
+          checkoutItemsData.push({ cartId, name, price, quantity: qty });
+          checkoutCheckboxMap[cartId] = cb;
         });
-      });
-    }
+        renderCheckoutSummary();
+        checkoutConfirmModal.style.display = 'flex';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
 
-    if (confirmCheckout) {
-      confirmCheckout.addEventListener('click', () => {
-        const allCheckboxes = document.querySelectorAll('.cart-item-checkbox');
-        const selectedCheckboxes = Array.from(allCheckboxes).filter(cb => cb.checked);
+      function closeCheckout() {
+        checkoutConfirmModal.style.display = 'none';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
 
-        if (selectedCheckboxes.length === 0) {
-          alert('Please select items to checkout');
-          return;
-        }
+      if (checkoutBtn) checkoutBtn.addEventListener('click', openCheckoutModal);
+      if (closeCheckoutModal) closeCheckoutModal.addEventListener('click', closeCheckout);
+      if (cancelCheckout) cancelCheckout.addEventListener('click', closeCheckout);
+      if (checkoutConfirmModal) checkoutConfirmModal.addEventListener('click', e => { if (e.target === checkoutConfirmModal) closeCheckout(); });
 
-        confirmCheckout.disabled = true;
-        confirmCheckout.textContent = 'Placing order...';
+      // Auto-select for buy-now flow
+      const params = new URLSearchParams(window.location.search);
+      const buyProductId = params.get('buy_product_id');
+      if (buyProductId) {
+        document.querySelectorAll('.cart-item').forEach(row => {
+          const cb = row.querySelector('.cart-item-checkbox');
+          if (!cb) return;
+          const checked = row.getAttribute('data-product-id') === buyProductId;
+          cb.checked = checked;
+          row.classList.toggle('selected', checked);
+        });
+        if (params.get('buy_now') === '1' && checkoutBtn) openCheckoutModal();
+      }
 
-        const selectedCartIds = selectedCheckboxes.map(cb => cb.dataset.cartId);
+      if (confirmCheckout) {
+        confirmCheckout.addEventListener('click', () => {
+          const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+          if (!selected.length) { alert('Please select items to checkout'); return; }
+          confirmCheckout.disabled = true;
+          confirmCheckout.textContent = 'Placing order...';
 
-        fetch('/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ cart_ids: selectedCartIds, payment_method: 'cod' })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            if (typeof showNotification === 'function') {
-              showNotification('Order placed successfully! The seller will review your order.', 'success');
-            }
-            setTimeout(() => { location.reload(); }, 900);
-          } else {
-            // Check if verification is required
-            if (data.requires_verification) {
-              closeCheckout();
-              if (data.verification_status === 'not_verified') {
-                // User hasn't submitted verification yet
-                if (typeof openVerificationModal === 'function') {
-                  openVerificationModal();
-                }
-              } else if (data.verification_status === 'pending_approval') {
-                // User submitted but admin hasn't approved yet
-                alert('Your verification application is under review. Please wait for admin approval before placing orders. You will be notified once approved.');
-              } else {
-                // Fallback
-                if (typeof openVerificationModal === 'function') {
-                  openVerificationModal();
-                }
-              }
+          const cartIds = selected.map(cb => cb.dataset.cartId);
+          const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
+
+          fetch('/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cart_ids: cartIds, payment_method: paymentMethod })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              if (typeof showNotification === 'function') showNotification('Order placed successfully! The seller will review your order.', 'success');
+              setTimeout(() => location.reload(), 900);
             } else {
-              if (typeof showNotification === 'function') {
-                showNotification(data.message || 'Failed to place order', 'error');
+              if (data.requires_verification) {
+                closeCheckout();
+                if (data.verification_status === 'not_verified') {
+                  if (typeof openVerificationModal === 'function') openVerificationModal();
+                } else if (data.verification_status === 'pending_approval') {
+                  alert('Your verification application is under review. Please wait for admin approval before placing orders. You will be notified once approved.');
+                } else {
+                  if (typeof openVerificationModal === 'function') openVerificationModal();
+                }
               } else {
-                alert(data.message || 'Failed to place order');
+                if (typeof showNotification === 'function') showNotification(data.message || 'Failed to place order', 'error');
+                else alert(data.message || 'Failed to place order');
               }
+              confirmCheckout.disabled = false;
+              confirmCheckout.textContent = 'Confirm & Place Order';
             }
+          })
+          .catch(() => {
+            alert('An error occurred. Please try again.');
             confirmCheckout.disabled = false;
             confirmCheckout.textContent = 'Confirm & Place Order';
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('An error occurred. Please try again.');
-          confirmCheckout.disabled = false;
-          confirmCheckout.textContent = 'Confirm & Place Order';
+          });
         });
-      });
-    }
-    }); // End of DOMContentLoaded
+      }
 
-    // Real-time cart sync — reload page when cart items change in Firestore
-    // This ensures Flutter-placed orders are reflected instantly without manual refresh
+    }); // end DOMContentLoaded
+
+    // Real-time cart sync
     (function() {
       const currentUser = "{{ session.get('username', '') }}";
       if (!currentUser || typeof firebase === 'undefined') return;
-
       try {
         const db = firebase.firestore();
-        db.collection('cart')
-          .where('user_id', '==', currentUser)
-          .onSnapshot(function(snapshot) {
-            snapshot.docChanges().forEach(function(change) {
-              if (change.type === 'removed') {
-                // A cart item was deleted (e.g. order placed from Flutter)
-                // Reload after short delay to batch multiple deletions
-                clearTimeout(window._cartReloadTimer);
-                window._cartReloadTimer = setTimeout(function() {
-                  window.location.reload();
-                }, 800);
-              }
-            });
+        db.collection('cart').where('user_id', '==', currentUser).onSnapshot(function(snapshot) {
+          snapshot.docChanges().forEach(function(change) {
+            if (change.type === 'removed') {
+              clearTimeout(window._cartReloadTimer);
+              window._cartReloadTimer = setTimeout(function() { window.location.reload(); }, 800);
+            }
           });
-      } catch(e) {
-        console.log('Cart real-time sync not available:', e);
-      }
+        });
+      } catch(e) { console.log('Cart real-time sync not available:', e); }
     })();
   </script>
 </body>
