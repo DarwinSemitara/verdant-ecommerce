@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from cloudinary_helper import upload_image as cloud_upload, delete_image as cloud_delete
-from cloudinary_helper import upload_image as cloud_upload, delete_image as cloud_delete
 import random
 import time
 from werkzeug.utils import secure_filename
