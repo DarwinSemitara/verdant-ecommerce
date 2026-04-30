@@ -1248,6 +1248,8 @@ def update_cart_variation(cart_item_id):
         return {'success': False, 'message': 'Error updating variation'}, 500
 
 
+@app.route('/get_cart_count')
+def get_cart_count():
     """Get current cart item count"""
     if 'username' not in session or session.get('role') != 'user':
         return {'cart_count': 0}, 200
