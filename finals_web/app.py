@@ -1394,6 +1394,7 @@ def cart():
             product_data = product_doc.to_dict()
             
             # If cart item has a variation, get variation details
+            variation_data = {}
             if variation_id:
                 variation_doc = product_variations_ref.document(variation_id).get()
                 if not variation_doc.exists:
@@ -1402,27 +1403,31 @@ def cart():
                 variation_data = variation_doc.to_dict()
                 price = float(variation_data.get('price', 0))
                 stock = variation_data.get('stock', 0)
-                # Use variation_name field, fall back to name
                 var_name = variation_data.get('variation_name') or variation_data.get('name', '')
                 parent_name = product_data.get('product_name', '')
                 name = f"{parent_name} — {var_name}" if parent_name and var_name else (parent_name or var_name)
                 image = variation_data.get('image', product_data.get('image', 'default.jpg'))
                 seller_username = product_data.get('seller_username', '')
-                # Get all variations for this product so user can switch in cart
                 all_variations_docs = list(product_variations_ref.where('parent_product_id', '==', product_id).stream())
                 all_variations = [{'id': v.id, 'name': v.to_dict().get('variation_name') or v.to_dict().get('name', ''), 'price': float(v.to_dict().get('price', 0)), 'stock': v.to_dict().get('stock', 0)} for v in all_variations_docs]
             else:
-                # Product without variation
                 price = float(product_data.get('price', 0))
                 stock = product_data.get('stock', 0)
                 name = product_data.get('product_name', product_data.get('name', ''))
                 image = product_data.get('image', 'default.jpg')
                 seller_username = product_data.get('seller_username', '')
                 all_variations = []
-            
+
             item_total = price * quantity
             total += item_total
-            
+
+            # Safe created_at conversion
+            raw_ts = cart_data.get('created_at')
+            try:
+                created_at = raw_ts.replace(tzinfo=None) if raw_ts else None
+            except Exception:
+                created_at = None
+
             cart_items.append({
                 'id': cart_doc.id,
                 'product_id': product_id,
@@ -1436,7 +1441,7 @@ def cart():
                 'item_total': item_total,
                 'specifications': variation_data.get('variation_name', variation_data.get('name', '')) if variation_id else '',
                 'all_variations': all_variations,
-                'created_at': cart_data.get('created_at').replace(tzinfo=None) if cart_data.get('created_at') else None,
+                'created_at': created_at,
             })
         
         from datetime import datetime as dt, timedelta as td
