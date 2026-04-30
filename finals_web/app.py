@@ -1189,8 +1189,65 @@ def add_to_cart_route(product_id):
         traceback.print_exc()
         return {'success': False, 'message': 'Error adding item to cart'}, 500
 
-@app.route('/get_cart_count')
-def get_cart_count():
+@app.route('/api/product_variations/<product_id>')
+def api_product_variations(product_id):
+    """Get all variations for a product"""
+    try:
+        from firestore_db import product_variations_ref
+        variations_docs = list(product_variations_ref.where('parent_product_id', '==', product_id).stream())
+        variations = []
+        for v in variations_docs:
+            vd = v.to_dict()
+            variations.append({
+                'id': v.id,
+                'name': vd.get('variation_name') or vd.get('name', ''),
+                'price': float(vd.get('price', 0)),
+                'stock': vd.get('stock', 0),
+            })
+        return jsonify({'success': True, 'variations': variations})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/update_cart_variation/<cart_item_id>', methods=['POST'])
+def update_cart_variation(cart_item_id):
+    """Update the variation of a cart item"""
+    if 'username' not in session or session.get('role') != 'user':
+        return {'success': False, 'message': 'Please login'}, 401
+    try:
+        from firestore_db import product_variations_ref
+        data = request.get_json() or {}
+        new_variation_id = data.get('variation_id')
+        if not new_variation_id:
+            return {'success': False, 'message': 'No variation specified'}, 400
+
+        user = get_user_by_username(session['username'])
+        if not user:
+            return {'success': False, 'message': 'User not found'}, 404
+        user_id = user['id']
+
+        cart_doc = cart_ref.document(cart_item_id).get()
+        if not cart_doc.exists:
+            return {'success': False, 'message': 'Cart item not found'}, 404
+        if cart_doc.to_dict().get('user_id') != user_id:
+            return {'success': False, 'message': 'Unauthorized'}, 403
+
+        # Verify variation exists and has stock
+        var_doc = product_variations_ref.document(new_variation_id).get()
+        if not var_doc.exists:
+            return {'success': False, 'message': 'Variation not found'}, 404
+        if var_doc.to_dict().get('stock', 0) <= 0:
+            return {'success': False, 'message': 'This variation is out of stock'}, 400
+
+        cart_ref.document(cart_item_id).update({
+            'variation_id': new_variation_id,
+            'updated_at': firestore_module.SERVER_TIMESTAMP
+        })
+        return {'success': True, 'message': 'Variation updated'}, 200
+    except Exception as e:
+        print(f"Error updating cart variation: {e}")
+        return {'success': False, 'message': 'Error updating variation'}, 500
+
+
     """Get current cart item count"""
     if 'username' not in session or session.get('role') != 'user':
         return {'cart_count': 0}, 200
@@ -1345,16 +1402,23 @@ def cart():
                 variation_data = variation_doc.to_dict()
                 price = float(variation_data.get('price', 0))
                 stock = variation_data.get('stock', 0)
-                name = variation_data.get('name', product_data.get('name', ''))
+                # Use variation_name field, fall back to name
+                var_name = variation_data.get('variation_name') or variation_data.get('name', '')
+                parent_name = product_data.get('product_name', '')
+                name = f"{parent_name} — {var_name}" if parent_name and var_name else (parent_name or var_name)
                 image = variation_data.get('image', product_data.get('image', 'default.jpg'))
                 seller_username = product_data.get('seller_username', '')
+                # Get all variations for this product so user can switch in cart
+                all_variations_docs = list(product_variations_ref.where('parent_product_id', '==', product_id).stream())
+                all_variations = [{'id': v.id, 'name': v.to_dict().get('variation_name') or v.to_dict().get('name', ''), 'price': float(v.to_dict().get('price', 0)), 'stock': v.to_dict().get('stock', 0)} for v in all_variations_docs]
             else:
                 # Product without variation
                 price = float(product_data.get('price', 0))
                 stock = product_data.get('stock', 0)
-                name = product_data.get('name', '')
+                name = product_data.get('product_name', product_data.get('name', ''))
                 image = product_data.get('image', 'default.jpg')
                 seller_username = product_data.get('seller_username', '')
+                all_variations = []
             
             item_total = price * quantity
             total += item_total
@@ -1370,10 +1434,12 @@ def cart():
                 'stock': stock,
                 'seller_username': seller_username,
                 'item_total': item_total,
-                'specifications': variation_data.get('name', '') if variation_id else ''
+                'specifications': variation_data.get('variation_name', variation_data.get('name', '')) if variation_id else '',
+                'all_variations': all_variations,
+                'created_at': cart_data.get('created_at'),
             })
         
-        return render_template('cart.html', profile_picture=profile_picture, cart_items=cart_items, total=total, shipping_address=shipping_address)
+        return render_template('cart.html', profile_picture=profile_picture, cart_items=cart_items, total=total, shipping_address=shipping_address, now=datetime.now, timedelta=timedelta)
         
     except Exception as e:
         print(f"Error loading cart: {e}")
@@ -3513,6 +3579,18 @@ def handle_user_application(application_id, action):
             # Update user's is_approved status
             user_ref = db.collection('users').document(user_id)
             user_ref.update({'is_approved': True})
+
+            # Send notification to user
+            try:
+                create_notification({
+                    'user_id': user_id,
+                    'type': 'account_approved',
+                    'title': 'Account Approved!',
+                    'message': 'Your account has been verified and approved. You can now place orders.',
+                    'link': '/homepage',
+                })
+            except Exception as notif_err:
+                print(f"Warning: Could not create notification: {notif_err}")
             
             message = 'User application approved successfully!'
         else:

@@ -48,10 +48,11 @@
       background: white;
       border-radius: 1.5rem;
       box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-      margin-bottom: 2rem;
-      max-height: 80vh;
       display: flex;
       flex-direction: column;
+      /* Fixed height showing ~4-5 items, scrollable */
+      max-height: 70vh;
+      min-height: 300px;
       position: relative;
     }
     
@@ -70,12 +71,12 @@
 
     .cart-item {
       display: grid;
-      grid-template-columns: 40px 140px 2fr 1fr 120px;
-      gap: 1.5rem;
-      padding: 1.5rem;
+      grid-template-columns: 40px 120px 2fr 1fr 120px 100px;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
       border-bottom: 1px solid #e9ecef;
       align-items: center;
-      transition: background 0.3s ease;
+      transition: background 0.2s;
     }
     
     .cart-item.selected {
@@ -210,34 +211,57 @@
       bottom: 0;
       background: white;
       border-top: 2px solid #e9ecef;
-      padding: 1.5rem 2rem;
+      padding: 1rem 2rem;
       border-radius: 0 0 1.5rem 1.5rem;
       box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      flex-shrink: 0;
     }
 
-    .cart-total {
+    .cart-total-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .cart-total-label {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #2d5016;
     }
 
     .cart-total-amount {
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 700;
       color: #2d5016;
     }
 
-    .checkout-section {
+    /* Date group styles */
+    .date-group { margin-bottom: 0; }
+    .date-group-header {
+      padding: 0.75rem 1.5rem 0.5rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .date-group-label {
       display: flex;
-      gap: 1rem;
       align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      color: #2d5016;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .date-group-checkbox { width: 18px; height: 18px; accent-color: #198754; cursor: pointer; }
+    .date-group-items { padding: 0; }
+
+    /* Quantity controls on cart items */
+    .cart-item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cart-item-line-total {
+      font-weight: 700;
+      color: #2d5016;
+      font-size: 1rem;
+      min-width: 80px;
       text-align: right;
     }
 
@@ -497,41 +521,116 @@
       {% if cart_items and cart_items|length > 0 %}
         <div class="cart-items-scroll">
           <div class="cart-items">
+            {% set ns = namespace(current_date='', group_idx=0) %}
             {% for item in cart_items %}
-            <div class="cart-item" data-cart-id="{{ item.id }}" data-product-id="{{ item.product_id }}" data-price="{{ item.price }}" data-quantity="{{ item.quantity }}">
-              <input type="checkbox" class="cart-item-checkbox" data-cart-id="{{ item.id }}" data-price="{{ item.price }}" data-quantity="{{ item.quantity }}">
-              
-              {% if item.image %}
-                <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image">
+              {# Compute date label #}
+              {% if item.created_at %}
+                {% set item_date = item.created_at.strftime('%Y-%m-%d') %}
               {% else %}
-                <div class="cart-item-image" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
-                  <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                    <path d="M21 15l-5-5L5 21" stroke-width="2"/>
-                  </svg>
-                </div>
+                {% set item_date = 'Unknown' %}
               {% endif %}
-              
-              <div class="cart-item-details">
-                <div class="cart-item-name">{{ item.name }}</div>
-                <div class="cart-item-description" style="color: #6c757d; font-size: 0.9rem; margin-top: 0.25rem;">Seller: {{ item.seller_username }}</div>
-                <div class="cart-item-description" style="color: #6c757d; font-size: 0.9rem;">Stock Available: {{ item.stock }}</div>
+
+              {% if item_date != ns.current_date %}
+                {# Close previous group if any #}
+                {% if ns.current_date != '' %}
+                  </div>{# close .date-group-items #}
+                  </div>{# close .date-group #}
+                {% endif %}
+                {% set ns.current_date = item_date %}
+                {% set ns.group_idx = ns.group_idx + 1 %}
+
+                {# Date label #}
+                {% if item.created_at %}
+                  {% set today = now().strftime('%Y-%m-%d') %}
+                  {% set yesterday = (now() - timedelta(days=1)).strftime('%Y-%m-%d') %}
+                  {% if item_date == today %}
+                    {% set date_label = 'Today' %}
+                  {% elif item_date == yesterday %}
+                    {% set date_label = 'Yesterday' %}
+                  {% else %}
+                    {% set date_label = item.created_at.strftime('%B %d, %Y') %}
+                  {% endif %}
+                {% else %}
+                  {% set date_label = 'Added earlier' %}
+                {% endif %}
+
+                <div class="date-group" data-group="{{ ns.group_idx }}">
+                  <div class="date-group-header">
+                    <label class="date-group-label">
+                      <input type="checkbox" class="date-group-checkbox" data-group="{{ ns.group_idx }}"
+                             onchange="toggleGroupItems(this)">
+                      <span>{{ date_label }}</span>
+                    </label>
+                  </div>
+                  <div class="date-group-items">
+              {% endif %}
+
+              <div class="cart-item" data-cart-id="{{ item.id }}" data-product-id="{{ item.product_id }}"
+                   data-price="{{ item.price }}" data-quantity="{{ item.quantity }}"
+                   data-variation-id="{{ item.variation_id or '' }}"
+                   data-group="{{ ns.group_idx }}">
+                <input type="checkbox" class="cart-item-checkbox"
+                       data-cart-id="{{ item.id }}" data-price="{{ item.price }}"
+                       data-quantity="{{ item.quantity }}" data-group="{{ ns.group_idx }}"
+                       onchange="onItemCheckChange(this)">
+
+                {% if item.image %}
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image">
+                {% else %}
+                  <div class="cart-item-image" style="display:flex;align-items:center;justify-content:center;background:#f8f9fa;">
+                    <svg style="width:60px;height:60px;color:#dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                      <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                    </svg>
+                  </div>
+                {% endif %}
+
+                <div class="cart-item-details">
+                  <div class="cart-item-name">{{ item.name }}</div>
+                  <div style="color:#6c757d;font-size:0.85rem;margin-top:0.2rem;">{{ item.seller_username }}</div>
+                  {% if item.all_variations and item.all_variations|length > 0 %}
+                    <div style="margin-top:0.5rem;">
+                      <select class="variation-select" data-cart-id="{{ item.id }}"
+                              style="font-size:0.85rem;padding:0.25rem 0.5rem;border:1px solid #dee2e6;border-radius:0.375rem;">
+                        {% for v in item.all_variations %}
+                          <option value="{{ v.id }}" data-price="{{ v.price }}"
+                                  {% if v.id == item.variation_id %}selected{% endif %}>
+                            {{ v.name }} — ₱{{ '%.2f'|format(v.price) }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="cart-item-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+
+                <div class="cart-item-quantity">
+                  <button class="quantity-btn" onclick="changeQty('{{ item.id }}', -1, this)">-</button>
+                  <span class="quantity-value" id="qty-{{ item.id }}">{{ item.quantity }}</span>
+                  <button class="quantity-btn" onclick="changeQty('{{ item.id }}', 1, this)">+</button>
+                </div>
+
+                <div class="cart-item-line-total" id="total-{{ item.id }}">
+                  ₱{{ '%.2f'|format(item.price * item.quantity) }}
+                </div>
               </div>
-              
-              <div style="color: #6c757d; font-size: 0.95rem;">
-                {{ item.specifications if item.specifications else 'No specifications' }}
-              </div>
-              
-              <div class="cart-item-price">₱{{ '%.2f'|format(item.price|float) }}</div>
-            </div>
             {% endfor %}
+            {# Close last group #}
+            {% if ns.current_date != '' %}
+              </div>{# close .date-group-items #}
+              </div>{# close .date-group #}
+            {% endif %}
           </div>
         </div>
-        
+
         <div class="cart-footer">
-          <!-- Total is now shown inside the checkout modal -->
-          <div class="checkout-section">
+          <div class="cart-total-bar">
+            <div>
+              <span style="font-size:0.9rem;color:#6c757d;">Selected Total</span><br>
+              <span class="cart-total-amount" id="cartSelectedTotal">₱0.00</span>
+            </div>
             <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
           </div>
         </div>
@@ -539,7 +638,7 @@
         <div class="cart-empty">
           <h2>Your cart is empty</h2>
           <p>Add some items to your cart to get started!</p>
-          <a href="{{ url_for('homepage') }}" class="btn-primary" style="text-decoration: none; padding: 1rem 2rem; width: auto; display: inline-block;">Browse Products</a>
+          <a href="{{ url_for('homepage') }}" class="btn-primary" style="text-decoration:none;padding:1rem 2rem;width:auto;display:inline-block;">Browse Products</a>
         </div>
       {% endif %}
     </div>
@@ -621,9 +720,103 @@
     // (Main cart total is now displayed inside the checkout modal only)
 
     function updateTotal() {
-      // Total is handled inside the checkout modal now.
+      let total = 0;
+      document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
+        const row = cb.closest('.cart-item');
+        const price = parseFloat(cb.dataset.price) || 0;
+        const qty = parseInt(cb.dataset.quantity) || 1;
+        total += price * qty;
+      });
+      const el = document.getElementById('cartSelectedTotal');
+      if (el) el.textContent = '₱' + total.toFixed(2);
     }
 
+    // Group checkbox toggle
+    function toggleGroupItems(groupCb) {
+      const group = groupCb.dataset.group;
+      document.querySelectorAll(`.cart-item-checkbox[data-group="${group}"]`).forEach(cb => {
+        cb.checked = groupCb.checked;
+        const row = cb.closest('.cart-item');
+        if (row) row.classList.toggle('selected', groupCb.checked);
+      });
+      updateTotal();
+    }
+
+    // Individual item checkbox
+    function onItemCheckChange(cb) {
+      const row = cb.closest('.cart-item');
+      if (row) row.classList.toggle('selected', cb.checked);
+      updateTotal();
+    }
+
+    // Quantity change on cart item
+    function changeQty(cartId, delta, btn) {
+      const qtyEl = document.getElementById('qty-' + cartId);
+      const totalEl = document.getElementById('total-' + cartId);
+      const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+      if (!qtyEl) return;
+      const currentQty = parseInt(qtyEl.textContent) || 1;
+      const newQty = currentQty + delta;
+      if (newQty < 1) return;
+
+      fetch(`/update_cart_quantity/${cartId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQty })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.success) {
+          qtyEl.textContent = newQty;
+          if (cb) cb.dataset.quantity = String(newQty);
+          // Update line total
+          const price = cb ? parseFloat(cb.dataset.price) : 0;
+          if (totalEl) totalEl.textContent = '₱' + (price * newQty).toFixed(2);
+          updateTotal();
+        } else {
+          alert(data.message || 'Could not update quantity');
+        }
+      })
+      .catch(() => alert('Error updating quantity'));
+    }
+
+    // Variation change in cart
+    document.querySelectorAll('.variation-select').forEach(sel => {
+      sel.addEventListener('change', function() {
+        const cartId = this.dataset.cartId;
+        const selectedOption = this.options[this.selectedIndex];
+        const newVariationId = this.value;
+        const newPrice = parseFloat(selectedOption.dataset.price) || 0;
+
+        fetch(`/update_cart_variation/${cartId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ variation_id: newVariationId })
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.success) {
+            // Update price display and checkbox data
+            const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+            const row = cb ? cb.closest('.cart-item') : null;
+            if (cb) cb.dataset.price = String(newPrice);
+            if (row) {
+              const priceEl = row.querySelector('.cart-item-price');
+              if (priceEl) priceEl.textContent = '₱' + newPrice.toFixed(2);
+              const qty = parseInt(cb ? cb.dataset.quantity : 1);
+              const totalEl = document.getElementById('total-' + cartId);
+              if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
+            }
+            updateTotal();
+          } else {
+            alert(data.message || 'Could not update variation');
+            // Revert select
+            location.reload();
+          }
+        })
+        .catch(() => location.reload());
+      });
+    });
     // Handle checkbox changes
     checkboxes.forEach(checkbox => {
       checkbox.addEventListener('change', (e) => {
@@ -632,8 +825,6 @@
         updateTotal(); // Update total when checkbox changes
       });
     });
-
-    // No visible total on main cart page; totals will be shown in the checkout modal
 
     // Delete selected items using modal confirmation
     const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -920,8 +1111,19 @@
             // Check if verification is required
             if (data.requires_verification) {
               closeCheckout();
-              if (typeof openVerificationModal === 'function') {
-                openVerificationModal();
+              if (data.verification_status === 'not_verified') {
+                // User hasn't submitted verification yet
+                if (typeof openVerificationModal === 'function') {
+                  openVerificationModal();
+                }
+              } else if (data.verification_status === 'pending_approval') {
+                // User submitted but admin hasn't approved yet
+                alert('Your verification application is under review. Please wait for admin approval before placing orders. You will be notified once approved.');
+              } else {
+                // Fallback
+                if (typeof openVerificationModal === 'function') {
+                  openVerificationModal();
+                }
               }
             } else {
               if (typeof showNotification === 'function') {

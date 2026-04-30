@@ -22,15 +22,17 @@ def register_checkout_routes(app):
                 return jsonify({
                     'success': False,
                     'message': 'Please verify your account before placing orders.',
-                    'requires_verification': True
+                    'requires_verification': True,
+                    'verification_status': 'not_verified'
                 }), 403
             
             # Check if user account is approved by admin
             if not user.get('is_approved', False):
                 return jsonify({
                     'success': False,
-                    'message': 'Your account is pending admin approval. Please wait for verification.',
-                    'requires_verification': True
+                    'message': 'Your verification is under review. Please wait for admin approval before placing orders.',
+                    'requires_verification': True,
+                    'verification_status': 'pending_approval'
                 }), 403
             
             # Get selected cart IDs and payment method from request

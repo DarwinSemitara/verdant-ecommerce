@@ -912,7 +912,7 @@
               <button class="view-btn buy-now-btn" data-product-id="${product.id}">
                 Buy
               </button>
-              <button class="add-to-cart-btn" data-product-id="${product.id}">
+              <button class="add-to-cart-btn" data-product-id="${product.id}" data-has-variations="${product.has_variations ? 'true' : 'false'}">
                 Add to Cart
               </button>
             </div>
@@ -976,52 +976,134 @@
         button.addEventListener('click', function(e) {
           e.stopPropagation();
           const productId = this.getAttribute('data-product-id');
-          
-          this.disabled = true;
-          const originalText = this.innerHTML;
-          this.innerHTML = '<span>Adding...</span>';
-          
+          const hasVariations = this.getAttribute('data-has-variations') === 'true';
+          const btn = this;
+
+          // If product has variations, show a quick picker modal
+          if (hasVariations) {
+            showVariationPicker(productId, btn);
+            return;
+          }
+
+          btn.disabled = true;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>Adding...</span>';
+
           fetch(`/add_to_cart/${productId}`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
           })
           .then(response => response.json())
           .then(data => {
             if (data.success) {
               cartCountBadge.textContent = data.cart_count;
               cartCountBadge.style.display = 'flex';
-              
-              this.innerHTML = '<span>✓ Added!</span>';
-              this.style.background = '#198754';
-              if (typeof showNotification === 'function') {
-                showNotification('Item added to cart', 'success');
-              }
-              
-              setTimeout(() => {
-                this.innerHTML = originalText;
-                this.style.background = '';
-                this.disabled = false;
-              }, 2000);
+              btn.innerHTML = '<span>✓ Added!</span>';
+              btn.style.background = '#198754';
+              if (typeof showNotification === 'function') showNotification('Item added to cart', 'success');
+              setTimeout(() => { btn.innerHTML = originalText; btn.style.background = ''; btn.disabled = false; }, 2000);
             } else {
-              if (typeof showNotification === 'function') {
-                showNotification(data.message || 'Failed to add item to cart', 'error');
-              } else {
-                alert(data.message || 'Failed to add item to cart');
-              }
-              this.innerHTML = originalText;
-              this.disabled = false;
+              if (typeof showNotification === 'function') showNotification(data.message || 'Failed to add item to cart', 'error');
+              else alert(data.message || 'Failed to add item to cart');
+              btn.innerHTML = originalText;
+              btn.disabled = false;
             }
           })
           .catch(error => {
             console.error('Error:', error);
             alert('An error occurred. Please try again.');
-            this.innerHTML = originalText;
-            this.disabled = false;
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           });
         });
       });
+    }
+
+    // Quick variation picker modal
+    function showVariationPicker(productId, triggerBtn) {
+      // Fetch variations for this product
+      fetch(`/api/product_variations/${productId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success || !data.variations || !data.variations.length) {
+            // No variations found, add directly
+            addToCartDirect(productId, null, triggerBtn);
+            return;
+          }
+
+          // Build modal
+          let modal = document.getElementById('variationPickerModal');
+          if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'variationPickerModal';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(modal);
+          }
+
+          const varOptions = data.variations.map(v =>
+            `<button type="button" class="var-pick-btn" data-var-id="${v.id}"
+              style="padding:0.6rem 1rem;border:2px solid #dee2e6;border-radius:0.5rem;background:white;cursor:pointer;font-size:0.9rem;transition:all 0.2s;"
+              onmouseover="this.style.borderColor='#198754';this.style.background='#f0fdf4';"
+              onmouseout="this.style.borderColor='#dee2e6';this.style.background='white';">
+              ${v.name} — ₱${parseFloat(v.price).toFixed(2)}
+            </button>`
+          ).join('');
+
+          modal.innerHTML = `
+            <div style="background:white;border-radius:1rem;padding:1.5rem;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="margin:0;color:#2d5016;font-size:1.1rem;">Select a Variation</h3>
+                <button onclick="document.getElementById('variationPickerModal').style.display='none'"
+                  style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">${varOptions}</div>
+            </div>`;
+
+          modal.style.display = 'flex';
+
+          // Bind variation buttons
+          modal.querySelectorAll('.var-pick-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const varId = this.dataset.varId;
+              modal.style.display = 'none';
+              addToCartDirect(productId, varId, triggerBtn);
+            });
+          });
+
+          // Close on backdrop click
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.style.display = 'none';
+          });
+        })
+        .catch(() => {
+          // Fallback: navigate to product page
+          window.location.href = `/product/${productId}`;
+        });
+    }
+
+    function addToCartDirect(productId, variationId, btn) {
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span>Adding...</span>'; }
+
+      fetch(`/add_to_cart/${productId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variationId ? { variation_id: variationId } : {})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (cartCountBadge) { cartCountBadge.textContent = data.cart_count; cartCountBadge.style.display = 'flex'; }
+          if (btn) { btn.innerHTML = '<span>✓ Added!</span>'; btn.style.background = '#198754'; }
+          if (typeof showNotification === 'function') showNotification('Item added to cart', 'success');
+          setTimeout(() => { if (btn) { btn.innerHTML = originalText; btn.style.background = ''; btn.disabled = false; } }, 2000);
+        } else {
+          if (typeof showNotification === 'function') showNotification(data.message || 'Failed to add item to cart', 'error');
+          else alert(data.message || 'Failed to add item to cart');
+          if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+        }
+      })
+      .catch(() => { if (btn) { btn.innerHTML = originalText; btn.disabled = false; } });
     }
 
     function attachBuyNowListeners() {
