@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+from cloudinary_helper import upload_image as cloud_upload, delete_image as cloud_delete
+from cloudinary_helper import upload_image as cloud_upload, delete_image as cloud_delete
 import random
 import time
 from werkzeug.utils import secure_filename
@@ -775,11 +777,7 @@ def register_rider():
         license_image_filename = None
         file = request.files.get('license_image')
         if file and file.filename:
-            filename = secure_filename(file.filename)
-            docs_root = os.path.join(app.root_path, 'static', 'uploads', 'documents')
-            os.makedirs(docs_root, exist_ok=True)
-            file.save(os.path.join(docs_root, filename))
-            license_image_filename = filename
+            license_image_filename = cloud_upload(file, 'verdant/documents')
 
         # Create rider user in Firestore
         user_data = {
@@ -1722,26 +1720,16 @@ def update_profile():
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest' and 'profile_picture' in request.files:
         file = request.files['profile_picture']
         if file and file.filename:
-            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-            filename = file.filename
-            if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                import uuid
-                ext = filename.rsplit('.', 1)[1].lower()
-                unique_filename = f"{session['username']}_{uuid.uuid4().hex[:8]}.{ext}"
-                upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'profiles')
-                os.makedirs(upload_folder, exist_ok=True)
-                file_path = os.path.join(upload_folder, unique_filename)
-                file.save(file_path)
-                if old_profile_picture and not old_profile_picture.startswith('http'):
-                    old_filepath = os.path.join(upload_folder, old_profile_picture)
-                    if os.path.exists(old_filepath):
-                        os.remove(old_filepath)
+            url = cloud_upload(file, 'verdant/profiles')
+            if url:
+                if old_profile_picture and 'cloudinary.com' in str(old_profile_picture):
+                    cloud_delete(old_profile_picture)
                 user_ref = db.collection('users').document(session['username'])
-                user_ref.update({'profile_picture': unique_filename})
-                session['profile_picture'] = unique_filename
-                return jsonify({'success': True, 'message': 'Profile picture updated successfully', 'profile_picture': unique_filename})
+                user_ref.update({'profile_picture': url})
+                session['profile_picture'] = url
+                return jsonify({'success': True, 'message': 'Profile picture updated successfully', 'profile_picture': url})
             else:
-                return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+                return jsonify({'success': False, 'message': 'Upload failed'}), 400
         else:
             return jsonify({'success': False, 'message': 'No file selected'}), 400
     
@@ -1781,20 +1769,13 @@ def update_profile():
             allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
             filename = file.filename
             if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                import uuid
-                ext = filename.rsplit('.', 1)[1].lower()
-                unique_filename = f"{session['username']}_{uuid.uuid4().hex[:8]}.{ext}"
-                upload_folder = os.path.join('static', 'uploads', 'profiles')
-                os.makedirs(upload_folder, exist_ok=True)
-                filepath = os.path.join(upload_folder, unique_filename)
-                file.save(filepath)
-                if old_profile_picture and not old_profile_picture.startswith('http'):
-                    old_filepath = os.path.join(upload_folder, old_profile_picture)
-                    if os.path.exists(old_filepath):
-                        os.remove(old_filepath)
-                user_ref = db.collection('users').document(session['username'])
-                user_ref.update({'profile_picture': unique_filename})
-                session['profile_picture'] = unique_filename
+                url = cloud_upload(file, 'verdant/profiles')
+                if url:
+                    if old_profile_picture and 'cloudinary.com' in str(old_profile_picture):
+                        cloud_delete(old_profile_picture)
+                    user_ref = db.collection('users').document(session['username'])
+                    user_ref.update({'profile_picture': url})
+                    session['profile_picture'] = url
 
     return redirect(url_for('profile'))
 
@@ -2148,27 +2129,18 @@ def submit_seller_application():
     store_phone = request.form.get('store_phone')
     
     # Handle file uploads
-    upload_folder = os.path.join('static', 'uploads', 'documents')
-    os.makedirs(upload_folder, exist_ok=True)
-
     business_permit_filename = None
     valid_id_filename = None
 
     if 'business_permit' in request.files:
         file = request.files['business_permit']
         if file and file.filename:
-            import uuid
-            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'pdf'
-            business_permit_filename = f"{session['username']}_permit_{uuid.uuid4().hex[:8]}.{ext}"
-            file.save(os.path.join(upload_folder, business_permit_filename))
+            business_permit_filename = cloud_upload(file, 'verdant/documents')
 
     if 'valid_id' in request.files:
         file = request.files['valid_id']
         if file and file.filename:
-            import uuid
-            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'pdf'
-            valid_id_filename = f"{session['username']}_id_{uuid.uuid4().hex[:8]}.{ext}"
-            file.save(os.path.join(upload_folder, valid_id_filename))
+            valid_id_filename = cloud_upload(file, 'verdant/documents')
     
     # Create seller application in Firestore
     application_ref = db.collection('seller_applications').document()
@@ -2228,16 +2200,12 @@ def my_profile():
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
                 filename = file.filename
                 if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                    import uuid
-                    import uuid
-                    ext = filename.rsplit('.', 1)[1].lower()
-                    unique_filename = f"{session['username']}_{uuid.uuid4().hex[:8]}.{ext}"
-                    upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'profiles')
-                    os.makedirs(upload_folder, exist_ok=True)
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
-                    update_data['profile_picture'] = unique_filename
-                    session['profile_picture'] = unique_filename        
+                    url = cloud_upload(file, 'verdant/profiles')
+                    if url:
+                        if old_profile_picture and 'cloudinary.com' in str(old_profile_picture):
+                            cloud_delete(old_profile_picture)
+                        update_data['profile_picture'] = url
+                        session['profile_picture'] = url        
         # Update in Firestore
         users_ref.document(user_id).update(update_data)
         
@@ -2305,7 +2273,7 @@ def store_preview():
         return redirect(url_for('seller_dashboard'))
     
     if request.method == 'POST':
-        # Handle store photo uploads (hidden form)
+        # Handle store photo uploads
         upload_folder = os.path.join('static', 'uploads', 'store')
         os.makedirs(upload_folder, exist_ok=True)
         photos_updated = False
@@ -2316,43 +2284,27 @@ def store_preview():
         if 'cover_photo' in request.files:
             file = request.files['cover_photo']
             if file and file.filename:
-                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-                filename = file.filename
-                if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                    import uuid
-                    ext = filename.rsplit('.', 1)[1].lower()
-                    unique_filename = f"{session['username']}_cover_{uuid.uuid4().hex[:8]}.{ext}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                url = cloud_upload(file, 'verdant/store')
+                if url:
                     old_pic = seller.get('cover_photo')
-                    if old_pic and not old_pic.startswith('http'):
-                        old_filepath = os.path.join(upload_folder, old_pic)
-                        if os.path.exists(old_filepath):
-                            os.remove(old_filepath)
-                    update_data['cover_photo'] = unique_filename
+                    if old_pic and 'cloudinary.com' in str(old_pic):
+                        cloud_delete(old_pic)
+                    update_data['cover_photo'] = url
                     photos_updated = True
 
         # Handle store profile photo
         if 'store_profile' in request.files:
             file = request.files['store_profile']
             if file and file.filename:
-                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
-                filename = file.filename
-                if '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions:
-                    import uuid
-                    ext = filename.rsplit('.', 1)[1].lower()
-                    unique_filename = f"{session['username']}_store_{uuid.uuid4().hex[:8]}.{ext}"
-                    filepath = os.path.join(upload_folder, unique_filename)
-                    file.save(filepath)
+                url = cloud_upload(file, 'verdant/store')
+                if url:
                     old_pic = seller.get('store_profile')
-                    if old_pic and not old_pic.startswith('http'):
-                        old_filepath = os.path.join(upload_folder, old_pic)
-                        if os.path.exists(old_filepath):
-                            os.remove(old_filepath)
-                    update_data['store_profile'] = unique_filename
-                    update_data['profile_picture'] = unique_filename
-                    session['store_profile'] = unique_filename
-                    session['profile_picture'] = unique_filename
+                    if old_pic and 'cloudinary.com' in str(old_pic):
+                        cloud_delete(old_pic)
+                    update_data['store_profile'] = url
+                    update_data['profile_picture'] = url
+                    session['store_profile'] = url
+                    session['profile_picture'] = url
                     photos_updated = True
 
         # Update user photos if any
@@ -2511,11 +2463,9 @@ def add_product():
         ext = filename.rsplit('.', 1)[1].lower()
         if ext not in allowed_extensions:
             continue
-        import uuid
-        new_filename = f"{session['username']}_product_{uuid.uuid4().hex[:8]}.{ext}"
-        filepath = os.path.join(upload_folder, new_filename)
-        file.save(filepath)
-        saved_filenames.append(new_filename)
+        url = cloud_upload(file, 'verdant/products')
+        if url:
+            saved_filenames.append(url)
 
     image_filename = saved_filenames[0] if saved_filenames else 'default.jpg'
     thumb_raw = request.form.get('thumbnail_index')
@@ -2589,12 +2539,7 @@ def add_product_v2():
             image_file = request.files.get('product_image')
             image_filename = None
             if image_file and image_file.filename:
-                upload_folder = os.path.join('static', 'uploads', 'products')
-                os.makedirs(upload_folder, exist_ok=True)
-                ext = image_file.filename.rsplit('.', 1)[1].lower()
-                import uuid
-                image_filename = f"{session['username']}_product_{uuid.uuid4().hex[:8]}.{ext}"
-                image_file.save(os.path.join(upload_folder, image_filename))
+                image_filename = cloud_upload(image_file, 'verdant/products')
             
             # Create product in products_v2
             product_data = {
@@ -2655,12 +2600,7 @@ def add_product_v2():
                 image_file = request.files.get(f'variation_image_{idx}')
                 image_filename = None
                 if image_file and image_file.filename:
-                    upload_folder = os.path.join('static', 'uploads', 'products')
-                    os.makedirs(upload_folder, exist_ok=True)
-                    ext = image_file.filename.rsplit('.', 1)[1].lower()
-                    import uuid
-                    image_filename = f"{session['username']}_var_{uuid.uuid4().hex[:8]}.{ext}"
-                    image_file.save(os.path.join(upload_folder, image_filename))
+                    image_filename = cloud_upload(image_file, 'verdant/products')
                 
                 variation_data = {
                     'parent_product_id': parent_id,
@@ -3032,23 +2972,16 @@ def submit_product_review(product_id):
         
         # Handle photo uploads
         files = request.files.getlist('photos') or []
-        reviews_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'reviews')
-        os.makedirs(reviews_upload_dir, exist_ok=True)
         for f in files:
             if not f or not f.filename:
                 continue
-            filename = secure_filename(f.filename)
-            base, ext = os.path.splitext(filename)
-            if ext.lower() not in ['.jpg', '.jpeg', '.png', '.gif']:
-                continue
-            unique_name = f"review_{product_id}_{int(time.time())}_{random.randint(1000,9999)}{ext.lower()}"
-            filepath = os.path.join(reviews_upload_dir, unique_name)
-            f.save(filepath)
-            db.collection('review_photos').document().set({
-                'review_id': review_id,
-                'filename': unique_name,
-                'created_at': firestore_module.SERVER_TIMESTAMP
-            })
+            url = cloud_upload(f, 'verdant/reviews')
+            if url:
+                db.collection('review_photos').document().set({
+                    'review_id': review_id,
+                    'url': url,
+                    'created_at': firestore_module.SERVER_TIMESTAMP
+                })
 
         return jsonify({'success': True}), 201
     except Exception as e:
