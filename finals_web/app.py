@@ -547,20 +547,48 @@ def handle_login():
             return redirect(url_for('login_page', error='invalid'))
         
         if check_password_hash(user['password'], password) or user['password'] == password:
-            # Successful login: reset session and clear any old flash messages
+            # Check if account is deleted
+            account_status = user.get('account_status', 'active')
+            if account_status == 'deleted':
+                delete_reason = user.get('delete_reason', 'inactive')
+                return redirect(url_for('login_page', error=f'deleted_{delete_reason}'))
+
+            # Check if account is banned
+            if account_status == 'banned':
+                ban_until = user.get('ban_until')
+                ban_count = user.get('ban_count', 1)
+                if ban_count >= 3:
+                    return redirect(url_for('login_page', error='banned_permanent'))
+                if ban_until:
+                    from datetime import datetime as _dt
+                    try:
+                        ban_until_dt = ban_until if hasattr(ban_until, 'timestamp') else None
+                        if ban_until_dt:
+                            now_utc = _dt.utcnow()
+                            ban_until_naive = ban_until_dt.replace(tzinfo=None)
+                            if now_utc < ban_until_naive:
+                                ban_days = (ban_until_naive - now_utc).days + 1
+                                return redirect(url_for('login_page', error=f'banned_temp_{ban_days}'))
+                            else:
+                                # Ban expired — lift it
+                                db.collection('users').document(username).update({'account_status': 'active', 'ban_until': None})
+                        else:
+                            return redirect(url_for('login_page', error='banned_temp_1'))
+                    except Exception:
+                        return redirect(url_for('login_page', error='banned_temp_1'))
+
+            # Successful login
             session['username'] = username
             session['role'] = user['role']
             session['profile_picture'] = user.get('profile_picture')
-            session['store_profile'] = user.get('store_profile')  # For sellers
-            session['user_id'] = user['id']  # Store Firestore document ID
+            session['store_profile'] = user.get('store_profile')
+            session['user_id'] = user['id']
             session.pop('_flashes', None)
 
             print(f"✅ User logged in: {username} (Role: {user['role']})")
 
-            # Block rider login - riders should use Flutter app
             if user['role'] == 'rider':
                 return redirect(url_for('login_page', error='rider_disabled'))
-
             if user['role'] == 'seller':
                 return redirect(url_for('seller_dashboard'))
             else:
@@ -2010,6 +2038,27 @@ def seller_dashboard():
     seller_approved = user.get('seller_approved', False)
     user_id = user['id']
     
+    # Get ban information
+    account_status = user.get('account_status', 'active')
+    ban_reason = user.get('ban_reason', '')
+    ban_until = user.get('ban_until')
+    ban_count = user.get('ban_count', 0)
+    ban_permanent = user.get('ban_permanent', False)
+    
+    # Calculate remaining ban days
+    ban_days_remaining = None
+    if account_status == 'banned' and ban_until and not ban_permanent:
+        from datetime import datetime as _dt
+        try:
+            ban_until_dt = ban_until if hasattr(ban_until, 'timestamp') else None
+            if ban_until_dt:
+                now_utc = _dt.utcnow()
+                ban_until_naive = ban_until_dt.replace(tzinfo=None)
+                if now_utc < ban_until_naive:
+                    ban_days_remaining = (ban_until_naive - now_utc).days + 1
+        except Exception:
+            pass
+    
     # Get latest application status
     application_status = None
     application_submitted_at = None
@@ -2029,7 +2078,15 @@ def seller_dashboard():
         import traceback
         traceback.print_exc()
 
-    return render_template('seller_dashboard.html', seller_approved=seller_approved, application_status=application_status, application_submitted_at=application_submitted_at)
+    return render_template('seller_dashboard.html', 
+                         seller_approved=seller_approved, 
+                         application_status=application_status, 
+                         application_submitted_at=application_submitted_at,
+                         account_status=account_status,
+                         ban_reason=ban_reason,
+                         ban_count=ban_count,
+                         ban_permanent=ban_permanent,
+                         ban_days_remaining=ban_days_remaining)
 
 @app.route('/seller/messages')
 def seller_messages():
@@ -3313,7 +3370,7 @@ def admin_seller_applications():
             
             print(f"📄 Found application: {app_doc.id} - {app_data.get('store_name')} - Status: {app_data.get('status')}")
             
-            # Get user info
+            # Get user info including ban status
             user = get_user_by_username(app_data.get('username'))
             
             # Format created_at timestamp
@@ -3339,7 +3396,9 @@ def admin_seller_applications():
                 'status': app_data.get('status'),
                 'created_at': created_at_formatted,
                 'username': app_data.get('username'),
-                'email': user.get('email') if user else ''
+                'email': user.get('email') if user else '',
+                'ban_count': user.get('ban_count', 0) if user else 0,
+                'ban_permanent': user.get('ban_permanent', False) if user else False
             })
         
         # Sort in Python instead of Firestore
@@ -4490,6 +4549,70 @@ def api_mobile_login():
         'role': user.get('role', 'user'),
         'email': user.get('email', ''),
     })
+
+@app.route('/admin/seller/manage/<username>', methods=['POST'])
+def admin_manage_seller(username):
+    """Ban or delete a seller account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json() or {}
+        action = data.get('action')  # 'ban' or 'delete'
+        reason = data.get('reason', '')
+
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+
+        if action == 'delete':
+            user_ref.update({
+                'account_status': 'deleted',
+                'delete_reason': reason,
+                'deleted_at': firestore_module.SERVER_TIMESTAMP,
+                'seller_approved': False,
+            })
+            # Force logout by invalidating any active session
+            # (Sessions are server-side; the user will be blocked on next request)
+            message = f'Seller account @{username} has been deleted.'
+
+        elif action == 'ban':
+            ban_count = user_data.get('ban_count', 0) + 1
+            from datetime import datetime as _dt, timedelta as _td
+            if ban_count == 1:
+                ban_days = 1
+            elif ban_count == 2:
+                ban_days = 3
+            else:
+                ban_days = None  # Permanent
+
+            ban_until = None if ban_days is None else (_dt.utcnow() + _td(days=ban_days))
+
+            user_ref.update({
+                'account_status': 'banned',
+                'ban_reason': reason,
+                'ban_count': ban_count,
+                'ban_until': ban_until,
+                'ban_permanent': ban_days is None,
+                'seller_approved': False if ban_days is None else user_data.get('seller_approved', False),
+            })
+            if ban_days is None:
+                message = f'Seller @{username} permanently banned (3rd offence).'
+            else:
+                message = f'Seller @{username} banned for {ban_days} day(s) (ban #{ban_count}).'
+        else:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+
+        return jsonify({'success': True, 'message': message, 'ban_count': user_data.get('ban_count', 0) + 1 if action == 'ban' else None})
+
+    except Exception as e:
+        print(f"Error managing seller: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/api/debug/products')
 def debug_products():

@@ -8,16 +8,352 @@
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
     border: 1px solid #e5e7eb;
   }
-
   .seller-app-card .table td,
-  .seller-app-card .table th {
-    color: #111827;
+  .seller-app-card .table th { color: #111827; }
+  .seller-app-card .table td .text-muted { color: #6b7280 !important; }
+
+  /* Red outline for 3rd-ban sellers */
+  tr.ban-permanent-row td:first-child { border-left: 3px solid #dc3545; }
+  tr.ban-permanent-row { background: #fff5f5; }
+
+  /* Manage modal */
+  .manage-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 1055;
+    align-items: center; justify-content: center;
+  }
+  .manage-modal-overlay.show { display: flex; }
+  .manage-modal-box {
+    background: #fff; border-radius: 0.75rem;
+    padding: 1.75rem; max-width: 520px; width: 95%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .manage-modal-box h5 { color: #111827; font-weight: 700; margin-bottom: 0.25rem; }
+  .manage-section { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
+  .manage-section h6 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.75rem; }
+  .reason-option { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
+  .reason-option input { margin-top: 0.2rem; accent-color: #111827; }
+  .reason-option label { cursor: pointer; font-size: 0.9rem; color: #374151; }
+  .reason-option label small { display: block; color: #9ca3af; font-size: 0.8rem; }
+  .btn-manage-action {
+    width: 100%; padding: 0.6rem; border: none; border-radius: 0.5rem;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 0.5rem;
+    transition: opacity 0.15s;
+  }
+  .btn-manage-action:hover { opacity: 0.85; }
+  .btn-delete-action { background: #dc3545; color: #fff; }
+  .btn-ban-action { background: #111827; color: #fff; }
+  .btn-cancel-manage { background: #f3f4f6; color: #374151; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="h5 mb-1 text-dark">Seller applications</h2>
+    <p class="text-muted small mb-0">Review and manage seller onboarding requests.</p>
+  </div>
+  <div class="text-end small text-muted">
+    Pending: <span class="text-dark fw-semibold">{{ pending_count }}</span>
+    &middot; Approved: <span class="text-dark fw-semibold">{{ approved_count }}</span>
+    &middot; Total: <span class="text-dark fw-semibold">{{ total_count }}</span>
+  </div>
+</div>
+
+<div class="mb-3 d-flex gap-2">
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="pending">Pending</button>
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="approved">Approved</button>
+  <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="rejected">Rejected</button>
+</div>
+
+<div class="card seller-app-card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-sm mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th>Owner</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in applications %}
+          <tr data-status="{{ app.status }}"
+              data-username="{{ app.username }}"
+              {% if app.ban_permanent %} class="ban-permanent-row"{% endif %}>
+            <td>
+              <div class="fw-semibold text-dark d-flex align-items-center gap-1">
+                {{ app.store_name }}
+                {% if app.ban_permanent %}
+                  <span class="badge bg-danger ms-1" title="3rd ban — consider deletion">3× banned</span>
+                {% elif app.ban_count and app.ban_count > 0 %}
+                  <span class="badge bg-warning text-dark ms-1">{{ app.ban_count }}× banned</span>
+                {% endif %}
+              </div>
+              <div class="text-muted small">{{ app.store_phone or 'N/A' }}</div>
+            </td>
+            <td>
+              <div class="text-dark">{{ app.username }}</div>
+              <div class="text-muted small">{{ app.email }}</div>
+            </td>
+            <td class="text-muted small">{{ app.store_category or 'N/A' }}</td>
+            <td class="status-cell">
+              {% if app.status == 'pending' %}
+                <span class="text-warning fw-semibold">Pending</span>
+              {% elif app.status == 'approved' %}
+                <span class="text-success fw-semibold">Approved</span>
+              {% else %}
+                <span class="text-danger fw-semibold">Rejected</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">
+              {{ app.created_at.strftime('%Y-%m-%d %H:%M') if app.created_at else 'N/A' }}
+            </td>
+            <td class="text-end">
+              <a href="{{ url_for('admin_seller_application_detail', application_id=app.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                View
+              </a>
+              {% if app.status == 'pending' %}
+              <button type="button" class="btn btn-sm btn-success me-1" onclick="handleApplication('{{ app.id }}', 'approve', this)">
+                Approve
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="handleApplication('{{ app.id }}', 'reject', this)">
+                Reject
+              </button>
+              {% endif %}
+              {% if app.status == 'approved' %}
+              <button type="button" class="btn btn-sm btn-outline-dark"
+                      onclick="openManageModal('{{ app.username }}', '{{ app.store_name }}', {{ app.ban_count or 0 }})">
+                Manage
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No seller applications yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Manage Seller Modal ─────────────────────────────────────────────── -->
+<div class="manage-modal-overlay" id="manageModal">
+  <div class="manage-modal-box">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h5 id="manageModalTitle">Manage Seller</h5>
+        <p class="text-muted small mb-0" id="manageModalSub"></p>
+      </div>
+      <button type="button" onclick="closeManageModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9ca3af;">&times;</button>
+    </div>
+
+    <!-- Delete section -->
+    <div class="manage-section">
+      <h6>Delete Account</h6>
+      <p class="text-muted small mb-2">Permanently removes the seller. They will be locked out immediately.</p>
+      <div class="reason-option">
+        <input type="radio" name="delete_reason" id="del_inactive" value="inactive">
+        <label for="del_inactive">Inactive <small>Account has been inactive for an extended period.</small></label>
+      </div>
+      <div class="reason-option">
+        <input type="radio" name="delete_reason" id="del_violation" value="violation">
+        <label for="del_violation">Policy Violation <small>Repeated or severe breach of platform rules.</small></label>
+      </div>
+      <div class="reason-option">
+        <input type="radio" name="delete_reason" id="del_scam" value="scam">
+        <label for="del_scam">Scam / Fraud <small>Confirmed fraudulent activity against buyers.</small></label>
+      </div>
+      <button class="btn-manage-action btn-delete-action" onclick="confirmManage('delete')">Delete Account</button>
+    </div>
+
+    <!-- Ban section -->
+    <div class="manage-section">
+      <h6>Ban Account <span id="banCountBadge" class="badge bg-secondary ms-1" style="font-size:0.75rem;"></span></h6>
+      <p class="text-muted small mb-2" id="banDurationNote"></p>
+      <div class="reason-option">
+        <input type="radio" name="ban_reason" id="ban_fake" value="fake_listings">
+        <label for="ban_fake">Fake or Misleading Listings <small>Products misrepresented in description or images.</small></label>
+      </div>
+      <div class="reason-option">
+        <input type="radio" name="ban_reason" id="ban_nondelivery" value="non_delivery">
+        <label for="ban_nondelivery">Non-Delivery of Orders <small>Consistently failing to fulfil accepted orders.</small></label>
+      </div>
+      <div class="reason-option">
+        <input type="radio" name="ban_reason" id="ban_harassment" value="harassment">
+        <label for="ban_harassment">Harassment / Abuse <small>Abusive behaviour toward buyers or platform staff.</small></label>
+      </div>
+      <button class="btn-manage-action btn-ban-action" id="banBtn" onclick="confirmManage('ban')">Ban Account</button>
+    </div>
+
+    <button class="btn-manage-action btn-cancel-manage" onclick="closeManageModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+  let _manageUsername = null;
+  let _manageBanCount = 0;
+
+  function openManageModal(username, storeName, banCount) {
+    _manageUsername = username;
+    _manageBanCount = banCount || 0;
+    document.getElementById('manageModalTitle').textContent = 'Manage: ' + storeName;
+    document.getElementById('manageModalSub').textContent = '@' + username;
+
+    // Ban count badge
+    const badge = document.getElementById('banCountBadge');
+    badge.textContent = 'Ban #' + (_manageBanCount + 1);
+    badge.className = _manageBanCount >= 2 ? 'badge bg-danger ms-1' : 'badge bg-secondary ms-1';
+
+    // Ban duration note
+    const note = document.getElementById('banDurationNote');
+    const banBtn = document.getElementById('banBtn');
+    if (_manageBanCount === 0) {
+      note.textContent = 'First ban: 1 day suspension.';
+      banBtn.textContent = 'Ban for 1 Day';
+    } else if (_manageBanCount === 1) {
+      note.textContent = 'Second ban: 3 day suspension.';
+      banBtn.textContent = 'Ban for 3 Days';
+    } else {
+      note.textContent = 'Third ban: PERMANENT — seller cannot accept orders. Consider deleting the account.';
+      banBtn.textContent = 'Ban Permanently';
+      banBtn.style.background = '#dc3545';
+    }
+
+    // Reset radios
+    document.querySelectorAll('input[name="delete_reason"], input[name="ban_reason"]').forEach(r => r.checked = false);
+    document.getElementById('manageModal').classList.add('show');
+    document.documentElement.style.overflow = 'hidden';
   }
 
-  .seller-app-card .table td .text-muted {
-    color: #6b7280 !important;
+  function closeManageModal() {
+    document.getElementById('manageModal').classList.remove('show');
+    document.documentElement.style.overflow = '';
+    _manageUsername = null;
   }
-</style>
+
+  function confirmManage(action) {
+    if (!_manageUsername) return;
+
+    let reason = '';
+    if (action === 'delete') {
+      const sel = document.querySelector('input[name="delete_reason"]:checked');
+      if (!sel) { alert('Please select a reason for deletion.'); return; }
+      reason = sel.value;
+    } else {
+      const sel = document.querySelector('input[name="ban_reason"]:checked');
+      if (!sel) { alert('Please select a reason for the ban.'); return; }
+      reason = sel.value;
+    }
+
+    const label = action === 'delete' ? 'delete' : 'ban';
+    if (!confirm(`Are you sure you want to ${label} @${_manageUsername}? This action will take effect immediately.`)) return;
+
+    fetch(`/admin/seller/manage/${_manageUsername}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, reason })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        closeManageModal();
+        alert(data.message);
+        location.reload();
+      } else {
+        alert(data.message || 'An error occurred.');
+      }
+    })
+    .catch(() => alert('An error occurred. Please try again.'));
+  }
+
+  // Close on backdrop click
+  document.getElementById('manageModal').addEventListener('click', function(e) {
+    if (e.target === this) closeManageModal();
+  });
+
+  function handleApplication(userId, action, btn) {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${actionText} this seller application?`)) return;
+
+    const row = btn ? btn.closest('tr') : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+      const sibling = btn.nextElementSibling || btn.previousElementSibling;
+      if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = true;
+    }
+
+    fetch(`/admin/seller-application/${userId}/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        if (row) {
+          const statusCell = row.querySelector('.status-cell');
+          if (statusCell) {
+            statusCell.innerHTML = action === 'approve'
+              ? '<span class="text-success fw-semibold">Approved</span>'
+              : '<span class="text-danger fw-semibold">Rejected</span>';
+            row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
+          }
+          const actionsCell = row.querySelector('td:last-child');
+          if (actionsCell) actionsCell.innerHTML = '<span class="text-muted small">Updated</span>';
+        }
+      } else {
+        alert(data.message || 'An error occurred.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+          const sibling = btn.nextElementSibling || btn.previousElementSibling;
+          if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = false;
+        }
+      }
+    })
+    .catch(() => {
+      alert('An error occurred. Please try again.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+      }
+    });
+  }
+
+  (function() {
+    const filterButtons = document.querySelectorAll('.app-filter-btn');
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    let currentFilter = null;
+    function applyFilter(status) {
+      rows.forEach(row => {
+        row.style.display = (!status || status === 'all' || row.getAttribute('data-status') === status) ? '' : 'none';
+      });
+    }
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const status = btn.getAttribute('data-filter');
+        if (currentFilter === status) {
+          currentFilter = null;
+          filterButtons.forEach(b => b.classList.remove('active'));
+          applyFilter(null);
+        } else {
+          currentFilter = status;
+          filterButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyFilter(status);
+        }
+      });
+    });
+  })();
+</script>
 {% endblock %}
 
 {% block content %}

@@ -674,6 +674,60 @@
     </div>
   </div>
 
+  <!-- Account Deleted Modal -->
+  <div class="error-modal" id="deletedModal" style="display:none;">
+    <div class="error-content" style="max-width: 500px;">
+      <h2 style="color: #dc3545; margin-bottom: 1rem;">Account Deleted</h2>
+      <p id="deletedMessage" style="margin-bottom: 1.5rem; line-height: 1.6;"></p>
+      <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1.5rem;">
+        If you believe this was a mistake, you can submit a report to our team for review.
+      </p>
+      <div style="display: flex; gap: 0.75rem;">
+        <button onclick="submitReport()" style="flex: 1; padding: 0.75rem; background: #111827; color: #fff; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+          Submit Report
+        </button>
+        <button onclick="closeDeletedModal()" style="flex: 1; padding: 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account Banned Modal -->
+  <div class="error-modal" id="bannedModal" style="display:none;">
+    <div class="error-content" style="max-width: 500px;">
+      <h2 style="color: #dc3545; margin-bottom: 1rem;">Account Banned</h2>
+      <p id="bannedMessage" style="margin-bottom: 1.5rem; line-height: 1.6;"></p>
+      <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 1.5rem;">
+        If you believe this was a mistake, you can submit a report to our team for review.
+      </p>
+      <div style="display: flex; gap: 0.75rem;">
+        <button onclick="submitReport()" style="flex: 1; padding: 0.75rem; background: #111827; color: #fff; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+          Submit Report
+        </button>
+        <button onclick="closeBannedModal()" style="flex: 1; padding: 0.75rem; background: #f3f4f6; color: #374151; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function submitReport() {
+      const subject = encodeURIComponent('Account Action Appeal - Verdant Platform');
+      const body = encodeURIComponent('Hello Verdant Team,\n\nI am writing to appeal the action taken on my account.\n\nUsername: [Your Username]\nReason for appeal: [Explain why you believe this was a mistake]\n\nThank you for your consideration.\n\nBest regards');
+      window.location.href = `mailto:darwinjeffsemitara@gmail.com?subject=${subject}&body=${body}`;
+    }
+
+    function closeDeletedModal() {
+      document.getElementById('deletedModal').style.display = 'none';
+    }
+
+    function closeBannedModal() {
+      document.getElementById('bannedModal').style.display = 'none';
+    }
+  </script>
+
   {% if error %}
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -682,6 +736,51 @@
       const errorMessage = document.getElementById("errorMessage");
 
       if (errorModal && errorMessage) {
+        // Handle deleted account errors
+        if (errorType.startsWith("deleted_")) {
+          const reason = errorType.replace("deleted_", "");
+          const deletedModal = document.getElementById("deletedModal");
+          const deletedMessage = document.getElementById("deletedMessage");
+          
+          if (deletedModal && deletedMessage) {
+            let reasonText = "";
+            if (reason === "inactive") {
+              reasonText = "Your account has been deleted due to prolonged inactivity.";
+            } else if (reason === "violation") {
+              reasonText = "Your account has been deleted due to repeated or severe policy violations.";
+            } else if (reason === "scam") {
+              reasonText = "Your account has been deleted due to confirmed fraudulent activity.";
+            } else {
+              reasonText = "Your account has been deleted by an administrator.";
+            }
+            
+            deletedMessage.innerHTML = `<strong>Reason:</strong> ${reasonText}`;
+            deletedModal.style.display = "flex";
+            return;
+          }
+        }
+
+        // Handle banned account errors
+        if (errorType.startsWith("banned_")) {
+          const bannedModal = document.getElementById("bannedModal");
+          const bannedMessage = document.getElementById("bannedMessage");
+          
+          if (bannedModal && bannedMessage) {
+            if (errorType === "banned_permanent") {
+              bannedMessage.innerHTML = "<strong>Your account has been permanently banned.</strong><br>This is your third violation. You can no longer access this account.";
+            } else if (errorType.startsWith("banned_temp_")) {
+              const days = errorType.replace("banned_temp_", "");
+              bannedMessage.innerHTML = `<strong>Your account is temporarily banned.</strong><br>You will be able to log in again in ${days} day(s).`;
+            } else {
+              bannedMessage.innerHTML = "<strong>Your account has been banned.</strong><br>Please contact support for more information.";
+            }
+            
+            bannedModal.style.display = "flex";
+            return;
+          }
+        }
+
+        // Handle other errors
         if (errorType === "invalid") {
           errorMessage.textContent = "Invalid password. Please try again.";
         } else if (errorType === "notfound") {

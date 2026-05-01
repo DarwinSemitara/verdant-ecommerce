@@ -6,6 +6,62 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
+  <!-- Ban Notification Alert -->
+  {% if account_status == 'banned' %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-left: 4px solid #dc3545;">
+    <div class="d-flex align-items-start">
+      <div style="font-size: 2rem; margin-right: 1rem;">⚠️</div>
+      <div style="flex: 1;">
+        <h5 class="alert-heading mb-2">
+          {% if ban_permanent %}
+          Account Permanently Banned
+          {% else %}
+          Account Temporarily Banned
+          {% endif %}
+        </h5>
+        <p class="mb-2">
+          {% if ban_permanent %}
+          <strong>Your account has been permanently banned.</strong> This is your third violation. You can no longer accept orders.
+          {% elif ban_days_remaining %}
+          <strong>Your account is temporarily banned for {{ ban_days_remaining }} day(s).</strong> You cannot accept orders during this period.
+          {% else %}
+          <strong>Your account has been banned.</strong> You cannot accept orders at this time.
+          {% endif %}
+        </p>
+        {% if ban_reason %}
+        <p class="mb-2"><strong>Reason:</strong> 
+          {% if ban_reason == 'fake_listings' %}
+          Fake or Misleading Listings - Products misrepresented in description or images.
+          {% elif ban_reason == 'non_delivery' %}
+          Non-Delivery of Orders - Consistently failing to fulfil accepted orders.
+          {% elif ban_reason == 'harassment' %}
+          Harassment / Abuse - Abusive behaviour toward buyers or platform staff.
+          {% else %}
+          {{ ban_reason }}
+          {% endif %}
+        </p>
+        {% endif %}
+        {% if ban_count %}
+        <p class="mb-2"><small class="text-muted">This is ban #{{ ban_count }}. 
+          {% if ban_count == 1 %}
+          Next violation will result in a 3-day ban.
+          {% elif ban_count == 2 %}
+          Next violation will result in a permanent ban.
+          {% endif %}
+        </small></p>
+        {% endif %}
+        <hr style="margin: 1rem 0;">
+        <p class="mb-0" style="font-size: 0.9rem;">
+          If you believe this was a mistake, you can 
+          <a href="mailto:darwinjeffsemitara@gmail.com?subject=Ban%20Appeal%20-%20{{ session.username }}&body=Hello%20Verdant%20Team%2C%0A%0AI%20am%20writing%20to%20appeal%20the%20ban%20on%20my%20account.%0A%0AUsername%3A%20{{ session.username }}%0AReason%20for%20appeal%3A%20%5BExplain%20why%20you%20believe%20this%20was%20a%20mistake%5D%0A%0AThank%20you%20for%20your%20consideration." 
+             class="alert-link" style="font-weight: 600;">submit a report</a> to our team for review.
+        </p>
+      </div>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  {% endif %}
+
   {% if not seller_approved %}
   {% if application_status == 'pending' %}
   <!-- Waiting for approval state -->
