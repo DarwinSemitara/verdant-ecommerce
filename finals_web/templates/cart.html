@@ -508,11 +508,13 @@
 
               <div class="cart-item" data-cart-id="{{ item.id }}" data-product-id="{{ item.product_id }}"
                    data-price="{{ item.price }}" data-quantity="{{ item.quantity }}"
+                   data-stock="{{ item.stock }}"
                    data-variation-id="{{ item.variation_id or '' }}"
                    data-group="{{ ns.group_idx }}">
                 <input type="checkbox" class="cart-item-checkbox"
                        data-cart-id="{{ item.id }}" data-price="{{ item.price }}"
-                       data-quantity="{{ item.quantity }}" data-group="{{ ns.group_idx }}"
+                       data-quantity="{{ item.quantity }}" data-stock="{{ item.stock }}"
+                       data-group="{{ ns.group_idx }}"
                        onchange="onItemCheckChange(this)">
 
                 {% if item.image %}
@@ -549,17 +551,23 @@
                 <div class="cart-item-price">₱{{ '%.2f'|format(item.price|float) }}</div>
 
                 <div class="cart-item-quantity">
-                  <button class="quantity-btn" onclick="changeQty('{{ item.id }}', -1, this)">-</button>
+                  <button class="quantity-btn" id="btn-minus-{{ item.id }}"
+                          onclick="changeQty('{{ item.id }}', -1, this)"
+                          {% if item.quantity <= 1 %}disabled{% endif %}
+                          style="{% if item.quantity <= 1 %}opacity:0.35;cursor:not-allowed;{% endif %}">-</button>
                   <input type="number" class="quantity-input" id="qty-{{ item.id }}"
-                         value="{{ item.quantity }}" min="0"
-                         data-cart-id="{{ item.id }}"
+                         value="{{ item.quantity }}" min="1" max="{{ item.stock }}"
+                         data-cart-id="{{ item.id }}" data-stock="{{ item.stock }}"
                          onchange="onQtyInput(this)"
                          style="width:52px;text-align:center;border:1px solid #dee2e6;border-radius:0.375rem;padding:0.25rem;font-size:0.95rem;-moz-appearance:textfield;appearance:textfield;">
                   <style>
                     #qty-{{ item.id }}::-webkit-outer-spin-button,
                     #qty-{{ item.id }}::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
                   </style>
-                  <button class="quantity-btn" onclick="changeQty('{{ item.id }}', 1, this)">+</button>
+                  <button class="quantity-btn" id="btn-plus-{{ item.id }}"
+                          onclick="changeQty('{{ item.id }}', 1, this)"
+                          {% if item.quantity >= item.stock %}disabled{% endif %}
+                          style="{% if item.quantity >= item.stock %}opacity:0.35;cursor:not-allowed;{% endif %}">+</button>
                 </div>
 
                 <div class="cart-item-line-total" id="total-{{ item.id }}">
@@ -608,7 +616,27 @@
   {% include 'footer_verdant.html' %}
 
   <script>
-    // ── GLOBAL FUNCTIONS (called from inline HTML) ──────────────────────────
+    // ── GLOBAL STATE & HELPERS ───────────────────────────────────────────────
+    let _pendingRemoveCartId = null;
+
+    function showRemoveModal(cartId) {
+      _pendingRemoveCartId = cartId;
+      const m = document.getElementById('removeItemModal');
+      if (m) { m.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; }
+    }
+    function hideRemoveModal() {
+      _pendingRemoveCartId = null;
+      const m = document.getElementById('removeItemModal');
+      if (m) { m.style.display = 'none'; document.documentElement.style.overflow = ''; }
+    }
+    function showModal(id) {
+      const m = document.getElementById(id);
+      if (m) { m.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; }
+    }
+    function hideModal(id) {
+      const m = document.getElementById(id);
+      if (m) { m.style.display = 'none'; document.documentElement.style.overflow = ''; }
+    }
 
     function updateTotal() {
       let total = 0;
@@ -651,26 +679,47 @@
       const input = document.getElementById('qty-' + cartId);
       if (!input) return;
       const currentQty = parseInt(input.value) || 1;
+      const stock = parseInt(input.dataset.stock) || 999;
       const newQty = currentQty + delta;
-      applyQtyChange(cartId, newQty);
+      applyQtyChange(cartId, newQty, stock);
     }
 
     // Typed quantity input
     function onQtyInput(input) {
       const cartId = input.dataset.cartId;
+      const stock = parseInt(input.dataset.stock) || 999;
       const newQty = parseInt(input.value);
       if (isNaN(newQty)) return;
-      applyQtyChange(cartId, newQty);
+      if (newQty > stock) {
+        const prevQty = parseInt(document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`)?.dataset.quantity) || 1;
+        input.value = prevQty;
+        showModal('stockExceededModal');
+        return;
+      }
+      applyQtyChange(cartId, newQty, stock);
     }
 
-    function applyQtyChange(cartId, newQty) {
+    function updateButtonStates(cartId, qty, stock) {
+      const minus = document.getElementById('btn-minus-' + cartId);
+      const plus = document.getElementById('btn-plus-' + cartId);
+      if (minus) { minus.disabled = qty <= 1; minus.style.opacity = qty <= 1 ? '0.35' : '1'; minus.style.cursor = qty <= 1 ? 'not-allowed' : ''; }
+      if (plus)  { plus.disabled = qty >= stock; plus.style.opacity = qty >= stock ? '0.35' : '1'; plus.style.cursor = qty >= stock ? 'not-allowed' : ''; }
+    }
+
+    function applyQtyChange(cartId, newQty, stock) {
       const input = document.getElementById('qty-' + cartId);
       const totalEl = document.getElementById('total-' + cartId);
       const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+      const effectiveStock = stock || parseInt(input?.dataset.stock) || 999;
 
       if (newQty <= 0) {
         if (input) input.value = parseInt(cb?.dataset.quantity) || 1;
         showRemoveModal(cartId);
+        return;
+      }
+      if (newQty > effectiveStock) {
+        if (input) input.value = parseInt(cb?.dataset.quantity) || 1;
+        showModal('stockExceededModal');
         return;
       }
 
@@ -679,6 +728,7 @@
       if (cb) cb.dataset.quantity = String(newQty);
       const price = cb ? parseFloat(cb.dataset.price) : 0;
       if (totalEl) totalEl.textContent = '₱' + (price * newQty).toFixed(2);
+      updateButtonStates(cartId, newQty, effectiveStock);
       updateTotal();
 
       // Background sync
@@ -690,10 +740,10 @@
       .then(r => r.json())
       .then(data => {
         if (!data.success) {
-          // Revert on failure
           const prevQty = parseInt(cb?.dataset.quantity) || 1;
           if (input) input.value = prevQty;
           if (totalEl) totalEl.textContent = '₱' + (price * prevQty).toFixed(2);
+          updateButtonStates(cartId, prevQty, effectiveStock);
           updateTotal();
           alert(data.message || 'Could not update quantity');
         }
@@ -701,8 +751,8 @@
       .catch(() => {});
     }
 
-    // ── DOM READY ────────────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function() {
+    // ── PAGE READY (after full DOM including bottom modals) ─────────────────
+    window.addEventListener('load', function() {
 
       // Cart button reload
       const cartButton = document.getElementById('cartButton');
@@ -1056,7 +1106,7 @@
         });
       }
 
-    }); // end DOMContentLoaded
+    }); // end load
 
     // Real-time cart sync
     (function() {
@@ -1077,6 +1127,20 @@
   </script>
 
   <!-- ── ALL MODALS (outside header/nav for correct DOM placement) ── -->
+
+  <!-- Stock exceeded modal -->
+  <div id="stockExceededModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:1rem;padding:1.75rem;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 style="font-size:1.3rem;font-weight:700;color:#2d5016;margin:0;">Stock Limit Reached</h2>
+        <button type="button" onclick="hideModal('stockExceededModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+      </div>
+      <p style="color:#495057;margin:0 0 1.5rem;">The quantity you entered exceeds the available stock for this item. The quantity has been reset to the previous value.</p>
+      <div style="display:flex;justify-content:flex-end;">
+        <button type="button" onclick="hideModal('stockExceededModal')" style="padding:0.6rem 1.6rem;border-radius:0.5rem;border:none;background:#2d5016;color:white;font-weight:600;cursor:pointer;">OK</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Delete confirmation modal -->
   <div id="deleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
