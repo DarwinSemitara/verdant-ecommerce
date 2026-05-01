@@ -21,16 +21,30 @@
     display: none; position: fixed; inset: 0;
     background: rgba(0,0,0,0.45); z-index: 1055;
     align-items: center; justify-content: center;
+    overflow-y: auto;
+    padding: 2rem 0;
   }
   .manage-modal-overlay.show { display: flex; }
   .manage-modal-box {
     background: #fff; border-radius: 0.75rem;
     padding: 1.75rem; max-width: 520px; width: 95%;
     box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    margin: auto;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .manage-modal-box h5 { color: #111827; font-weight: 700; margin-bottom: 0.25rem; }
   .manage-section { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
   .manage-section h6 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.75rem; }
+  .manage-section .duration-highlight { 
+    background: #fef3c7; 
+    padding: 0.5rem; 
+    border-radius: 0.375rem; 
+    font-weight: 600; 
+    color: #92400e;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+  }
   .reason-option { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
   .reason-option input { margin-top: 0.2rem; accent-color: #111827; }
   .reason-option label { cursor: pointer; font-size: 0.9rem; color: #374151; }
@@ -44,6 +58,36 @@
   .btn-delete-action { background: #dc3545; color: #fff; }
   .btn-ban-action { background: #111827; color: #fff; }
   .btn-cancel-manage { background: #f3f4f6; color: #374151; }
+
+  /* Confirmation modal */
+  .confirm-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 1060;
+    align-items: center; justify-content: center;
+  }
+  .confirm-modal-overlay.show { display: flex; }
+  .confirm-modal-box {
+    background: #fff; border-radius: 0.75rem;
+    padding: 2rem; max-width: 420px; width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .confirm-modal-box h5 { color: #111827; font-weight: 700; margin-bottom: 1rem; }
+  .confirm-modal-box p { color: #6b7280; margin-bottom: 1.5rem; line-height: 1.6; }
+  .confirm-modal-actions { display: flex; gap: 0.75rem; }
+  .confirm-modal-actions button { flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+
+  /* Success notification */
+  .success-toast {
+    position: fixed; top: 2rem; right: 2rem; z-index: 1070;
+    background: #10b981; color: #fff; padding: 1rem 1.5rem;
+    border-radius: 0.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    display: none; animation: slideIn 0.3s ease;
+  }
+  .success-toast.show { display: block; }
+  @keyframes slideIn {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
 </style>
 {% endblock %}
 
@@ -64,6 +108,7 @@
   <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="pending">Pending</button>
   <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="approved">Approved</button>
   <button type="button" class="btn btn-outline-secondary btn-sm app-filter-btn" data-filter="rejected">Rejected</button>
+  <button type="button" class="btn btn-outline-danger btn-sm app-filter-btn" data-filter="deleted">Deleted</button>
 </div>
 
 <div class="card seller-app-card">
@@ -82,7 +127,7 @@
         </thead>
         <tbody>
           {% for app in applications %}
-          <tr data-status="{{ app.status }}"
+          <tr data-status="{{ app.account_status or app.status }}"
               data-username="{{ app.username }}"
               {% if app.ban_permanent %} class="ban-permanent-row"{% endif %}>
             <td>
@@ -102,7 +147,9 @@
             </td>
             <td class="text-muted small">{{ app.store_category or 'N/A' }}</td>
             <td class="status-cell">
-              {% if app.status == 'pending' %}
+              {% if app.account_status == 'deleted' %}
+                <span class="text-danger fw-semibold">Deleted</span>
+              {% elif app.status == 'pending' %}
                 <span class="text-warning fw-semibold">Pending</span>
               {% elif app.status == 'approved' %}
                 <span class="text-success fw-semibold">Approved</span>
@@ -114,6 +161,14 @@
               {{ app.created_at.strftime('%Y-%m-%d %H:%M') if app.created_at else 'N/A' }}
             </td>
             <td class="text-end">
+              {% if app.account_status == 'deleted' %}
+              <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="undoDelete('{{ app.username }}', '{{ app.store_name }}')">
+                Undo
+              </button>
+              <button type="button" class="btn btn-sm btn-danger" onclick="permanentDelete('{{ app.username }}', '{{ app.store_name }}')">
+                Delete
+              </button>
+              {% else %}
               <a href="{{ url_for('admin_seller_application_detail', application_id=app.id) }}" class="btn btn-sm btn-outline-secondary me-1">
                 View
               </a>
@@ -130,6 +185,7 @@
                       onclick="openManageModal('{{ app.username }}', '{{ app.store_name }}', {{ app.ban_count or 0 }})">
                 Manage
               </button>
+              {% endif %}
               {% endif %}
             </td>
           </tr>
@@ -176,8 +232,8 @@
 
     <!-- Ban section -->
     <div class="manage-section">
-      <h6>Ban Account <span id="banCountBadge" class="badge bg-secondary ms-1" style="font-size:0.75rem;"></span></h6>
-      <p class="text-muted small mb-2" id="banDurationNote"></p>
+      <h6>Ban Account</h6>
+      <div class="duration-highlight" id="banDurationNote"></div>
       <div class="reason-option">
         <input type="radio" name="ban_reason" id="ban_fake" value="fake_listings">
         <label for="ban_fake">Fake or Misleading Listings <small>Products misrepresented in description or images.</small></label>
@@ -197,9 +253,30 @@
   </div>
 </div>
 
+<!-- Confirmation Modal -->
+<div class="confirm-modal-overlay" id="confirmModal">
+  <div class="confirm-modal-box">
+    <h5 id="confirmTitle">Confirm Action</h5>
+    <p id="confirmMessage">Are you sure you want to proceed?</p>
+    <div class="confirm-modal-actions">
+      <button onclick="closeConfirmModal()" style="background: #f3f4f6; color: #374151;">Cancel</button>
+      <button id="confirmBtn" onclick="executeConfirmedAction()" style="background: #dc3545; color: #fff;">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div class="success-toast" id="successToast">
+  <div style="display: flex; align-items: center; gap: 0.75rem;">
+    <span style="font-size: 1.5rem;">✓</span>
+    <span id="successMessage">Action completed successfully!</span>
+  </div>
+</div>
+
 <script>
   let _manageUsername = null;
   let _manageBanCount = 0;
+  let _pendingAction = null;
 
   function openManageModal(username, storeName, banCount) {
     _manageUsername = username;
@@ -207,22 +284,19 @@
     document.getElementById('manageModalTitle').textContent = 'Manage: ' + storeName;
     document.getElementById('manageModalSub').textContent = '@' + username;
 
-    // Ban count badge
-    const badge = document.getElementById('banCountBadge');
-    badge.textContent = 'Ban #' + (_manageBanCount + 1);
-    badge.className = _manageBanCount >= 2 ? 'badge bg-danger ms-1' : 'badge bg-secondary ms-1';
-
     // Ban duration note
     const note = document.getElementById('banDurationNote');
     const banBtn = document.getElementById('banBtn');
     if (_manageBanCount === 0) {
       note.textContent = 'First ban: 1 day suspension.';
       banBtn.textContent = 'Ban for 1 Day';
+      banBtn.style.background = '#111827';
     } else if (_manageBanCount === 1) {
       note.textContent = 'Second ban: 3 day suspension.';
       banBtn.textContent = 'Ban for 3 Days';
+      banBtn.style.background = '#111827';
     } else {
-      note.textContent = 'Third ban: PERMANENT — seller cannot accept orders. Consider deleting the account.';
+      note.textContent = 'Third ban: PERMANENT — seller cannot accept orders.';
       banBtn.textContent = 'Ban Permanently';
       banBtn.style.background = '#dc3545';
     }
@@ -230,12 +304,10 @@
     // Reset radios
     document.querySelectorAll('input[name="delete_reason"], input[name="ban_reason"]').forEach(r => r.checked = false);
     document.getElementById('manageModal').classList.add('show');
-    document.documentElement.style.overflow = 'hidden';
   }
 
   function closeManageModal() {
     document.getElementById('manageModal').classList.remove('show');
-    document.documentElement.style.overflow = '';
     _manageUsername = null;
   }
 
@@ -253,20 +325,72 @@
       reason = sel.value;
     }
 
-    const label = action === 'delete' ? 'delete' : 'ban';
-    if (!confirm(`Are you sure you want to ${label} @${_manageUsername}? This action will take effect immediately.`)) return;
+    // Store pending action
+    _pendingAction = { action, reason, username: _manageUsername };
 
-    fetch(`/admin/seller/manage/${_manageUsername}`, {
+    // Show confirmation modal
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    if (action === 'delete') {
+      confirmTitle.textContent = 'Confirm Account Deletion';
+      confirmMessage.textContent = `Are you sure you want to delete @${_manageUsername}? The account will be moved to the deleted section and can be restored or permanently deleted later.`;
+      confirmBtn.style.background = '#dc3545';
+    } else {
+      const banText = _manageBanCount === 0 ? '1 day' : _manageBanCount === 1 ? '3 days' : 'permanently';
+      confirmTitle.textContent = 'Confirm Account Ban';
+      confirmMessage.textContent = `Are you sure you want to ban @${_manageUsername} for ${banText}? They will not be able to accept orders during this period.`;
+      confirmBtn.style.background = '#111827';
+    }
+
+    document.getElementById('confirmModal').classList.add('show');
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+    _pendingAction = null;
+  }
+
+  function executeConfirmedAction() {
+    if (!_pendingAction) return;
+
+    const { action, reason, username } = _pendingAction;
+
+    fetch(`/admin/seller/manage/${username}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action, reason })
     })
     .then(r => r.json())
     .then(data => {
+      closeConfirmModal();
+      closeManageModal();
       if (data.success) {
-        closeManageModal();
-        alert(data.message);
-        location.reload();
+        showSuccessToast(data.message);
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        alert(data.message || 'An error occurred.');
+      }
+    })
+    .catch(() => {
+      closeConfirmModal();
+      alert('An error occurred. Please try again.');
+    });
+  }
+
+  function undoDelete(username, storeName) {
+    if (!confirm(`Restore @${username}? The account will be reactivated and moved back to approved sellers.`)) return;
+
+    fetch(`/admin/seller/undo-delete/${username}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showSuccessToast(data.message);
+        setTimeout(() => location.reload(), 1500);
       } else {
         alert(data.message || 'An error occurred.');
       }
@@ -274,9 +398,86 @@
     .catch(() => alert('An error occurred. Please try again.'));
   }
 
-  // Close on backdrop click
+  function permanentDelete(username, storeName) {
+    // Show confirmation modal
+    _pendingAction = { type: 'permanent_delete', username, storeName };
+    
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    confirmTitle.textContent = 'Permanent Deletion';
+    confirmMessage.innerHTML = `<strong>WARNING:</strong> This will permanently delete @${username} and all associated data. This action <strong>CANNOT</strong> be undone. Are you absolutely sure?`;
+    confirmBtn.style.background = '#dc3545';
+    confirmBtn.textContent = 'Permanently Delete';
+
+    document.getElementById('confirmModal').classList.add('show');
+  }
+
+  function executeConfirmedAction() {
+    if (!_pendingAction) return;
+
+    if (_pendingAction.type === 'permanent_delete') {
+      const { username } = _pendingAction;
+      
+      fetch(`/admin/seller/permanent-delete/${username}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        closeConfirmModal();
+        if (data.success) {
+          showSuccessToast(data.message);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          alert(data.message || 'An error occurred.');
+        }
+      })
+      .catch(() => {
+        closeConfirmModal();
+        alert('An error occurred. Please try again.');
+      });
+    } else {
+      // Original ban/delete action
+      const { action, reason, username } = _pendingAction;
+
+      fetch(`/admin/seller/manage/${username}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, reason })
+      })
+      .then(r => r.json())
+      .then(data => {
+        closeConfirmModal();
+        closeManageModal();
+        if (data.success) {
+          showSuccessToast(data.message);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          alert(data.message || 'An error occurred.');
+        }
+      })
+      .catch(() => {
+        closeConfirmModal();
+        alert('An error occurred. Please try again.');
+      });
+    }
+  }
+
+  function showSuccessToast(message) {
+    const toast = document.getElementById('successToast');
+    document.getElementById('successMessage').textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Close modals on backdrop click
   document.getElementById('manageModal').addEventListener('click', function(e) {
     if (e.target === this) closeManageModal();
+  });
+  document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
   });
 
   function handleApplication(userId, action, btn) {
@@ -327,6 +528,32 @@
       }
     });
   }
+
+  (function() {
+    const filterButtons = document.querySelectorAll('.app-filter-btn');
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    let currentFilter = null;
+    function applyFilter(status) {
+      rows.forEach(row => {
+        row.style.display = (!status || status === 'all' || row.getAttribute('data-status') === status) ? '' : 'none';
+      });
+    }
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const status = btn.getAttribute('data-filter');
+        if (currentFilter === status) {
+          currentFilter = null;
+          filterButtons.forEach(b => b.classList.remove('active'));
+          applyFilter(null);
+        } else {
+          currentFilter = status;
+          filterButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyFilter(status);
+        }
+      });
+    });
+  })();
 
   (function() {
     const filterButtons = document.querySelectorAll('.app-filter-btn');

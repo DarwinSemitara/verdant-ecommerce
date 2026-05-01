@@ -3370,7 +3370,7 @@ def admin_seller_applications():
             
             print(f"📄 Found application: {app_doc.id} - {app_data.get('store_name')} - Status: {app_data.get('status')}")
             
-            # Get user info including ban status
+            # Get user info including ban status and account status
             user = get_user_by_username(app_data.get('username'))
             
             # Format created_at timestamp
@@ -3398,14 +3398,15 @@ def admin_seller_applications():
                 'username': app_data.get('username'),
                 'email': user.get('email') if user else '',
                 'ban_count': user.get('ban_count', 0) if user else 0,
-                'ban_permanent': user.get('ban_permanent', False) if user else False
+                'ban_permanent': user.get('ban_permanent', False) if user else False,
+                'account_status': user.get('account_status', 'active') if user else 'active'
             })
         
         # Sort in Python instead of Firestore
         applications.sort(key=lambda x: x.get('created_at') or '', reverse=True)
         
         pending_count = sum(1 for app in applications if app['status'] == 'pending')
-        approved_count = sum(1 for app in applications if app['status'] == 'approved')
+        approved_count = sum(1 for app in applications if app['status'] == 'approved' and app.get('account_status') != 'deleted')
         total_count = len(applications)
         
         print(f"✅ Loaded {total_count} applications ({pending_count} pending, {approved_count} approved)")
@@ -4575,9 +4576,7 @@ def admin_manage_seller(username):
                 'deleted_at': firestore_module.SERVER_TIMESTAMP,
                 'seller_approved': False,
             })
-            # Force logout by invalidating any active session
-            # (Sessions are server-side; the user will be blocked on next request)
-            message = f'Seller account @{username} has been deleted.'
+            message = f'Seller account @{username} has been moved to deleted section.'
 
         elif action == 'ban':
             ban_count = user_data.get('ban_count', 0) + 1
@@ -4610,6 +4609,73 @@ def admin_manage_seller(username):
 
     except Exception as e:
         print(f"Error managing seller: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/seller/undo-delete/<username>', methods=['POST'])
+def admin_undo_delete_seller(username):
+    """Restore a deleted seller account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_ref.update({
+            'account_status': 'active',
+            'delete_reason': firestore_module.DELETE_FIELD,
+            'deleted_at': firestore_module.DELETE_FIELD,
+            'seller_approved': True,
+        })
+
+        return jsonify({'success': True, 'message': f'Seller @{username} has been restored successfully.'})
+
+    except Exception as e:
+        print(f"Error restoring seller: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/seller/permanent-delete/<username>', methods=['POST'])
+def admin_permanent_delete_seller(username):
+    """Permanently delete a seller account and all associated data"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        # Delete user document
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Delete seller application
+        seller_apps = db.collection('seller_applications').where('username', '==', username).stream()
+        for app in seller_apps:
+            app.reference.delete()
+
+        # Delete all products from this seller
+        from firestore_db import products_v2_ref, product_variations_ref
+        seller_products = products_v2_ref.where('seller_username', '==', username).stream()
+        for prod in seller_products:
+            # Delete variations first
+            variations = product_variations_ref.where('parent_product_id', '==', prod.id).stream()
+            for var in variations:
+                var.reference.delete()
+            # Delete product
+            prod.reference.delete()
+
+        # Finally delete user
+        user_ref.delete()
+
+        return jsonify({'success': True, 'message': f'Seller @{username} and all associated data have been permanently deleted.'})
+
+    except Exception as e:
+        print(f"Error permanently deleting seller: {e}")
         import traceback; traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
