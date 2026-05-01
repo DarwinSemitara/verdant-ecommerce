@@ -50,9 +50,9 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.12);
       display: flex;
       flex-direction: column;
-      /* Fixed height showing ~4-5 items, scrollable */
-      max-height: 70vh;
-      min-height: 300px;
+      /* Fixed height showing 5 items, scrollable */
+      height: 75vh;
+      min-height: 400px;
       position: relative;
     }
     
@@ -71,9 +71,9 @@
 
     .cart-item {
       display: grid;
-      grid-template-columns: 40px 120px 2fr 1fr 120px 100px;
-      gap: 1rem;
-      padding: 1rem 1.5rem;
+      grid-template-columns: 44px 140px 2fr 1fr 140px 110px;
+      gap: 1.25rem;
+      padding: 1.25rem 2rem;
       border-bottom: 1px solid #e9ecef;
       align-items: center;
       transition: background 0.2s;
@@ -92,8 +92,8 @@
     }
 
     .cart-item-image {
-      width: 120px;
-      height: 120px;
+      width: 130px;
+      height: 130px;
       object-fit: cover;
       border-radius: 0.5rem;
       background: #f8f9fa;
@@ -530,7 +530,7 @@
                 {% endif %}
 
                 <div class="cart-item-details">
-                  <div class="cart-item-name">{{ item.name }}</div>
+                  <div class="cart-item-name" data-base-name="{{ item.name.split('—')[0].strip() if '—' in item.name else item.name }}">{{ item.name }}</div>
                   <div style="color:#6c757d;font-size:0.85rem;margin-top:0.2rem;">{{ item.seller_username }}</div>
                   {% if item.all_variations and item.all_variations|length > 0 %}
                     <div style="margin-top:0.5rem;">
@@ -899,7 +899,7 @@
             if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
             const nameEl = row.querySelector('.cart-item-name');
             if (nameEl && varName) {
-              const base = nameEl.textContent.includes('—') ? nameEl.textContent.split('—')[0].trim() : nameEl.textContent.trim();
+              const base = nameEl.dataset.baseName || (nameEl.textContent.includes('—') ? nameEl.textContent.split('—')[0].trim() : nameEl.textContent.trim());
               nameEl.textContent = base + ' — ' + varName;
             }
             if (newImage) {
