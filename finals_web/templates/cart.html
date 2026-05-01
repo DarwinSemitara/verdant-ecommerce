@@ -944,73 +944,20 @@
           total += lineTotal;
           const safeName = (item.name || 'Item').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           return `
-            <div style="display:flex;justify-content:space-between;align-items:center;margin:0.35rem 0;gap:0.75rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:0.5rem 0;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid #f0f0f0;">
               <div style="flex:1;min-width:0;">
                 <div style="font-weight:500;">${safeName}</div>
-                <div style="font-size:0.85rem;color:#6c757d;">₱${item.price.toFixed(2)} each</div>
+                <div style="font-size:0.85rem;color:#6c757d;">₱${item.price.toFixed(2)} × ${item.quantity}</div>
               </div>
-              <div style="display:flex;align-items:center;gap:0.5rem;">
-                <button type="button" class="quantity-btn checkout-qty-btn-minus" data-cart-id="${item.cartId}">-</button>
-                <input type="number" class="checkout-qty-input" data-cart-id="${item.cartId}"
-                       value="${item.quantity}" min="1"
-                       style="width:48px;text-align:center;border:1px solid #dee2e6;border-radius:0.375rem;padding:0.2rem;">
-                <button type="button" class="quantity-btn checkout-qty-btn-plus" data-cart-id="${item.cartId}">+</button>
-                <span class="checkout-line-total" data-cart-id="${item.cartId}" style="font-weight:600;min-width:70px;text-align:right;">₱${lineTotal.toFixed(2)}</span>
-              </div>
+              <span style="font-weight:600;min-width:70px;text-align:right;">₱${lineTotal.toFixed(2)}</span>
             </div>`;
         }).join('');
         checkoutItemsSummary.innerHTML = `
-          <div style="font-weight:600;margin-bottom:0.35rem;">${checkoutItemsData.length} item(s) selected</div>
+          <div style="font-weight:600;margin-bottom:0.5rem;color:#2d5016;">${checkoutItemsData.length} item(s)</div>
           <div>${linesHtml}</div>
-          <div style="border-top:1px solid #dee2e6;margin-top:0.75rem;padding-top:0.5rem;display:flex;justify-content:space-between;font-weight:600;">
-            <span>Total</span><span id="checkoutTotalAmount">₱${total.toFixed(2)}</span>
+          <div style="margin-top:0.75rem;padding-top:0.5rem;display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;">
+            <span>Total</span><span style="color:#2d5016;">₱${total.toFixed(2)}</span>
           </div>`;
-
-        // Bind qty controls in modal
-        checkoutItemsSummary.querySelectorAll('.checkout-qty-btn-minus, .checkout-qty-btn-plus').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const cid = parseInt(this.dataset.cartId);
-            const item = checkoutItemsData.find(i => i.cartId === cid);
-            if (!item) return;
-            const delta = this.classList.contains('checkout-qty-btn-plus') ? 1 : -1;
-            const newQty = item.quantity + delta;
-            if (newQty < 1) return;
-            updateCheckoutQty(cid, newQty, item);
-          });
-        });
-        checkoutItemsSummary.querySelectorAll('.checkout-qty-input').forEach(inp => {
-          inp.addEventListener('change', function() {
-            const cid = parseInt(this.dataset.cartId);
-            const item = checkoutItemsData.find(i => i.cartId === cid);
-            if (!item) return;
-            const newQty = parseInt(this.value);
-            if (isNaN(newQty) || newQty < 1) { this.value = item.quantity; return; }
-            updateCheckoutQty(cid, newQty, item);
-          });
-        });
-      }
-
-      function updateCheckoutQty(cartId, newQty, item) {
-        fetch(`/update_cart_quantity/${cartId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quantity: newQty })
-        })
-        .then(r => r.json())
-        .then(data => {
-          if (data && data.success) {
-            item.quantity = newQty;
-            const cb = checkoutCheckboxMap[cartId];
-            if (cb) cb.dataset.quantity = String(newQty);
-            // Also update main cart input
-            const mainInput = document.getElementById('qty-' + cartId);
-            if (mainInput) mainInput.value = newQty;
-            renderCheckoutSummary();
-          } else {
-            alert(data.message || 'Failed to update quantity');
-          }
-        })
-        .catch(() => alert('Error updating quantity'));
       }
 
       function openCheckoutModal() {
@@ -1188,9 +1135,26 @@
       <div id="checkoutItemsSummary" style="background:#f8f9fa;border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;color:#495057;"></div>
       <div style="margin-bottom:1.25rem;">
         <div style="font-weight:600;margin-bottom:0.5rem;">Payment method</div>
-        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #198754;background:#e9f7ef;cursor:pointer;">
+        <!-- Cash on Delivery — active -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #198754;background:#e9f7ef;cursor:pointer;margin-bottom:0.5rem;">
           <input type="radio" name="payment_method" value="cod" checked style="margin-top:0.15rem;" />
           <div><div style="font-weight:600;">Cash on Delivery</div><div style="font-size:0.85rem;color:#198754;">Pay when your order arrives</div></div>
+        </label>
+        <!-- GCash — coming soon -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #dee2e6;background:#f8f9fa;cursor:not-allowed;opacity:0.55;margin-bottom:0.5rem;">
+          <input type="radio" name="payment_method" value="gcash" disabled style="margin-top:0.15rem;" />
+          <div>
+            <div style="font-weight:600;">GCash</div>
+            <div style="font-size:0.85rem;color:#6c757d;">Coming soon</div>
+          </div>
+        </label>
+        <!-- Bank Transfer — coming soon -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #dee2e6;background:#f8f9fa;cursor:not-allowed;opacity:0.55;">
+          <input type="radio" name="payment_method" value="bank" disabled style="margin-top:0.15rem;" />
+          <div>
+            <div style="font-weight:600;">Bank Transfer</div>
+            <div style="font-size:0.85rem;color:#6c757d;">Coming soon</div>
+          </div>
         </label>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1rem;">
