@@ -50,17 +50,17 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.12);
       display: flex;
       flex-direction: column;
-      /* Fixed height showing 5 items, scrollable */
-      height: 75vh;
-      min-height: 400px;
+      /* Fixed height always — tall enough for 5 items */
+      height: calc(5 * 160px + 60px + 70px); /* 5 items + date header + footer */
+      min-height: 600px;
       position: relative;
     }
-    
+
     .cart-items-scroll {
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 2rem;
       flex: 1;
+      /* No padding here — padding on inner items */
     }
 
     .cart-items {
@@ -71,45 +71,64 @@
 
     .cart-item {
       display: grid;
-      grid-template-columns: 44px 140px 2fr 1fr 140px 110px;
-      gap: 1.25rem;
-      padding: 1.25rem 2rem;
+      grid-template-columns: 44px 130px 1fr 100px 130px 100px;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
       border-bottom: 1px solid #e9ecef;
       align-items: center;
+      min-height: 150px;
       transition: background 0.2s;
     }
-    
-    .cart-item.selected {
-      background: #f0f8f0;
-    }
 
-    .cart-item:hover {
-      background: #f8f9fa;
-    }
-
-    .cart-item:last-child {
-      border-bottom: none;
-    }
+    .cart-item.selected { background: #f0f8f0; }
+    .cart-item:hover { background: #f8f9fa; }
+    .cart-item:last-child { border-bottom: none; }
 
     .cart-item-image {
-      width: 130px;
-      height: 130px;
+      width: 120px;
+      height: 120px;
       object-fit: cover;
       border-radius: 0.5rem;
       background: #f8f9fa;
+      flex-shrink: 0;
     }
 
     .cart-item-details {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.4rem;
+      min-width: 0; /* allow text truncation */
     }
 
     .cart-item-name {
-      font-size: 1.2rem;
+      font-size: 1rem;
       font-weight: 600;
       color: #2d5016;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
+
+    /* Date group — NOT sticky, scrolls with content */
+    .date-group { margin-bottom: 0; }
+    .date-group-header {
+      padding: 0.6rem 1.5rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      /* removed position:sticky */
+    }
+    .date-group-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      color: #2d5016;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .date-group-checkbox { width: 18px; height: 18px; accent-color: #198754; cursor: pointer; }
+    .date-group-items { padding: 0; }
 
     .cart-item-description {
       color: #6c757d;
@@ -228,28 +247,6 @@
       font-weight: 700;
       color: #2d5016;
     }
-
-    /* Date group styles */
-    .date-group { margin-bottom: 0; }
-    .date-group-header {
-      padding: 0.75rem 1.5rem 0.5rem;
-      background: #f8f9fa;
-      border-bottom: 1px solid #e9ecef;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    .date-group-label {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 700;
-      color: #2d5016;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-    .date-group-checkbox { width: 18px; height: 18px; accent-color: #198754; cursor: pointer; }
-    .date-group-items { padding: 0; }
 
     /* Quantity controls on cart items */
     .cart-item-quantity {
@@ -593,7 +590,7 @@
           </div>
         </div>
       {% else %}
-        <div class="cart-empty">
+        <div class="cart-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 2rem;">
           <h2>Your cart is empty</h2>
           <p>Add some items to your cart to get started!</p>
           <a href="{{ url_for('homepage') }}" class="btn-primary" style="text-decoration:none;padding:1rem 2rem;width:auto;display:inline-block;">Browse Products</a>
@@ -899,10 +896,9 @@
             if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
             const nameEl = row.querySelector('.cart-item-name');
             if (nameEl && varName) {
-              const base = nameEl.dataset.baseName || (nameEl.textContent.includes('—') ? nameEl.textContent.split('—')[0].trim() : nameEl.textContent.trim());
-              nameEl.textContent = base + ' — ' + varName;
-            }
-            if (newImage) {
+              // Show only the variation name, not base — variation
+              nameEl.textContent = varName;
+            }            if (newImage) {
               const imgEl = document.getElementById('img-' + cartId);
               if (imgEl) {
                 if (imgEl.tagName === 'IMG') { imgEl.src = newImage; }

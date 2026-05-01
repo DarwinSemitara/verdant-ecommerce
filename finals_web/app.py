@@ -1420,7 +1420,8 @@ def cart():
                 stock = variation_data.get('stock', 0)
                 var_name = variation_data.get('variation_name') or variation_data.get('name', '')
                 parent_name = product_data.get('product_name', '')
-                name = f"{parent_name} — {var_name}" if parent_name and var_name else (parent_name or var_name)
+                # Show only the variation name in the cart
+                name = var_name if var_name else parent_name
                 image = variation_data.get('image', product_data.get('image', 'default.jpg'))
                 seller_username = product_data.get('seller_username', '')
                 all_variations_docs = list(product_variations_ref.where('parent_product_id', '==', product_id).stream())
