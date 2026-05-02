@@ -1205,9 +1205,9 @@ def add_to_cart_route(product_id):
                     'updated_at': firestore_module.SERVER_TIMESTAMP
                 })
         
-        # Get updated cart count
+        # Get updated cart count (number of unique items, not total quantity)
         cart_items = list(cart_ref.where('user_id', '==', user_id).stream())
-        cart_count = sum(item.to_dict().get('quantity', 0) for item in cart_items)
+        cart_count = len(cart_items)  # Count number of items, not quantities
         
         return {'success': True, 'message': 'Item added to cart', 'cart_count': cart_count}, 200
         
@@ -1289,7 +1289,7 @@ def get_cart_count():
         
         user_id = user['id']
         cart_items = list(cart_ref.where('user_id', '==', user_id).stream())
-        cart_count = sum(item.to_dict().get('quantity', 0) for item in cart_items)
+        cart_count = len(cart_items)  # Count number of items, not quantities
         
         return {'cart_count': cart_count}, 200
     except Exception as e:
