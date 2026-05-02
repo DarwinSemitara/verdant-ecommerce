@@ -84,8 +84,8 @@
     }
 
     .messages-page {
-      max-width: 1800px;
-      margin: 2rem auto;
+      max-width: 2200px;
+      margin: 2rem 1rem;
       padding: 2rem;
     }
 
@@ -365,18 +365,18 @@
     }
 
     .message-bubble.sent {
-      background: linear-gradient(135deg, #198754, #2d5016);
-      color: white;
+      background: #e9ecef;
+      color: #333;
       align-self: flex-end;
       border-bottom-right-radius: 0.25rem;
+      border: 1px solid #d1d5db;
     }
 
     .message-bubble.received {
-      background: #ffffff;
-      color: #333;
+      background: linear-gradient(135deg, #198754, #2d5016);
+      color: white;
       align-self: flex-start;
       border-bottom-left-radius: 0.25rem;
-      border: 1px solid #e9ecef;
     }
 
     .message-time {
@@ -402,7 +402,7 @@
       transition: color 0.2s;
     }
 
-    .message-bubble.sent .order-id {
+    .message-bubble.received .order-id {
       color: #60a5fa;
     }
 
@@ -410,7 +410,7 @@
       color: #2563eb;
     }
 
-    .message-bubble.sent .order-id:hover {
+    .message-bubble.received .order-id:hover {
       color: #93c5fd;
     }
 
@@ -910,7 +910,11 @@
           avatar.className = 'conversation-avatar';
           if (conv.profile_picture) {
             const img = document.createElement('img');
-            img.src = '/static/uploads/profiles/' + conv.profile_picture;
+            // Use the img() helper function to get the correct path
+            const profilePicPath = conv.profile_picture.startsWith('http') 
+              ? conv.profile_picture 
+              : '/static/uploads/profiles/' + conv.profile_picture;
+            img.src = profilePicPath;
             img.alt = conv.other_username;
             img.style.width = '100%';
             img.style.height = '100%';
@@ -1170,6 +1174,17 @@
             return;
           }
           sendMessage(text);
+        });
+
+        // Add Enter key handler to send message (Shift+Enter for new line)
+        messageInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text) {
+              sendMessage(text);
+            }
+          }
         });
       }
 
