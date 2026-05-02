@@ -127,7 +127,7 @@
         </thead>
         <tbody>
           {% for app in applications %}
-          <tr data-status="{{ app.account_status or app.status }}"
+          <tr data-status="{% if app.account_status == 'deleted' %}deleted{% else %}{{ app.status }}{% endif %}"
               data-username="{{ app.username }}"
               {% if app.ban_permanent %} class="ban-permanent-row"{% endif %}>
             <td>

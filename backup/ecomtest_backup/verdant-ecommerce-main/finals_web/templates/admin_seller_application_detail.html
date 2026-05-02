@@ -1,0 +1,174 @@
+{% extends 'base_admin.html' %}
+
+{% block extra_head %}
+<style>
+  .admin-placeholder-card {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+  }
+
+  .admin-placeholder-title {
+    color: #111827;
+  }
+
+  .admin-placeholder-card .text-muted {
+    color: #6b7280 !important;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('admin_seller_applications') }}" class="text-muted small">
+    &larr; Back to seller applications
+  </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="h5 text-dark mb-1">{{ application.store_name }}</h2>
+    <p class="text-muted small mb-0">
+      Submitted by {{ application.username }}{% if application.email %} &bull; {{ application.email }}{% endif %}
+      {% if application.created_at %}
+        &bull; {{ application.created_at.strftime('%Y-%m-%d %H:%M') }}
+      {% endif %}
+    </p>
+  </div>
+  <div>
+    {% if application.status == 'pending' %}
+      <span class="badge bg-warning text-dark text-uppercase small">Pending</span>
+    {% elif application.status == 'approved' %}
+      <span class="badge bg-success text-uppercase small">Approved</span>
+    {% else %}
+      <span class="badge bg-secondary text-uppercase small">Rejected</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="admin-placeholder-card h-100">
+      <div class="admin-placeholder-title">Store information</div>
+      <dl class="mb-0 small">
+        <dt class="text-muted">Store name</dt>
+        <dd class="text-dark mb-2">{{ application.store_name }}</dd>
+
+        <dt class="text-muted">Category</dt>
+        <dd class="text-dark mb-2">{{ application.store_category or 'N/A' }}</dd>
+
+        <dt class="text-muted">Store phone</dt>
+        <dd class="text-dark mb-2">{{ application.store_phone or 'Not provided' }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="admin-placeholder-card h-100">
+      <div class="admin-placeholder-title">Owner information</div>
+      <dl class="mb-0 small">
+        <dt class="text-muted">Username</dt>
+        <dd class="text-dark mb-2">{{ application.username }}</dd>
+
+        <dt class="text-muted">Full name</dt>
+        <dd class="text-dark mb-2">
+          {% if application.first_name or application.last_name %}
+            {{ (application.first_name or '') ~ ' ' ~ (application.last_name or '') }}
+          {% else %}
+            N/A
+          {% endif %}
+        </dd>
+
+        <dt class="text-muted">Email</dt>
+        <dd class="text-dark mb-2">{{ application.email or 'N/A' }}</dd>
+
+        <dt class="text-muted">Contact phone</dt>
+        <dd class="text-dark mb-2">{{ application.phone or 'Not provided' }}</dd>
+
+        <dt class="text-muted">Address</dt>
+        <dd class="text-dark mb-0">{{ application.address or 'Not provided' }}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<div class="admin-placeholder-card mb-3">
+  <div class="admin-placeholder-title">Store description</div>
+  <p class="small mb-0 text-dark">
+    {{ application.store_description or 'No store description provided.' }}
+  </p>
+</div>
+
+<div class="admin-placeholder-card mb-4">
+  <div class="admin-placeholder-title">Documents</div>
+  <ul class="small mb-0">
+    <li>
+      Business permit / DTI registration:
+      {% if application.business_permit %}
+        <a href="{{ application.business_permit if application.business_permit.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.business_permit) }}" target="_blank">View file</a>
+      {% else %}
+        <span class="text-muted">Not provided</span>
+      {% endif %}
+    </li>
+    <li>
+      Valid ID:
+      {% if application.valid_id %}
+        <a href="{{ application.valid_id if application.valid_id.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.valid_id) }}" target="_blank">View file</a>
+      {% else %}
+        <span class="text-muted">Not provided</span>
+      {% endif %}
+    </li>
+  </ul>
+</div>
+
+{% if application.status == 'pending' %}
+<div class="d-flex gap-2">
+  <button type="button" class="btn btn-success" onclick="handleApplication({{ application.user_id }}, 'approve', this)">
+    Approve application
+  </button>
+  <button type="button" class="btn btn-outline-danger" onclick="handleApplication({{ application.user_id }}, 'reject', this)">
+    Reject application
+  </button>
+</div>
+{% endif %}
+
+<script>
+  function handleApplication(userId, action, btn) {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${actionText} this seller application?`)) {
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+    }
+
+    fetch(`/admin/seller-application/${userId}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = "{{ url_for('admin_seller_applications') }}";
+      } else {
+        alert(data.message || 'An error occurred.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = action === 'approve' ? 'Approve application' : 'Reject application';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error updating application:', error);
+      alert('An error occurred. Please try again.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = action === 'approve' ? 'Approve application' : 'Reject application';
+      }
+    });
+  }
+</script>
+{% endblock %}

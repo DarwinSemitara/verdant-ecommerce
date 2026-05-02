@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Settings - Verdant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%);
+      min-height: 100vh;
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-menu-item {
+      display: block;
+      padding: 0.875rem 1.25rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    /* Profile Overview Section */
+    .profile-overview-card {
+      background: #fff;
+      border-radius: 1rem;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border: 1px solid rgba(45, 80, 22, 0.08);
+      margin-bottom: 2rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .profile-overview-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .profile-header-section {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid #f1f3f5;
+    }
+
+    .profile-avatar-section {
+      position: relative;
+    }
+
+    .profile-avatar-wrapper {
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .profile-avatar-wrapper:hover {
+      transform: scale(1.05);
+    }
+
+    .profile-avatar-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .profile-avatar-wrapper:hover .profile-avatar-overlay {
+      opacity: 1;
+    }
+
+    .upload-text {
+      font-size: 0.75rem;
+      color: white;
+      font-weight: 500;
+    }
+
+    .profile-avatar-img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #e9ecef;
+    }
+
+    .profile-avatar-placeholder {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #6c757d;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 600;
+      border: 2px solid #e9ecef;
+    }
+
+    .profile-info-section h2 {
+      margin: 0 0 0.5rem 0;
+      color: #212529;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .profile-email {
+      color: #6c757d;
+      margin: 0 0 0.25rem 0;
+      font-size: 0.95rem;
+    }
+
+    .profile-member-since {
+      color: #6c757d;
+      margin: 0;
+      font-size: 0.85rem;
+    }
+
+    .account-name-with-status {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #6c757d;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    .status-indicator.status-active {
+      background: #28a745;
+    }
+
+    .status-indicator.status-away {
+      background: #ffc107;
+    }
+
+    .status-indicator.status-offline {
+      background: #6c757d;
+    }
+
+    .confirm-btn {
+      background: none;
+      border: none;
+      color: #007bff;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      font-family: inherit;
+      border-radius: 0;
+    }
+
+    .confirm-btn:hover {
+      color: #0056b3;
+      text-decoration: none;
+    }
+
+    .confirm-btn:disabled {
+      color: #28a745;
+      text-decoration: none;
+      cursor: not-allowed;
+    }
+
+    .forgot-password-link {
+      color: #6c757d;
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-left: 1rem;
+      align-self: center;
+    }
+
+    .forgot-password-link:hover {
+      color: #495057;
+      text-decoration: underline;
+    }
+
+    .security-item.disabled {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .security-item.disabled .security-icon {
+      filter: grayscale(100%);
+    }
+
+    .security-status.inactive {
+      background: #6c757d;
+      color: white;
+    }
+
+    .security-item.disabled button {
+      cursor: not-allowed !important;
+    }
+
+    .profile-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: #ffffff;
+      border-radius: 0.75rem;
+      border: 1px solid #e9ecef;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .stat-item:hover {
+      background: #f8f9fa;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #495057;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      display: block;
+      font-size: 0.85rem;
+      color: #6c757d;
+      font-weight: 500;
+    }
+
+    .status-active {
+      color: #28a745;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-active::before {
+      content: '●';
+      color: #28a745;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Location Section */
+    .location-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 0.75rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .location-section h3 {
+      margin: 0 0 1rem 0;
+      color: #212529;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .address-display {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: white;
+      border-radius: 0.5rem;
+      border: 1px solid #e9ecef;
+    }
+
+    .address-display .info-label {
+      font-weight: 600;
+      color: #495057;
+      font-size: 0.9rem;
+    }
+
+    .address-display .info-value {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+
+    .map-container {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      border: 1px solid #dee2e6;
+    }
+
+    #settingsMap {
+      height: 300px;
+      background: #f8f9fa;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      position: relative;
+      border: 1px solid #dee2e6;
+    }
+
+    #settingsMap.loading {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .map-controls {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .map-controls button {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
+    }
+
+    .map-controls button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .location-status {
+      font-size: 0.875rem;
+      color: #6c757d;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .location-status.success {
+      color: #155724;
+      background: #d4edda;
+      border-color: #c3e6cb;
+    }
+
+    .location-status.error {
+      color: #721c24;
+      background: #f8d7da;
+      border-color: #f5c6cb;
+    }
+
+    @media (max-width: 768px) {
+      .profile-header-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+
+      .profile-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .address-display {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+    }
+  </style>
+</head>
+<body class="has-main-header">
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('homepage') }}" class="nav-logo">Verdant</a>
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('cart') }}" class="icon-button" aria-label="Cart" style="text-decoration: none; color: inherit;" id="cartButton">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
+            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <span id="cartCount" class="badge">0</span>
+        </a>
+        {% include 'notification_component.html' %}
+        <a href="{{ url_for('user_messages') }}" class="icon-button" aria-label="Messages" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 5h16v10H6l-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <button id="helpButton" class="icon-button" aria-label="Help">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1" fill="currentColor"/>
+          </svg>
+          <span>Help</span>
+        </button>
+        <div class="profile-dropdown">
+          <button class="profile-btn" aria-label="Profile" id="profileButton">
+            {% if user.profile_picture %}
+              <img alt="Profile" src="{{ img(user.profile_picture, 'profiles') }}" style="width: 100%; height: 100%; object-fit: cover;" />
+            {% else %}
+              <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+            {% endif %}
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
+            <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
+            <div class="profile-menu-divider"></div>
+            <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+              <button type="submit" class="profile-menu-item logout">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <div class="settings-container">
+      <div class="settings-header">
+        <h1>Account Settings</h1>
+        <p>Manage your account preferences and security settings</p>
+      </div>
+      
+      <div class="settings-tabs">
+        <button class="tab-btn active" data-tab="profile">Profile</button>
+        <button class="tab-btn" data-tab="security">Security</button>
+      </div>
+      
+      <div class="settings-main-layout">
+        <!-- Profile Overview Section -->
+        <div class="profile-overview-card" data-latitude="{{ user.latitude }}" data-longitude="{{ user.longitude }}">
+          <div class="profile-header-section">
+            <div class="profile-avatar-section">
+              <div class="profile-avatar-wrapper" onclick="document.getElementById('profilePictureInput').click()">
+                {% if user.profile_picture %}
+                  <img src="{{ img(user.profile_picture, 'profiles') }}" alt="Profile Picture" class="profile-avatar-img">
+                {% else %}
+                  <div class="profile-avatar-placeholder">{{ user.username[0]|upper }}</div>
+                {% endif %}
+                <div class="profile-avatar-overlay">
+                  <div class="upload-text">Update Photo</div>
+                </div>
+              </div>
+              <input type="file" id="profilePictureInput" name="profile_picture" accept="image/*" style="display: none;">
+            </div>
+            <div class="profile-info-section">
+              <div class="account-name-with-status">
+                <h2>{{ user.username }}</h2>
+                <div class="status-indicator status-active" title="Account Active"></div>
+              </div>
+              <p class="profile-email">{{ user.email }}</p>
+              <p class="profile-member-since">Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'N/A' }}</p>
+            </div>
+          </div>
+          
+          <div class="profile-stats-grid">
+            <div class="stat-item">
+              <span class="stat-number">{{ user.total_orders or 0 }}</span>
+              <span class="stat-label">Total Orders</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">{{ user.delivered_orders or 0 }}</span>
+              <span class="stat-label">Delivered</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number" id="settingsCartCount">Loading...</span>
+              <span class="stat-label">Cart Items</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Settings Content -->
+        <div class="settings-content-wrapper">
+          <div class="settings-content">
+        <!-- Profile Tab -->
+        <div class="tab-content active" id="profile-tab">
+          <div class="settings-card">
+            <h2>Personal Information</h2>
+            <form id="profileForm" class="settings-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="username">Username</label>
+                  <input type="text" id="username" name="username" value="{{ user.username }}" disabled>
+                  <p class="form-note">Username cannot be changed</p>
+                </div>
+                
+                <div class="form-group">
+                  <label for="email">Email Address</label>
+                  <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="full_name">Full Name</label>
+                  <div class="info-display">
+                    <div class="info-value">{{ user.full_name or 'Not provided' }}</div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="phone">Phone Number</label>
+                  <input type="tel" id="phone" name="phone" value="{{ user.phone or '' }}" placeholder="09XXXXXXXXX">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="address">Home Address</label>
+                <textarea id="address" name="address" rows="3" placeholder="House number, street, barangay, city, province, country">{{ user.address or '' }}</textarea>
+              </div>
+              
+              <!-- Location Map Section -->
+              <div class="location-section">
+                <h3>Location Settings</h3>
+                <div class="address-display">
+                  <span class="info-label">Current Address:</span>
+                  <span class="info-value">{{ user.address or 'No address set' }}</span>
+                </div>
+                <div class="map-container">
+                  <div id="settingsMap" class="map-placeholder"></div>
+                  <div class="map-controls">
+                    <button type="button" id="getCurrentLocationBtn" class="btn btn-outline-primary btn-sm">
+                      Get Current Location
+                    </button>
+                    <button type="button" id="updateLocationBtn" class="btn btn-success btn-sm">
+                      Update Location
+                    </button>
+                  </div>
+                  <div id="locationStatus" class="location-status"></div>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Security Tab -->
+        <div class="tab-content" id="security-tab">
+          <div class="settings-card">
+            <h2>Change Password</h2>
+            <form id="passwordForm" class="settings-form">
+              <div class="form-group">
+                <label for="current_password">Current Password</label>
+                <input type="password" id="current_password" name="current_password" required placeholder="Enter current password">
+                <button type="button" id="confirmCurrentPassword" class="confirm-btn">Confirm</button>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="new_password">New Password</label>
+                  <input type="password" id="new_password" name="new_password" required placeholder="Enter new password" disabled>
+                  <p class="form-note">Must be at least 8 characters long</p>
+                </div>
+                
+                <div class="form-group">
+                  <label for="confirm_password">Confirm New Password</label>
+                  <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm new password" disabled>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="updatePasswordBtn" disabled>Update Password</button>
+                <a href="#" class="forgot-password-link">Forgot Password?</a>
+              </div>
+            </form>
+          </div>
+          
+          <div class="settings-card">
+            <h2>Account Security</h2>
+            <div class="security-info">
+              <div class="security-item">
+                <div class="security-icon">🖥️</div>
+                <div class="security-details">
+                  <h3>Devices</h3>
+                  <p>Manage and monitor devices signed into your account</p>
+                  <button type="button" class="security-action-btn" onclick="viewDevices()">View Devices</button>
+                </div>
+                <div class="security-status active">1 Active</div>
+              </div>
+              
+              <div class="security-item disabled">
+                <div class="security-icon">🔐</div>
+                <div class="security-details">
+                  <h3>Password Protection</h3>
+                  <p>Enhanced password security features (Coming Soon)</p>
+                  <button type="button" class="security-action-btn" disabled>Configure</button>
+                </div>
+                <div class="security-status inactive">Disabled</div>
+              </div>
+              
+              <div class="security-item">
+                <div class="security-icon">⚙️</div>
+                <div class="security-details">
+                  <h3>Account Management</h3>
+                  <p>Permanently delete your account and all associated data</p>
+                  <button type="button" class="security-action-btn danger" onclick="deleteAccount()">Delete Account</button>
+                </div>
+                <div class="security-status">Manage</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- Devices Modal -->
+<div id="devicesModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Device Management</h2>
+      <button type="button" class="modal-close" onclick="closeDevicesModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="current-device">
+        <h3>Current Device</h3>
+        <div class="device-info" id="currentDeviceInfo">
+          <div class="loading">Loading device information...</div>
+        </div>
+      </div>
+      
+      <div class="device-history">
+        <h3>Login History</h3>
+        <div class="history-list">
+          <div class="history-item">
+            <div class="history-info">
+              <div class="history-device">Current Session</div>
+              <div class="history-time" id="currentLoginTime">Just now</div>
+              <div class="history-location" id="currentLocation">Detecting location...</div>
+            </div>
+            <div class="history-status active">Active</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDevicesModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteAccountModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Delete Account</h2>
+      <button type="button" class="modal-close" onclick="closeDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="warning-message">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">
+          <h3>Warning: This action is permanent!</h3>
+          <p>Deleting your account will permanently remove:</p>
+          <ul>
+            <li>All your order history and records</li>
+            <li>Your profile information and preferences</li>
+            <li>Your saved addresses and payment methods</li>
+            <li>Your cart items and wishlist</li>
+            <li>Your messages and conversations</li>
+          </ul>
+          <p><strong>This action cannot be undone and your data cannot be recovered.</strong></p>
+        </div>
+      </div>
+      
+      <div class="restriction-notice" id="restrictionNotice" style="display: none;">
+        <div class="restriction-icon">🚫</div>
+        <div class="restriction-text">
+          <h3>Cannot Delete Account</h3>
+          <p id="restrictionMessage">You have pending orders that must be completed or cancelled before deleting your account.</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDeleteAccount()">Delete Account Permanently</button>
+    </div>
+  </div>
+</div>
+</main>
+
+<style>
+/* Settings Page Styles */
+.main-content {
+  max-width: 1800px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.settings-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.settings-main-layout {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  align-items: flex-start;
+}
+
+.profile-overview-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      height: fit-content;
+      width: 350px;
+      margin-top: 0;
+      transition: none;
+    }
+
+.profile-overview-card:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.settings-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  overflow: visible;
+  min-height: 600px;
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.settings-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1800px;
+  position: relative;
+  left: 0;
+  top: 0;
+}
+
+.settings-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.settings-header h1 {
+  color: #2d5016;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.settings-header p {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.settings-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 1rem 2rem;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.tab-btn:hover {
+  border-color: #2d5016;
+  color: #2d5016;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #2d5016, #4a7c23);
+  border-color: #2d5016;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.settings-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  border: 1px solid rgba(45, 80, 22, 0.1);
+}
+
+.settings-card h2 {
+  color: #2d5016;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f5;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e9ecef;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2d5016;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(45, 80, 22, 0.15);
+  background: white;
+}
+
+.form-group input:disabled {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.form-group textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.form-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.info-display {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  min-height: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2d5016, #4a7c23);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+}
+
+.security-info {
+  display: grid;
+  gap: 1rem;
+}
+
+.security-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f8f9fa;
+  border-radius: 0.75rem;
+  border: 1px solid #e9ecef;
+  transition: all 0.2s ease;
+}
+
+.security-item:hover {
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.security-icon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  background: #ffffff;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9ecef;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.security-details {
+  flex: 1;
+}
+
+.security-details h3 {
+  margin: 0 0 0.25rem 0;
+  color: #212529;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.security-details p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.security-status {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  text-align: center;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.security-status.active {
+  background: #e8f5e8;
+  color: #2d5016;
+  border: 1px solid #c8e6c9;
+}
+
+.security-status.inactive {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e9ecef;
+}
+
+.security-action-btn {
+  background: none;
+  border: 1px solid #007bff;
+  color: #007bff;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.security-action-btn:hover:not(:disabled) {
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+}
+
+.security-action-btn:disabled {
+  border-color: #6c757d;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.security-action-btn.danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.security-action-btn.danger:hover:not(:disabled) {
+  background: #dc3545;
+  color: white;
+}
+
+/* Delete Account Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 1rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #dc3545;
+  font-size: 1.5rem;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #495057;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.warning-message {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 0.5rem;
+}
+
+.warning-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.warning-text h3 {
+  margin: 0 0 0.5rem 0;
+  color: #dc3545;
+}
+
+.warning-text p {
+  margin: 0.5rem 0;
+  color: #495057;
+}
+
+.warning-text ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.warning-text li {
+  margin-bottom: 0.25rem;
+  color: #495057;
+}
+
+.restriction-notice {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+}
+
+.restriction-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.restriction-text h3 {
+  margin: 0 0 0.5rem 0;
+  color: #6c757d;
+}
+
+.restriction-text p {
+  margin: 0;
+  color: #495057;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  border-color: #545b62;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+  border-color: #bd2130;
+}
+
+/* Devices Modal Styles */
+.current-device, .device-history {
+  margin-bottom: 2rem;
+}
+
+.current-device h3, .device-history h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.device-info {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.device-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.device-detail:last-child {
+  border-bottom: none;
+}
+
+.device-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.device-value {
+  color: #6c757d;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.history-list {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.history-item:last-child {
+  margin-bottom: 0;
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-device {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.history-time, .history-location {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.125rem;
+}
+
+.history-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.history-status.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.loading {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 0 1rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .security-item {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Tab switching
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Remove active class from all buttons and contents
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      // Add active class to clicked button and corresponding content
+      btn.classList.add('active');
+      const tabId = btn.getAttribute('data-tab') + '-tab';
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+  
+  // Form submissions
+  const profileForm = document.getElementById('profileForm');
+  if (profileForm) {
+    profileForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Add form submission logic here
+      alert('Profile updated successfully!');
+    });
+  }
+  
+  const passwordForm = document.getElementById('passwordForm');
+  if (passwordForm) {
+    const currentPasswordInput = document.getElementById('current_password');
+    const newPasswordInput = document.getElementById('new_password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    const confirmBtn = document.getElementById('confirmCurrentPassword');
+    const updatePasswordBtn = document.getElementById('updatePasswordBtn');
+
+    // Confirm current password functionality
+    confirmBtn.addEventListener('click', function() {
+      const currentPassword = currentPasswordInput.value;
+      
+      if (!currentPassword) {
+        alert('Please enter your current password');
+        return;
+      }
+
+      // Verify current password
+      fetch('/api/verify_current_password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          current_password: currentPassword
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Enable new password fields
+          newPasswordInput.disabled = false;
+          confirmPasswordInput.disabled = false;
+          updatePasswordBtn.disabled = false;
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Confirmed';
+          confirmBtn.style.color = '#28a745';
+          confirmBtn.style.textDecoration = 'none';
+          currentPasswordInput.disabled = true;
+        } else {
+          alert('Current password is incorrect');
+        }
+      })
+      .catch(error => {
+        console.error('Error verifying password:', error);
+        alert('Error verifying password. Please try again.');
+      });
+    });
+
+    passwordForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const newPassword = newPasswordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+      
+      if (newPassword.length < 8) {
+        alert('Password must be at least 8 characters long!');
+        return;
+      }
+      
+      if (newPassword !== confirmPassword) {
+        alert('New passwords do not match!');
+        return;
+      }
+      
+      // Add password update logic here
+      alert('Password updated successfully!');
+      this.reset();
+      
+      // Reset form state
+      newPasswordInput.disabled = true;
+      confirmPasswordInput.disabled = true;
+      updatePasswordBtn.disabled = true;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm';
+      confirmBtn.style.color = '#007bff';
+      confirmBtn.style.textDecoration = 'underline';
+      currentPasswordInput.disabled = false;
+    });
+  }
+  
+      // Load cart count
+      fetch('{{ url_for("get_cart_count") }}')
+        .then(response => response.json())
+        .then(data => {
+          const cartCount = document.getElementById('cartCount');
+          const settingsCartCount = document.getElementById('settingsCartCount');
+          
+          if (cartCount) {
+            if (data.cart_count > 0) {
+              cartCount.textContent = data.cart_count;
+              cartCount.style.display = 'flex';
+            } else {
+              cartCount.style.display = 'none';
+            }
+          }
+          
+          if (settingsCartCount) {
+            settingsCartCount.textContent = data.cart_count || '0';
+          }
+        });
+
+      // Profile picture upload
+      const profilePictureInput = document.getElementById('profilePictureInput');
+      if (profilePictureInput) {
+        profilePictureInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+              alert('Please select a valid image file (JPEG, PNG, or GIF).');
+              return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              alert('File size must be less than 5MB.');
+              return;
+            }
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('profile_picture', file);
+
+            // Upload profile picture
+            fetch('/update_profile', {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            })
+            .then(response => {
+              if (!response.ok) {
+                return response.json().then(err => {
+                  throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                });
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (data.success) {
+                // Update avatar preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                  const avatarWrapper = document.querySelector('.profile-avatar-wrapper');
+                  if (avatarWrapper) {
+                    avatarWrapper.innerHTML = `
+                      <img src="${e.target.result}" alt="Profile Picture" class="profile-avatar-img">
+                      <div class="profile-avatar-overlay">
+                        <div class="upload-text">Update Photo</div>
+                      </div>
+                    `;
+                  }
+                };
+                reader.readAsDataURL(file);
+
+                // Update all profile pictures in the UI
+                updateProfilePicturesInUI(data.profile_picture);
+                
+                alert('Profile picture updated successfully!');
+              } else {
+                alert(data.message || 'Failed to update profile picture.');
+              }
+            })
+            .catch(error => {
+              console.error('Error uploading profile picture:', error);
+              alert('Error updating profile picture: ' + error.message);
+            });
+          }
+        });
+      }
+
+      function updateProfilePicturesInUI(profilePicture) {
+        // Update all profile pictures in navigation dropdowns
+        const profileButtons = document.querySelectorAll('.profile-btn img');
+        profileButtons.forEach(img => {
+          img.src = profilePicture.startsWith('http') ? profilePicture : "{{ url_for('static', filename='uploads/profiles/') }}" + profilePicture;
+        });
+
+        // Update session data for profile picture
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('profile_picture', profilePicture);
+        }
+      }
+
+      // Location functionality
+      const settingsMap = document.getElementById('settingsMap');
+      const getCurrentLocationBtn = document.getElementById('getCurrentLocationBtn');
+      const updateLocationBtn = document.getElementById('updateLocationBtn');
+      const locationStatus = document.getElementById('locationStatus');
+
+      let userLatitude = null;
+      let userLongitude = null;
+      let map = null;
+      let currentMarker = null;
+
+      // Set user coordinates from data attributes
+      const profileOverview = document.querySelector('.profile-overview-card');
+      if (profileOverview) {
+        userLatitude = profileOverview.dataset.latitude ? parseFloat(profileOverview.dataset.latitude) : null;
+        userLongitude = profileOverview.dataset.longitude ? parseFloat(profileOverview.dataset.longitude) : null;
+      }
+
+      // Initialize map
+      function initializeMap() {
+        if (!settingsMap) return;
+
+        const defaultCoords = [14.5995, 120.9842]; // Manila as default
+        
+        // Initialize Leaflet map
+        map = L.map('settingsMap').setView(defaultCoords, 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Add click handler to set location
+        map.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          
+          setMapLocation(lat, lng);
+        });
+
+        // Show existing location if available
+        if (userLatitude && userLongitude) {
+          showLocationOnMap(userLatitude, userLongitude);
+        }
+      }
+
+      function setMapLocation(lat, lng) {
+        userLatitude = lat;
+        userLongitude = lng;
+        
+        // Remove existing marker if any
+        if (currentMarker) {
+          map.removeLayer(currentMarker);
+        }
+        
+        // Add new marker
+        currentMarker = L.marker([lat, lng]).addTo(map);
+        
+        // Update map view to new location
+        map.setView([lat, lng], 15);
+        
+        // Get place name using reverse geocoding
+        updateLocationStatus('Getting location details...', 'success');
+        
+        // Use Nominatim reverse geocoding API
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.display_name) {
+              const placeName = data.display_name;
+              updateLocationStatus(`Location: ${placeName}`, 'success');
+              
+              // Update the popup with place name
+              currentMarker.bindPopup(placeName).openPopup();
+            } else {
+              updateLocationStatus('Location selected. Click "Update Location" to save.', 'success');
+            }
+          })
+          .catch(error => {
+            console.error('Error getting place name:', error);
+            updateLocationStatus('Location selected. Click "Update Location" to save.', 'success');
+          });
+      }
+
+      function showLocationOnMap(lat, lng) {
+        // Remove existing marker if any
+        if (currentMarker) {
+          map.removeLayer(currentMarker);
+        }
+        
+        // Add marker for current location
+        currentMarker = L.marker([lat, lng]).addTo(map);
+        
+        // Update map view to show the location
+        map.setView([lat, lng], 15);
+        
+        // Get place name for existing location
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.display_name) {
+              const placeName = data.display_name;
+              currentMarker.bindPopup(placeName).openPopup();
+            }
+          })
+          .catch(error => {
+            console.error('Error getting place name:', error);
+          });
+      }
+
+      function updateLocationStatus(message, type = '') {
+        if (locationStatus) {
+          locationStatus.textContent = message;
+          locationStatus.className = 'location-status ' + type;
+        }
+      }
+
+      // Get current location
+      if (getCurrentLocationBtn) {
+        getCurrentLocationBtn.addEventListener('click', function() {
+          if (!navigator.geolocation) {
+            updateLocationStatus('Geolocation is not supported by your browser.', 'error');
+            return;
+          }
+
+          updateLocationStatus('Getting your current location...');
+          settingsMap.classList.add('loading');
+
+          navigator.geolocation.getCurrentPosition(
+            function(position) {
+              settingsMap.classList.remove('loading');
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+              
+              setMapLocation(lat, lng);
+              updateLocationStatus('Current location detected. Click "Update Location" to save.', 'success');
+            },
+            function(error) {
+              settingsMap.classList.remove('loading');
+              let errorMessage = 'Unable to get your location.';
+              
+              switch(error.code) {
+                case error.PERMISSION_DENIED:
+                  errorMessage = 'Location access denied. Please enable location services.';
+                  break;
+                case error.POSITION_UNAVAILABLE:
+                  errorMessage = 'Location information is unavailable.';
+                  break;
+                case error.TIMEOUT:
+                  errorMessage = 'Location request timed out.';
+                  break;
+              }
+              
+              updateLocationStatus(errorMessage, 'error');
+            }
+          );
+        });
+      }
+
+      // Update location in database
+      if (updateLocationBtn) {
+        updateLocationBtn.addEventListener('click', function() {
+          if (!userLatitude || !userLongitude) {
+            updateLocationStatus('Please select a location first.', 'error');
+            return;
+          }
+
+          updateLocationStatus('Updating your location...');
+          updateLocationBtn.disabled = true;
+
+          fetch('/api/update_location', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              latitude: userLatitude,
+              longitude: userLongitude
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            updateLocationBtn.disabled = false;
+            
+            if (data.success) {
+              updateLocationStatus('Location updated successfully!', 'success');
+              if (data.address) {
+                const addressElement = document.querySelector('.address-display .info-value');
+                if (addressElement) {
+                  addressElement.textContent = data.address;
+                }
+                // Also update the address textarea
+                const addressTextarea = document.getElementById('address');
+                if (addressTextarea) {
+                  addressTextarea.value = data.address;
+                }
+              }
+            } else {
+              updateLocationStatus(data.message || 'Failed to update location.', 'error');
+            }
+          })
+          .catch(error => {
+            updateLocationBtn.disabled = false;
+            updateLocationStatus('Error updating location. Please try again.', 'error');
+            console.error('Location update error:', error);
+          });
+        });
+      }
+
+      // Initialize map
+      initializeMap();
+
+      // Security functions
+      function viewDevices() {
+        console.log('View devices function called');
+        
+        // Show the modal
+        const modal = document.getElementById('devicesModal');
+        modal.style.display = 'flex';
+        
+        // Get device information
+        const deviceInfo = {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine
+        };
+        
+        console.log('Device info:', deviceInfo);
+        
+        // Parse user agent to get browser and OS info
+        let browserInfo = 'Unknown Browser';
+        let osInfo = 'Unknown OS';
+        
+        if (deviceInfo.userAgent.includes('Chrome')) {
+          browserInfo = 'Chrome';
+        } else if (deviceInfo.userAgent.includes('Firefox')) {
+          browserInfo = 'Firefox';
+        } else if (deviceInfo.userAgent.includes('Safari')) {
+          browserInfo = 'Safari';
+        } else if (deviceInfo.userAgent.includes('Edge')) {
+          browserInfo = 'Edge';
+        }
+        
+        if (deviceInfo.userAgent.includes('Windows')) {
+          osInfo = 'Windows';
+        } else if (deviceInfo.userAgent.includes('Mac')) {
+          osInfo = 'macOS';
+        } else if (deviceInfo.userAgent.includes('Linux')) {
+          osInfo = 'Linux';
+        } else if (deviceInfo.userAgent.includes('Android')) {
+          osInfo = 'Android';
+        } else if (deviceInfo.userAgent.includes('iOS')) {
+          osInfo = 'iOS';
+        }
+        
+        console.log('Browser:', browserInfo, 'OS:', osInfo);
+        
+        // Update device info in modal
+        const deviceInfoContainer = document.getElementById('currentDeviceInfo');
+        deviceInfoContainer.innerHTML = `
+          <div class="device-detail">
+            <span class="device-label">Browser:</span>
+            <span class="device-value">${browserInfo}</span>
+          </div>
+          <div class="device-detail">
+            <span class="device-label">Operating System:</span>
+            <span class="device-value">${osInfo}</span>
+          </div>
+          <div class="device-detail">
+            <span class="device-label">Platform:</span>
+            <span class="device-value">${deviceInfo.platform}</span>
+          </div>
+          <div class="device-detail">
+            <span class="device-label">Language:</span>
+            <span class="device-value">${deviceInfo.language}</span>
+          </div>
+          <div class="device-detail">
+            <span class="device-label">Online Status:</span>
+            <span class="device-value">${deviceInfo.onLine ? 'Online' : 'Offline'}</span>
+          </div>
+          <div class="device-detail">
+            <span class="device-label">Cookies Enabled:</span>
+            <span class="device-value">${deviceInfo.cookieEnabled ? 'Yes' : 'No'}</span>
+          </div>
+        `;
+        
+        // Get IP address and location
+        fetch('https://api.ipify.org?format=json')
+          .then(response => response.json())
+          .then(ipData => {
+            const ipAddress = ipData.ip || 'Unknown';
+            console.log('IP Address:', ipAddress);
+            
+            // Add IP to device info
+            const deviceInfoContainer = document.getElementById('currentDeviceInfo');
+            const existingContent = deviceInfoContainer.innerHTML;
+            deviceInfoContainer.innerHTML = existingContent + `
+              <div class="device-detail">
+                <span class="device-label">IP Address:</span>
+                <span class="device-value">${ipAddress}</span>
+              </div>
+            `;
+            
+            // Update location
+            const locationElement = document.getElementById('currentLocation');
+            locationElement.textContent = `IP: ${ipAddress}`;
+            
+            // Update current time
+            const timeElement = document.getElementById('currentLoginTime');
+            timeElement.textContent = new Date().toLocaleString();
+          })
+          .catch(error => {
+            console.error('Error getting IP:', error);
+            
+            // Update location with error
+            const locationElement = document.getElementById('currentLocation');
+            locationElement.textContent = 'IP: Unable to retrieve';
+            
+            // Update current time
+            const timeElement = document.getElementById('currentLoginTime');
+            timeElement.textContent = new Date().toLocaleString();
+          });
+      }
+
+      function closeDevicesModal() {
+        const modal = document.getElementById('devicesModal');
+        modal.style.display = 'none';
+      }
+
+      function deleteAccount() {
+        try {
+          console.log('Delete account function called');
+          
+          // Show the modal
+          const modal = document.getElementById('deleteAccountModal');
+          if (!modal) {
+            console.error('Delete account modal not found');
+            return;
+          }
+          modal.style.display = 'flex';
+          
+          // Check for pending orders
+          fetch('/api/check_pending_orders', {
+            method: 'GET',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Pending orders data:', data);
+            
+            const restrictionNotice = document.getElementById('restrictionNotice');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            const restrictionMessage = document.getElementById('restrictionMessage');
+            
+            if (!restrictionNotice || !confirmDeleteBtn || !restrictionMessage) {
+              console.error('Modal elements not found');
+              return;
+            }
+            
+            if (data.has_pending_orders) {
+              // Show restriction notice
+              restrictionNotice.style.display = 'flex';
+              confirmDeleteBtn.disabled = true;
+              confirmDeleteBtn.style.opacity = '0.6';
+              confirmDeleteBtn.style.cursor = 'not-allowed';
+              
+              if (data.pending_count === 1) {
+                restrictionMessage.textContent = `You have ${data.pending_count} pending order that must be completed or cancelled before deleting your account.`;
+              } else {
+                restrictionMessage.textContent = `You have ${data.pending_count} pending orders that must be completed or cancelled before deleting your account.`;
+              }
+            } else {
+              // Hide restriction notice
+              restrictionNotice.style.display = 'none';
+              confirmDeleteBtn.disabled = false;
+              confirmDeleteBtn.style.opacity = '1';
+              confirmDeleteBtn.style.cursor = 'pointer';
+            }
+          })
+          .catch(error => {
+            console.error('Error checking pending orders:', error);
+            // Enable deletion anyway if there's an error
+            const restrictionNotice = document.getElementById('restrictionNotice');
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            
+            if (restrictionNotice && confirmDeleteBtn) {
+              restrictionNotice.style.display = 'none';
+              confirmDeleteBtn.disabled = false;
+              confirmDeleteBtn.style.opacity = '1';
+              confirmDeleteBtn.style.cursor = 'pointer';
+            }
+          });
+        } catch (error) {
+          console.error('Error in deleteAccount function:', error);
+        }
+      }
+
+      function closeDeleteModal() {
+        const modal = document.getElementById('deleteAccountModal');
+        modal.style.display = 'none';
+      }
+
+      function confirmDeleteAccount() {
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        
+        if (confirmDeleteBtn.disabled) {
+          return;
+        }
+        
+        // Final confirmation
+        const finalConfirm = confirm('Are you absolutely sure? This will permanently delete your account and all associated data. This action cannot be undone.');
+        
+        if (finalConfirm) {
+          // Disable button and show loading
+          confirmDeleteBtn.disabled = true;
+          confirmDeleteBtn.textContent = 'Deleting...';
+          
+          // Proceed with account deletion
+          fetch('/api/delete_account', {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              alert('Account deleted successfully. You will be logged out and redirected to the home page.');
+              closeDeleteModal();
+              window.location.href = '/logout';
+            } else {
+              alert('Error deleting account: ' + data.message);
+              // Reset button
+              confirmDeleteBtn.disabled = false;
+              confirmDeleteBtn.textContent = 'Delete Account Permanently';
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting account:', error);
+            alert('Error deleting account. Please try again.');
+            // Reset button
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.textContent = 'Delete Account Permanently';
+          });
+        }
+      }
+
+      // Help modal
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const closeHelpModal = document.getElementById('closeHelpModal');
+
+      if (helpButton && helpModal && closeHelpModal) {
+        helpButton.addEventListener('click', () => {
+          helpModal.style.display = 'flex';
+        });
+
+        closeHelpModal.addEventListener('click', () => {
+          helpModal.style.display = 'none';
+        });
+      }
+
+      // Profile dropdown
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+
+      if (profileButton && profileMenu) {
+        profileButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          profileMenu.classList.toggle('show');
+        });
+      }
+
+      // Close dropdown when clicking outside
+      window.addEventListener('click', (e) => {
+        if (helpModal && e.target === helpModal) helpModal.style.display = 'none';
+        if (profileButton && profileMenu && !profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove('show');
+        }
+      });
+
+      // Cart button
+      const cartButton = document.getElementById('cartButton');
+      if (cartButton) {
+        cartButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.href = "{{ url_for('cart') }}";
+        });
+      }
+    });
+
+  // Global functions for onclick handlers
+  function viewDevices() {
+    console.log('View devices function called');
+    
+    // Prevent body scrolling
+    document.body.style.overflow = 'hidden';
+    
+    // Show the modal
+    const modal = document.getElementById('devicesModal');
+    modal.style.display = 'flex';
+    
+    // Get device information
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      cookieEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine
+    };
+    
+    console.log('Device info:', deviceInfo);
+    
+    // Parse user agent to get browser and OS info
+    let browserInfo = 'Unknown Browser';
+    let osInfo = 'Unknown OS';
+    
+    if (deviceInfo.userAgent.includes('Chrome')) {
+      browserInfo = 'Chrome';
+    } else if (deviceInfo.userAgent.includes('Firefox')) {
+      browserInfo = 'Firefox';
+    } else if (deviceInfo.userAgent.includes('Safari')) {
+      browserInfo = 'Safari';
+    } else if (deviceInfo.userAgent.includes('Edge')) {
+      browserInfo = 'Edge';
+    }
+    
+    if (deviceInfo.userAgent.includes('Windows')) {
+      osInfo = 'Windows';
+    } else if (deviceInfo.userAgent.includes('Mac')) {
+      osInfo = 'macOS';
+    } else if (deviceInfo.userAgent.includes('Linux')) {
+      osInfo = 'Linux';
+    } else if (deviceInfo.userAgent.includes('Android')) {
+      osInfo = 'Android';
+    } else if (deviceInfo.userAgent.includes('iOS')) {
+      osInfo = 'iOS';
+    }
+    
+    console.log('Browser:', browserInfo, 'OS:', osInfo);
+    
+    // Update device info in modal
+    const deviceInfoContainer = document.getElementById('currentDeviceInfo');
+    deviceInfoContainer.innerHTML = `
+      <div class="device-detail">
+        <span class="device-label">Browser:</span>
+        <span class="device-value">${browserInfo}</span>
+      </div>
+      <div class="device-detail">
+        <span class="device-label">Operating System:</span>
+        <span class="device-value">${osInfo}</span>
+      </div>
+      <div class="device-detail">
+        <span class="device-label">Platform:</span>
+        <span class="device-value">${deviceInfo.platform}</span>
+      </div>
+      <div class="device-detail">
+        <span class="device-label">Language:</span>
+        <span class="device-value">${deviceInfo.language}</span>
+      </div>
+      <div class="device-detail">
+        <span class="device-label">Online Status:</span>
+        <span class="device-value">${deviceInfo.onLine ? 'Online' : 'Offline'}</span>
+      </div>
+      <div class="device-detail">
+        <span class="device-label">Cookies Enabled:</span>
+        <span class="device-value">${deviceInfo.cookieEnabled ? 'Yes' : 'No'}</span>
+      </div>
+    `;
+    
+    // Get IP address and location
+    fetch('https://api.ipify.org?format=json')
+      .then(response => response.json())
+      .then(ipData => {
+        const ipAddress = ipData.ip || 'Unknown';
+        console.log('IP Address:', ipAddress);
+        
+        // Add IP to device info
+        const deviceInfoContainer = document.getElementById('currentDeviceInfo');
+        const existingContent = deviceInfoContainer.innerHTML;
+        deviceInfoContainer.innerHTML = existingContent + `
+          <div class="device-detail">
+            <span class="device-label">IP Address:</span>
+            <span class="device-value">${ipAddress}</span>
+          </div>
+        `;
+        
+        // Update location
+        const locationElement = document.getElementById('currentLocation');
+        locationElement.textContent = `IP: ${ipAddress}`;
+        
+        // Update current time
+        const timeElement = document.getElementById('currentLoginTime');
+        timeElement.textContent = new Date().toLocaleString();
+      })
+      .catch(error => {
+        console.error('Error getting IP:', error);
+        
+        // Update location with error
+        const locationElement = document.getElementById('currentLocation');
+        locationElement.textContent = 'IP: Unable to retrieve';
+        
+        // Update current time
+        const timeElement = document.getElementById('currentLoginTime');
+        timeElement.textContent = new Date().toLocaleString();
+      });
+  }
+
+  function closeDevicesModal() {
+    const modal = document.getElementById('devicesModal');
+    modal.style.display = 'none';
+    // Restore body scrolling
+    document.body.style.overflow = 'auto';
+  }
+
+  function deleteAccount() {
+    try {
+      console.log('Delete account function called');
+      
+      // Prevent body scrolling
+      document.body.style.overflow = 'hidden';
+      
+      // Show the modal
+      const modal = document.getElementById('deleteAccountModal');
+      if (!modal) {
+        console.error('Delete account modal not found');
+        return;
+      }
+      modal.style.display = 'flex';
+      
+      // Check for pending orders
+      fetch('/api/check_pending_orders', {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Pending orders data:', data);
+        
+        const restrictionNotice = document.getElementById('restrictionNotice');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const restrictionMessage = document.getElementById('restrictionMessage');
+        
+        if (!restrictionNotice || !confirmDeleteBtn || !restrictionMessage) {
+          console.error('Modal elements not found');
+          return;
+        }
+        
+        if (data.has_pending_orders) {
+          // Show restriction notice
+          restrictionNotice.style.display = 'flex';
+          confirmDeleteBtn.disabled = true;
+          confirmDeleteBtn.style.opacity = '0.6';
+          confirmDeleteBtn.style.cursor = 'not-allowed';
+          
+          if (data.pending_count === 1) {
+            restrictionMessage.textContent = `You have ${data.pending_count} pending order that must be completed or cancelled before deleting your account.`;
+          } else {
+            restrictionMessage.textContent = `You have ${data.pending_count} pending orders that must be completed or cancelled before deleting your account.`;
+          }
+        } else {
+          // Hide restriction notice
+          restrictionNotice.style.display = 'none';
+          confirmDeleteBtn.disabled = false;
+          confirmDeleteBtn.style.opacity = '1';
+          confirmDeleteBtn.style.cursor = 'pointer';
+        }
+      })
+      .catch(error => {
+        console.error('Error checking pending orders:', error);
+        // Enable deletion anyway if there's an error
+        const restrictionNotice = document.getElementById('restrictionNotice');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        
+        if (restrictionNotice && confirmDeleteBtn) {
+          restrictionNotice.style.display = 'none';
+          confirmDeleteBtn.disabled = false;
+          confirmDeleteBtn.style.opacity = '1';
+          confirmDeleteBtn.style.cursor = 'pointer';
+        }
+      });
+    } catch (error) {
+      console.error('Error in deleteAccount function:', error);
+    }
+  }
+
+  function closeDeleteModal() {
+    const modal = document.getElementById('deleteAccountModal');
+    modal.style.display = 'none';
+    // Restore body scrolling
+    document.body.style.overflow = 'auto';
+  }
+
+  function confirmDeleteAccount() {
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    if (confirmDeleteBtn.disabled) {
+      return;
+    }
+    
+    // Final confirmation
+    const finalConfirm = confirm('Are you absolutely sure? This will permanently delete your account and all associated data. This action cannot be undone.');
+    
+    if (finalConfirm) {
+      // Disable button and show loading
+      confirmDeleteBtn.disabled = true;
+      confirmDeleteBtn.textContent = 'Deleting...';
+      
+      // Proceed with account deletion
+      fetch('/api/delete_account', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Account deleted successfully. You will be logged out and redirected to the home page.');
+          closeDeleteModal();
+          window.location.href = '/logout';
+        } else {
+          alert('Error deleting account: ' + data.message);
+          // Reset button
+          confirmDeleteBtn.disabled = false;
+          confirmDeleteBtn.textContent = 'Delete Account Permanently';
+        }
+      })
+      .catch(error => {
+        console.error('Error deleting account:', error);
+        alert('Error deleting account. Please try again.');
+        // Reset button
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.textContent = 'Delete Account Permanently';
+      });
+    }
+  }
+</script>
+
+  <!-- Help modal -->
+  <div class="modal" id="helpModal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeHelpModal">&times;</span>
+      <h2>Help & FAQs</h2>
+      <div class="info-content-placeholder">This is a placeholder. FAQs coming soon.</div>
+    </div>
+  </div>
+
+  {% include 'footer_verdant.html' %}
+</body>
+</html>

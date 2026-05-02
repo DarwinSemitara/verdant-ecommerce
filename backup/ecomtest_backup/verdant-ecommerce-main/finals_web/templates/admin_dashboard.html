@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - Verdant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f8f9fa;
+      color: #212529;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .admin-header {
+      background: #ffffff;
+      border-bottom: 1px solid #e9ecef;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .admin-nav {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+    }
+
+    .admin-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #212529;
+      text-decoration: none;
+    }
+
+    .admin-user {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .admin-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #6c757d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: white;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+    }
+
+    /* Main Content */
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .admin-title {
+      margin-bottom: 2rem;
+    }
+
+    .admin-title h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 0.5rem;
+    }
+
+    .admin-title p {
+      color: #6c757d;
+      font-size: 1rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .stat-title {
+      font-size: 0.9rem;
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .stat-icon.pending { background: #ffc107; }
+    .stat-icon.approved { background: #28a745; }
+    .stat-icon.total { background: #6c757d; }
+    .stat-icon.stores { background: #007bff; }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #212529;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    /* Applications Section */
+    .applications-section {
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      padding: 1.5rem 2rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #212529;
+      margin: 0;
+    }
+
+    .applications-list {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .application-item {
+      border-bottom: 1px solid #e9ecef;
+      padding: 1.5rem 2rem;
+      transition: background-color 0.2s;
+    }
+
+    .application-item:last-child {
+      border-bottom: none;
+    }
+
+    .application-item:hover {
+      background: #f8f9fa;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .app-info h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 0.25rem;
+    }
+
+    .app-username {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    .app-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pending {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .badge-approved {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .badge-rejected {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .app-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .detail-item {
+      background: #f8f9fa;
+      padding: 0.75rem;
+      border-radius: 4px;
+      border-left: 3px solid #6c757d;
+    }
+
+    .detail-label {
+      font-size: 0.8rem;
+      color: #6c757d;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-value {
+      font-size: 0.9rem;
+      color: #212529;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .app-description {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #6c757d;
+    }
+
+    .app-description .detail-label {
+      margin-bottom: 0.5rem;
+    }
+
+    .app-description .detail-value {
+      line-height: 1.5;
+    }
+
+    .app-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-approve {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-approve:hover {
+      background: #218838;
+    }
+
+    .btn-reject {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-reject:hover {
+      background: #c82333;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .no-applications {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6c757d;
+    }
+
+    .no-applications h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #495057;
+    }
+
+    /* Notification */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 4px;
+      color: white;
+      font-weight: 500;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideIn 0.3s ease;
+    }
+
+    .notification.success {
+      background: #28a745;
+    }
+
+    .notification.error {
+      background: #dc3545;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .admin-nav {
+        padding: 1rem;
+      }
+      
+      .admin-container {
+        padding: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .app-actions {
+        flex-direction: column;
+      }
+      
+      .app-details {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="admin-header">
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="admin-logo">Verdant Admin</a>
+      <div class="admin-user">
+        <span>Administrator</span>
+        <div class="admin-avatar">A</div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <div class="admin-title">
+      <h1>Admin Dashboard</h1>
+      <p>Manage seller applications and oversee the Verdant marketplace</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-title">Pending Applications</div>
+          <div class="stat-icon pending">P</div>
+        </div>
+        <div class="stat-number">{{ pending_count }}</div>
+        <div class="stat-label">Awaiting Review</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-title">Approved Sellers</div>
+          <div class="stat-icon approved">A</div>
+        </div>
+        <div class="stat-number">{{ approved_count }}</div>
+        <div class="stat-label">Active Stores</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-title">Total Applications</div>
+          <div class="stat-icon total">T</div>
+        </div>
+        <div class="stat-number">{{ applications|length }}</div>
+        <div class="stat-label">All Time</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-title">Success Rate</div>
+          <div class="stat-icon stores">%</div>
+        </div>
+        <div class="stat-number">{{ ((approved_count / applications|length * 100) | round(1)) if applications|length > 0 else 0 }}%</div>
+        <div class="stat-label">Approval Rate</div>
+      </div>
+    </div>
+
+    <div class="applications-section">
+      <div class="section-header">
+        <h2 class="section-title">Seller Applications</h2>
+      </div>
+      
+      {% if applications %}
+      <div class="applications-list">
+        {% for app in applications %}
+        <div class="application-item">
+          <div class="app-header">
+            <div class="app-info">
+              <h3>{{ app.store_name }}</h3>
+              <p class="app-username">{{ app.username }}</p>
+            </div>
+            <span class="app-badge badge-{{ app.status }}">{{ app.status|capitalize }}</span>
+          </div>
+          
+          <div class="app-details">
+            <div class="detail-item">
+              <div class="detail-label">Email</div>
+              <div class="detail-value">{{ app.email }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Phone</div>
+              <div class="detail-value">{{ app.store_phone or 'Not provided' }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Category</div>
+              <div class="detail-value">{{ app.store_category }}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Applied</div>
+              <div class="detail-value">{{ app.created_at.strftime('%B %d, %Y') }}</div>
+            </div>
+          </div>
+          
+          {% if app.store_description %}
+          <div class="app-description">
+            <div class="detail-label">Store Description</div>
+            <div class="detail-value">{{ app.store_description }}</div>
+          </div>
+          {% endif %}
+          
+          {% if app.status == 'pending' %}
+          <div class="app-actions">
+            <button class="btn btn-approve" onclick="handleApplication({{ app.user_id }}, 'approve')">
+              Approve Application
+            </button>
+            <button class="btn btn-reject" onclick="handleApplication({{ app.user_id }}, 'reject')">
+              Reject Application
+            </button>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="no-applications">
+        <h3>No Applications</h3>
+        <p>Seller applications will appear here when submitted.</p>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    function handleApplication(userId, action) {
+      const actionText = action === 'approve' ? 'approve' : 'reject';
+      
+      if (!confirm(`Are you sure you want to ${actionText} this seller application?`)) {
+        return;
+      }
+      
+      // Show loading state
+      const buttons = document.querySelectorAll(`button[onclick*="${userId}"]`);
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+      });
+      
+      fetch(`/admin/seller-application/${userId}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const message = action === 'approve' 
+            ? 'Seller application approved successfully!' 
+            : 'Seller application rejected!';
+          
+          showNotification(message, 'success');
+          
+          // Reload page after short delay
+          setTimeout(() => {
+            location.reload();
+          }, 1500);
+        } else {
+          showNotification(data.message || 'An error occurred', 'error');
+          // Reset buttons
+          buttons.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.textContent = action === 'approve' ? 'Approve Application' : 'Reject Application';
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+        // Reset buttons
+        buttons.forEach(btn => {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          btn.textContent = action === 'approve' ? 'Approve Application' : 'Reject Application';
+        });
+      });
+    }
+    
+    function showNotification(message, type) {
+      // Remove existing notifications
+      const existing = document.querySelectorAll('.notification');
+      existing.forEach(n => n.remove());
+      
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

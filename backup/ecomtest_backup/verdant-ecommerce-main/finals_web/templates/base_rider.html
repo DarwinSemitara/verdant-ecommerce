@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rider Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/responsive.css') }}" rel="stylesheet">
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #f4e3d0 0%, #f9f1e5 45%, #f3dec4 100%);
+      background-attachment: fixed;
+    }
+    .sidebar {
+      width: 220px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #2b1b0f;
+      color: #fff;
+      padding-top: 20px;
+      transition: left 0.25s ease, width 0.25s ease;
+      z-index: 1030;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar .menu { position: relative; }
+    .sidebar h4 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 200ms ease, color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+      position: relative;
+    }
+    .sidebar a:hover {
+      background: #5c4533;
+      color: #fdf7f1;
+      transform: translateX(2px);
+      box-shadow: inset 0 0 0 9999px rgba(255,255,255,0.05);
+    }
+    .sidebar a.active {
+      font-weight: 700;
+      background: #5c4533;
+    }
+    .sidebar a.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 8px;
+      width: 4px;
+      background: #d19a5b;
+      border-radius: 0 4px 4px 0;
+    }
+    .sidebar a .bi { margin-right: 6px; }
+    .main-content {
+      margin-left: 220px;
+      transition: margin-left 0.25s ease;
+      min-height: 100vh;
+      padding: 0 24px 32px;
+    }
+    .collapsed .sidebar {
+      width: 64px;
+      left: 0;
+      overflow-x: hidden;
+    }
+    .collapsed .main-content { margin-left: 64px; }
+    .collapsed .sidebar h4 { display: none; }
+    .collapsed .sidebar a { padding: 12px 12px; text-align: center; }
+    .collapsed .sidebar a .bi { margin-right: 0; font-size: 1.25rem; }
+    .collapsed .sidebar a .label { display: none; }
+
+    .sidebar .bottom {
+      padding: 20px 12px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: auto;
+    }
+    .sidebar .bottom a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: #ecf0f1;
+      font-weight: 500;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+    .sidebar .bottom a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .sidebar .bottom a .bi {
+      font-size: 1.1rem;
+      margin-right: 0;
+    }
+
+    .header-bar {
+      background: rgba(255, 250, 244, 0.96);
+      border-bottom: 1px solid #e0c7a2;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 10;
+      margin: 0 -24px;
+    }
+    .header-icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .profile-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: none;
+      padding: 0;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .profile-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: #ffffff;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.18s ease;
+    }
+    @keyframes dropdownSlide {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .profile-menu-item {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #343a40;
+      text-decoration: none;
+      transition: background 0.15s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.35rem 0;
+    }
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    .logout-modal-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 999px;
+      background: #fef2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .logout-modal-icon-wrap .logout-icon {
+      font-size: 1.9rem;
+      color: #dc2626;
+    }
+
+    .rider-logout-dialog {
+      max-width: 380px;
+    }
+    @media (max-width: 480px) {
+      .rider-logout-dialog {
+        max-width: 90%;
+      }
+    }
+
+    .page-shell {
+      position: relative;
+      min-height: 400px;
+      background: rgba(255, 253, 249, 0.98);
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      margin-top: 16px;
+      padding: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        margin-left: 0;
+        padding: 0 12px 24px;
+      }
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="menu">
+      <h4 class="px-3">Verdant</h4>
+      <a href="{{ url_for('rider_homepage') }}" class="{% if request.endpoint == 'rider_homepage' %}active{% endif %}" data-no-pjax>
+        <i class="bi bi-compass"></i> <span class="label">Dashboard</span>
+      </a>
+      <a href="{{ url_for('rider_profile') }}" class="{% if request.endpoint == 'rider_profile' %}active{% endif %}" data-no-pjax>
+        <i class="bi bi-person"></i> <span class="label">Profile</span>
+      </a>
+    </div>
+    <div class="bottom">
+      <a href="{{ url_for('rider_messages') }}" data-no-pjax>
+        <i class="bi bi-chat-dots"></i>
+        <span class="label">Messages</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="header-bar d-flex align-items-center justify-content-end">
+      <div class="header-icons">
+        <div class="profile-dropdown">
+          <button class="profile-btn" aria-label="Profile" id="riderProfileButton">
+            {% if session.get('profile_picture') %}
+              <img alt="Profile" src="{{ img(session.get('profile_picture'), 'profiles') }}" />
+            {% else %}
+              <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+            {% endif %}
+          </button>
+          <div class="profile-menu" id="riderProfileMenu">
+            <a href="{{ url_for('rider_profile') }}" class="profile-menu-item">Profile</a>
+            <div class="profile-menu-divider"></div>
+            <button type="button" class="profile-menu-item logout" id="riderLogoutTrigger">Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-shell" id="pageShell">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  <div class="modal fade" id="riderLogoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered rider-logout-dialog">
+      <div class="modal-content py-4 position-relative">
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-body text-center pt-3">
+          <div class="logout-modal-icon-wrap">
+            <i class="bi bi-box-arrow-right logout-icon"></i>
+          </div>
+          <p class="mb-4">Are you sure you want to log out?</p>
+          <div class="d-flex justify-content-center gap-3">
+            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">No</button>
+            <button type="button" class="btn btn-danger px-4" id="confirmRiderLogout">Yes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function(){
+      const riderProfileButton = document.getElementById('riderProfileButton');
+      const riderProfileMenu = document.getElementById('riderProfileMenu');
+      if (riderProfileButton && riderProfileMenu) {
+        riderProfileButton.addEventListener('click', function (e) {
+          e.stopPropagation();
+          riderProfileMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function (e) {
+          if (!riderProfileButton.contains(e.target) && !riderProfileMenu.contains(e.target)) {
+            riderProfileMenu.classList.remove('show');
+          }
+        });
+      }
+      const logoutTrigger = document.getElementById('riderLogoutTrigger');
+      const logoutModalEl = document.getElementById('riderLogoutModal');
+      const confirmLogoutBtn = document.getElementById('confirmRiderLogout');
+      if (logoutTrigger && logoutModalEl && confirmLogoutBtn && window.bootstrap && window.bootstrap.Modal) {
+        const logoutModal = new bootstrap.Modal(logoutModalEl);
+        logoutTrigger.addEventListener('click', function (e) {
+          e.preventDefault();
+          logoutModal.show();
+        });
+        confirmLogoutBtn.addEventListener('click', function () {
+          window.location.href = "{{ url_for('logout') }}";
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

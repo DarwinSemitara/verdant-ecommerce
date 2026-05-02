@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verdant - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <style>
+    html, body {
+      zoom: 1 !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden !important;
+    }
+    .login-body {
+      width: 100vw !important;
+      min-height: 100vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative;
+      overflow: hidden;
+      background: #022c22;
+    }
+
+    /* ── Video background with slow zoom/pan effect ── */
+    .login-bg-video {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      min-width: 100vw;
+      min-height: 100vh;
+      width: auto;
+      height: auto;
+      transform: translate(-50%, -50%) scale(1.15);
+      object-fit: cover;
+      z-index: 0;
+      animation: videoPan 30s ease-in-out infinite alternate;
+      filter: brightness(0.45);
+    }
+
+    @keyframes videoPan {
+      0%   { transform: translate(-50%, -50%) scale(1.15) translate(0px, 0px); }
+      25%  { transform: translate(-50%, -50%) scale(1.2)  translate(-30px, -15px); }
+      50%  { transform: translate(-50%, -50%) scale(1.18) translate(20px, -25px); }
+      75%  { transform: translate(-50%, -50%) scale(1.22) translate(-15px, 20px); }
+      100% { transform: translate(-50%, -50%) scale(1.15) translate(25px, 10px); }
+    }
+
+    /* Dark overlay for readability */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(2,44,34,0.55) 0%, rgba(6,95,70,0.35) 100%);
+      z-index: 1;
+    }
+
+    /* ── Login card ── */
+    .login-card {
+      background: rgba(255,255,255,0.97);
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.35);
+      width: 100%;
+      max-width: 400px;
+      padding: 48px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(4px);
+    }
+    .login-card .verdant-title {
+      font-family: 'Rubik Bubbles', cursive;
+      font-size: 52px;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+      line-height: 1;
+      text-align: center;
+      background: linear-gradient(135deg, #065f46 0%, #16a34a 50%, #6ee7b7 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .login-card .login-subtitle {
+      font-size: 15px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 32px;
+      text-align: center;
+      letter-spacing: 0.3px;
+    }
+    .login-card form { width: 100%; }
+    .login-card form h2 { display: none; }
+    .login-card label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    .login-card input[type="text"],
+    .login-card input[type="password"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-card input:focus {
+      border-color: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
+    }
+    .login-card .password-input-container { position: relative; }
+    .login-card .password-input-container input { padding-right: 44px; }
+    .login-card .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9ca3af;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    .login-card .loginbutton {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #065f46 0%, #16a34a 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .login-card .loginbutton:hover { opacity: 0.9; transform: translateY(-1px); }
+    .login-card .signup-text {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 16px;
+      margin-bottom: 0;
+    }
+    .login-card .signup-link { color: #16a34a; font-weight: 600; text-decoration: none; }
+    .login-card .signup-link:hover { text-decoration: underline; }
+    .login-card .forgot-password {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 10px;
+      text-decoration: none;
+    }
+    .login-card .forgot-password:hover { color: #16a34a; }
+    .login-card .back-to-guest-home {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 6px;
+      text-decoration: none;
+    }
+    .login-card .back-to-guest-home:hover { color: #16a34a; }
+    @media (max-width: 480px) {
+      .login-card {
+        max-width: 100%;
+        margin: 16px;
+        padding: 36px 24px 32px;
+      }
+    }
+  </style>
+</head>
+<body class="login-body">
+  <!-- Video background -->
+  <video class="login-bg-video" autoplay muted loop playsinline>
+    <source src="{{ url_for('static', filename='videos/videoframe.mp4') }}" type="video/mp4">
+  </video>
+  <!-- Dark overlay -->
+  <div class="login-overlay"></div>
+
+  <!-- CENTERED LOGIN CARD -->
+  <div class="login-card">
+    <div class="verdant-title">VERDANT</div>
+    <div class="login-subtitle">Login to your account</div>
+
+    <form id="loginForm" method="POST" action="{{ url_for('handle_login') }}">
+      <h2>Login</h2>
+
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" placeholder="Enter username" required />
+
+      <label for="password">Password</label>
+      <div class="password-input-container">
+        <input id="password" name="password" type="password" placeholder="Enter password" required />
+        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+
+      <button class="loginbutton" type="submit">Login</button>
+
+      <p class="signup-text">
+        Don't have an account? <a href="#" class="signup-link">Sign up</a>
+      </p>
+
+      <a href="#" class="forgot-password" aria-label="Forgot password">Forgot password?</a>
+      <a href="{{ url_for('guest_home') }}" class="back-to-guest-home">Back to guest homepage</a>
+    </form>
+  </div>
+
+  <!-- Floating Help Button -->
+  <button id="infoToggle" type="button" class="help-button help-fab" aria-label="Open help">?</button>
+
+  <!-- INFO MODAL -->
+  <div class="info-modal" id="infoModal">
+    <div class="info-content">
+      <span class="close-btn" id="closeInfo">&times;</span>
+      <h2>Need help with Verdant?</h2>
+      <div class="help-role-tabs">
+        <button type="button" class="help-role-tab active" data-role="user">For Users</button>
+        <button type="button" class="help-role-tab" data-role="seller">For Sellers</button>
+        <button type="button" class="help-role-tab" data-role="rider" style="display:none;">For Riders</button>
+      </div>
+      <div id="helpRole_user" class="help-role-panel active">
+        <h3>Using Verdant as a User</h3>
+        <ul>
+          <li><strong>Creating an account:</strong> Click <em>Sign up</em> on the login card, accept the terms, choose <em>Sign up as User</em>, then complete your personal details and password.</li>
+          <li><strong>Setting up your profile:</strong> After signing up, go to your account/profile page to add your address, contact number, and (optionally) a profile photo so riders can find you more easily.</li>
+          <li><strong>Browsing products:</strong> Use the home page categories, search bar, and featured sections to discover items. Click a product card to see full details, photos, and seller information.</li>
+          <li><strong>Managing your cart:</strong> From any product page, add items to your cart. In the cart you can adjust quantities, remove items, and see an updated subtotal before checking out.</li>
+          <li><strong>Placing an order:</strong> On checkout, confirm your delivery address, payment method, and review the final total. When you submit, separate orders are created per seller so each store can manage its own part.</li>
+          <li><strong>Tracking status:</strong> Open your <em>Orders</em> page to see each order's status (pending, accepted, with rider, delivered). The timeline shows where you are in the process.</li>
+          <li><strong>After delivery:</strong> Once your order is marked delivered, you can review items, contact the seller for concerns, or place a new order using previously saved details.</li>
+        </ul>
+        <p>If you forget your password, use the <em>Forgot password</em> link on the login card and follow the reset steps to regain access.</p>
+      </div>
+      <div id="helpRole_seller" class="help-role-panel">
+        <h3>Using Verdant as a Seller</h3>
+        <ul>
+          <li><strong>Applying as a seller:</strong> From <em>Sign up</em>, choose <em>Sign up as Seller</em> and provide your basic info, store name, and contact details. Make sure the email and phone are active.</li>
+          <li><strong>Approval process:</strong> An admin reviews your application for completeness and basic compliance. While waiting, you can still log in but some features may be limited until approval.</li>
+          <li><strong>Setting up your catalog:</strong> In the seller dashboard, add products with clear names, descriptions, prices, and photos. Group items into categories so customers can find them easily.</li>
+          <li><strong>Handling new orders:</strong> When a customer checks out with your products, the order appears on your <em>My Orders</em> page. Review items and totals, then <strong>accept</strong> or <strong>reject</strong> with a reason if needed.</li>
+          <li><strong>Preparing items:</strong> After accepting an order, prepare it for pickup. Make sure quantities and packaging match what the user ordered to avoid issues during delivery.</li>
+          <li><strong>Working with riders:</strong> Once accepted, your order becomes visible to riders. They handle pickup and delivery, while you keep inventory and product information up to date.</li>
+          <li><strong>Customer communication:</strong> If something is out of stock or needs substitution, update the order or reach out via the platform's messaging and notifications, depending on your workflow.</li>
+        </ul>
+        <p>Sellers focus on maintaining accurate listings, honoring policies, and preparing orders on time. Riders and the system handle the final delivery to customers.</p>
+      </div>
+      <div id="helpRole_rider" class="help-role-panel" style="display:none;">
+        <h3>Using Verdant as a Rider</h3>
+        <ul>
+          <li><strong>Applying as a rider:</strong> From <em>Sign up</em>, choose <em>Apply as Rider</em> and submit your contact details, address, vehicle type, and ID photo. This helps the team verify your identity and eligibility.</li>
+          <li><strong>Onboarding & approval:</strong> After submitting, an admin reviews your application. You can still log in and access the Rider Dashboard while pending, but you can only accept real deliveries once approved.</li>
+          <li><strong>Setting your service area:</strong> On your first login, an onboarding overlay walks you through pinning your main delivery area on the map. Choose a place you can regularly serve (e.g., your city or nearby barangays).</li>
+          <li><strong>Finding orders:</strong> In the <em>Available Orders</em> tab, you see orders from nearby sellers that match your service area. Check the total amount, address, and list of items before accepting.</li>
+          <li><strong>Accepting & delivering:</strong> When you accept a delivery, the order moves into your <em>Current Deliveries</em> tab. Pick up items from the seller, follow the displayed address, and update the delivery status as you progress.</li>
+          <li><strong>Updating status:</strong> Use the rider controls (e.g., out for delivery, delivered) so the customer and seller are kept informed. Completed deliveries appear in <em>Delivery History</em> for your records.</li>
+          <li><strong>Staying organized:</strong> Keep your contact details and service area updated so Verdant can continue matching you with nearby orders that fit your schedule.</li>
+        </ul>
+        <p>While your application is pending, you can freely explore the dashboard, practice using the map, and familiarize yourself with how orders flow from seller to customer.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP MODAL -->
+  <div class="signup-modal" id="signupModal">
+    <div class="signup-content">
+      <span class="close-btn" id="closeSignup">&times;</span>
+      <h2>Create Account</h2>
+      
+      <!-- Terms & Policies Step (first) -->
+      <div id="termsStep" class="terms-step">
+        <h3>Terms and Policies</h3>
+        <div class="terms-box">
+          <p><strong>Welcome to our Home & Garden marketplace.</strong> By creating an account, you agree to shop responsibly, provide accurate information, and comply with all applicable laws.</p>
+          <p><strong>Purchases & Returns.</strong> Items may be returned subject to seller policies and local regulations. Please review item pages for specific return windows and conditions.</p>
+          <p><strong>Privacy.</strong> We collect only the data needed to operate the service (account details, order data). We do not sell your personal information. See our Privacy Policy for details.</p>
+          <p><strong>Seller Responsibilities.</strong> Sellers must provide accurate listings, ship on time, and honor warranties/returns according to policy. Prohibited items include hazardous materials, counterfeit goods, and items restricted by law.</p>
+          <p><strong>Acceptable Use.</strong> No fraud, harassment, or misuse of the platform. We may suspend accounts that violate these policies.</p>
+          <p>By proceeding, you acknowledge that you have read and agree to these terms and policies.</p>
+        </div>
+        <label class="terms-agree">
+          <input type="checkbox" id="agreeTerms" /> I have read and agree to the terms and policies
+        </label>
+        <button id="continueToRole" class="signupbutton" disabled>Continue</button>
+      </div>
+
+      <!-- Role Selection -->
+      <div id="roleSelect" class="role-select" style="display:none;">
+        <div class="role-cards">
+          <button type="button" id="chooseUser" class="role-card" data-role="user">
+            <div class="role-icon">👤</div>
+            <div class="role-title">Sign up as User</div>
+            <div class="role-desc">Shop products, manage orders, and track deliveries.</div>
+          </button>
+          <button type="button" id="chooseSeller" class="role-card" data-role="seller">
+            <div class="role-icon">🛍️</div>
+            <div class="role-title">Sign up as Seller</div>
+            <div class="role-desc">Open your store and start selling to customers.</div>
+          </button>
+          <button type="button" id="chooseRider" class="role-card" data-role="rider" style="display:none;">
+            <div class="role-icon">🏍️</div>
+            <div class="role-title">Apply as Rider</div>
+            <div class="role-desc">Deliver orders and earn money as a delivery partner.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- User Signup Form -->
+      <div id="userFormContainer" class="role-form" style="display:none;">
+        <div class="role-form-header">
+          <button type="button" class="back-to-select role-header-icon" data-target="roleSelect" aria-label="Back to role selection">&larr;</button>
+          <h3>User Information</h3>
+        </div>
+        <form id="signupForm" method="POST" action="{{ url_for('handle_signup') }}">
+          <label for="signup-username">Username</label>
+          <input id="signup-username" name="username" type="text" placeholder="Enter username" required />
+
+          <label for="signup-email">Email</label>
+          <input id="signup-email" name="email" type="email" placeholder="example@email.com" required />
+
+          <label for="signup-phone">Phone Number</label>
+          <input id="signup-phone" name="phone" type="tel" placeholder="09XXXXXXXXX" required />
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="signup-password">Password</label>
+              <div class="password-input-container">
+                <input id="signup-password" name="password" type="password" placeholder="Create a password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('signup-password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-col">
+              <label for="signup-confirm-password">Confirm Password</label>
+              <div class="password-input-container">
+                <input id="signup-confirm-password" name="confirm_password" type="password" placeholder="Re-enter password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('signup-confirm-password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="signupbutton">Create User Account</button>
+        </form>
+      </div>
+
+      <!-- Seller Signup Form -->
+      <div id="sellerFormContainer" class="role-form" style="display:none;">
+        <div class="role-form-header">
+          <button type="button" class="back-to-select role-header-icon" data-target="roleSelect" aria-label="Back to role selection">&larr;</button>
+          <h3>Seller Application</h3>
+        </div>
+        <form id="sellerSignupForm" method="POST" action="{{ url_for('register_seller') }}">
+          <label for="seller_username">Username</label>
+          <input type="text" name="seller_username" id="seller_username" placeholder="Store owner username" required />
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="seller_first_name">First Name</label>
+              <input type="text" name="first_name" id="seller_first_name" placeholder="First name" required />
+            </div>
+            <div class="form-col">
+              <label for="seller_last_name">Last Name</label>
+              <input type="text" name="last_name" id="seller_last_name" placeholder="Last name" required />
+            </div>
+          </div>
+
+          <label for="seller_email">Email</label>
+          <input type="email" name="email" id="seller_email" placeholder="store@email.com" required />
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="seller_dob">Date of Birth</label>
+              <input type="date" name="date_of_birth" id="seller_dob" required />
+            </div>
+            <div class="form-col">
+              <label for="seller_gender">Gender</label>
+              <select name="gender" id="seller_gender" required>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="seller_phone">Phone Number</label>
+              <input type="tel" name="phone" id="seller_phone" placeholder="09XXXXXXXXX" required />
+            </div>
+            <div class="form-col">
+              <label for="seller_alt_phone">Alternate Phone (Optional)</label>
+              <input type="tel" name="alternate_phone" id="seller_alt_phone" placeholder="09XXXXXXXXX" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="seller_password">Password</label>
+              <div class="password-input-container">
+                <input type="password" name="password" id="seller_password" placeholder="Create a password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('seller_password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-col">
+              <label for="seller_confirm_password">Confirm Password</label>
+              <div class="password-input-container">
+                <input type="password" id="seller_confirm_password" placeholder="Re-enter password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('seller_confirm_password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="signupbutton">Create Seller Account</button>
+        </form>
+      </div>
+
+      <!-- Rider Application Form -->
+      <div id="riderFormContainer" class="role-form" style="display:none;">
+        <div class="role-form-header">
+          <button type="button" class="back-to-select role-header-icon" data-target="roleSelect" aria-label="Back to role selection">&larr;</button>
+          <h3>Rider Application</h3>
+        </div>
+        <form id="riderSignupForm" method="POST" action="{{ url_for('register_rider') }}" enctype="multipart/form-data">
+          <label for="rider_username">Username</label>
+          <input type="text" name="rider_username" id="rider_username" placeholder="Your username" required />
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="rider_first_name">First Name</label>
+              <input type="text" name="first_name" id="rider_first_name" placeholder="First name" required />
+            </div>
+            <div class="form-col">
+              <label for="rider_last_name">Last Name</label>
+              <input type="text" name="last_name" id="rider_last_name" placeholder="Last name" required />
+            </div>
+          </div>
+
+          <label for="rider_email">Email</label>
+          <input type="email" name="email" id="rider_email" placeholder="your@email.com" required />
+
+          <label for="rider_address">Address</label>
+          <textarea name="address" id="rider_address" placeholder="House number, street, barangay, city" required></textarea>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="rider_dob">Date of Birth</label>
+              <input type="date" name="date_of_birth" id="rider_dob" required />
+            </div>
+            <div class="form-col">
+              <label for="rider_gender">Gender</label>
+              <select name="gender" id="rider_gender" required>
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="rider_phone">Phone Number</label>
+              <input type="tel" name="phone" id="rider_phone" placeholder="09XXXXXXXXX" required />
+            </div>
+            <div class="form-col">
+              <label for="rider_alt_phone">Alternate Phone (Optional)</label>
+              <input type="tel" name="alternate_phone" id="rider_alt_phone" placeholder="09XXXXXXXXX" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="vehicle_type">Vehicle Type</label>
+              <select name="vehicle_type" id="vehicle_type" required>
+                <option value="">Select vehicle</option>
+                <option value="motorcycle">Motorcycle</option>
+                <option value="bicycle">Bicycle</option>
+                <option value="car">Car</option>
+                <option value="van">Van</option>
+              </select>
+            </div>
+            <div class="form-col">
+              <label for="vehicle_registration">Vehicle Registration</label>
+              <input type="text" name="vehicle_registration" id="vehicle_registration" placeholder="Plate or OR/CR number" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="license_number">License Number</label>
+              <input type="text" name="license_number" id="license_number" placeholder="Driver's license number" required />
+            </div>
+            <div class="form-col">
+              <label for="license_image">Identification Card / Any ID</label>
+              <input type="file" name="license_image" id="license_image" accept="image/*" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-col">
+              <label for="rider_password">Password</label>
+              <div class="password-input-container">
+                <input type="password" name="password" id="rider_password" placeholder="Create a password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('rider_password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="form-col">
+              <label for="rider_confirm_password">Confirm Password</label>
+              <div class="password-input-container">
+                <input type="password" id="rider_confirm_password" placeholder="Re-enter password" required />
+                <button type="button" class="password-toggle" onclick="togglePassword('rider_confirm_password')">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="signupbutton">Submit Rider Application</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR MODAL -->
+  <div class="error-modal" id="errorModal">
+    <div class="error-content">
+      <span class="close-btn" id="closeError">&times;</span>
+      <h2>Login Error</h2>
+      <p id="errorMessage"></p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+  <!-- Override forgot password to use username instead of email -->
+  <script>
+    (function() {
+      function bindUsernameForgot() {
+        var message = document.getElementById('forgotMessage');
+        var sendBtn = document.getElementById('sendOtpButton');
+        if (!sendBtn) return;
+        var newBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+        newBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var usernameInput = document.getElementById('forgot-username');
+          if (!usernameInput || !usernameInput.value.trim()) {
+            if (message) message.textContent = 'Please enter your username.';
+            return;
+          }
+          fetch('/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: usernameInput.value.trim() })
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (message) message.textContent = data.message || '';
+            var stepPhone = document.getElementById('forgotStepPhone');
+            var stepCode = document.getElementById('forgotStepCode');
+            if (data && data.success && stepPhone && stepCode) {
+              stepPhone.style.display = 'none';
+              stepCode.style.display = 'block';
+            }
+          })
+          .catch(function() {
+            if (message) message.textContent = 'An error occurred while sending the verification code.';
+          });
+        }, true);
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        bindUsernameForgot();
+        var forgotModal = document.getElementById('forgotModal');
+        if (forgotModal) {
+          var observer = new MutationObserver(function() {
+            bindUsernameForgot();
+            var u = document.getElementById('forgot-username');
+            var m = document.getElementById('forgotMessage');
+            if (u) u.value = '';
+            if (m) m.textContent = '';
+          });
+          observer.observe(forgotModal, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+      });
+    })();
+  </script>
+
+  <!-- Forgot Password Modal -->
+  <div class="forgot-modal" id="forgotModal">
+    <div class="forgot-content">
+      <span class="close-btn" id="closeForgot">&times;</span>
+      <h2>Reset Password</h2>
+
+      <div id="forgotStepPhone">
+        <p>Enter your username to receive a verification code at the email on file.</p>
+        <label for="forgot-username">Username</label>
+        <input id="forgot-username" type="text" placeholder="your_username" />
+        <button type="button" id="sendOtpButton" class="signupbutton">Send verification code</button>
+      </div>
+
+      <div id="forgotStepCode" style="display:none;">
+        <p>We sent a verification code to your email. Enter it below and choose a new password.</p>
+        <label for="forgot-code">Verification Code</label>
+        <input id="forgot-code" type="text" placeholder="6-digit code" />
+
+        <div class="form-row">
+          <div class="form-col">
+            <label for="forgot-new-password">New Password</label>
+            <input id="forgot-new-password" type="password" placeholder="New password" />
+          </div>
+          <div class="form-col">
+            <label for="forgot-confirm-password">Confirm New Password</label>
+            <input id="forgot-confirm-password" type="password" placeholder="Confirm new password" />
+          </div>
+        </div>
+
+        <button type="button" id="resetPasswordButton" class="signupbutton">Change password</button>
+      </div>
+
+      <p id="forgotMessage" class="forgot-message"></p>
+    </div>
+  </div>
+
+  {% if error %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const errorType = "{{ error | escape }}";
+      const errorModal = document.getElementById("errorModal");
+      const errorMessage = document.getElementById("errorMessage");
+
+      if (errorModal && errorMessage) {
+        if (errorType === "invalid") {
+          errorMessage.textContent = "Invalid password. Please try again.";
+        } else if (errorType === "notfound") {
+          errorMessage.textContent = "User not found. Please check your username.";
+        } else if (errorType === "username_exists") {
+          errorMessage.textContent = "Username already exists. Please choose a different username.";
+        } else if (errorType === "email_exists_user") {
+          errorMessage.textContent = "An account with this email already exists. Please login or use a different email.";
+        } else if (errorType === "rider_disabled") {
+          errorMessage.textContent = "Rider login is disabled. Please use the mobile app to access rider features.";
+        } else if (errorType === "signup_failed") {
+          errorMessage.textContent = "Failed to create account. Please try again or contact support.";
+        }
+
+        errorModal.style.display = "flex";
+      }
+    });
+  </script>
+  {% endif %}
+
+  {% if request.args.get('signup') %}
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const signupType = "{{ request.args.get('signup') | escape }}";
+      let message = "";
+
+      if (signupType === "user") {
+        message = "Your user account has been created. You can now log in.";
+      } else if (signupType === "seller") {
+        message = "Your seller account has been created. You can log in and wait for admin approval.";
+      } else if (signupType === "rider") {
+        message = "Your rider application has been submitted. You can log in and wait for admin approval.";
+      } else if (signupType === "true") {
+        // Open signup modal when signup=true parameter is present
+        setTimeout(() => {
+          showSignupModal();
+        }, 100);
+        return;
+      }
+
+      if (message && typeof showNotification === "function") {
+        showNotification(message, "success");
+      }
+    });
+  </script>
+  {% endif %}
+</body>
+</html>

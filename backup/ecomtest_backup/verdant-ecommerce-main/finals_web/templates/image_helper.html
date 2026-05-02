@@ -1,0 +1,10 @@
+{# Macro to render an image that could be a full URL or a legacy filename #}
+{% macro img_url(path, folder='products') %}
+  {%- if path and path.startswith('http') -%}
+    {{ path }}
+  {%- elif path and path != 'default.jpg' -%}
+    {{ url_for('static', filename='uploads/' ~ folder ~ '/' ~ path) }}
+  {%- else -%}
+    {{ url_for('static', filename='img/placeholder.png') }}
+  {%- endif -%}
+{% endmacro %}

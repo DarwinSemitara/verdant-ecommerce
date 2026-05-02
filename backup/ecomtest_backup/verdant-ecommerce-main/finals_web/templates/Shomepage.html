@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seller Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/seller.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+</head>
+<body>
+  <header>
+    <h1>Welcome, Seller {{ session['username'] }}</h1>
+    <form action="{{ url_for('logout') }}" method="GET">
+      <button type="submit">Logout</button>
+    </form>
+  </header>
+
+  <section class="dashboard">
+    <h2>Your Store: [Store Name Placeholder]</h2>
+    <p>Here you can manage your products, view orders, and track performance.</p>
+
+    <div class="actions">
+      <button>Add New Product</button>
+      <button>View Orders</button>
+      <button>Edit Store Info</button>
+    </div>
+  </section>
+</body>
+</html>

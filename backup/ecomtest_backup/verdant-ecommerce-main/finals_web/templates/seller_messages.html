@@ -1,0 +1,466 @@
+{% extends 'base_user.html' %}
+
+{% block content %}
+<style>
+  /* Custom conversation highlight color - watered down blue */
+  .list-group-item.active {
+    background-color: #e3f2fd !important;
+    border-color: #bbdefb !important;
+    color: #1565c0 !important;
+  }
+  
+  .list-group-item.active:hover {
+    background-color: #bbdefb !important;
+  }
+  
+  /* Ensure profile pictures load properly */
+  .conversation-item img {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+  }
+  
+  /* Simple send form - no loading states */
+  #sendMessageForm .d-flex {
+    align-items: center;
+  }
+  
+  #messageInput:not(:disabled) {
+    background-color: #fff !important;
+    border: 1px solid #ced4da !important;
+  }
+  
+  #sendMessageButton:not(:disabled) {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+  }
+  
+  #sendMessageButton:disabled {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    pointer-events: none !important;
+    opacity: 0.6 !important;
+  }
+  
+  /* Fixed conversation item width with text truncation */
+  .list-group-item {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .conversation-item .message-preview {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+    display: inline-block;
+  }
+</style>
+
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="fw-bold mb-1" style="font-size: 1.9rem; color: #212529;">Messages</h1>
+        <small class="text-muted">Communicate with customers, riders, and other accounts</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-0 pb-2">
+          <h5 class="card-title mb-0" style="font-size: 1rem;">Conversations</h5>
+          <small class="text-muted">Recent and pinned chats</small>
+        </div>
+        <div class="card-body p-0 d-flex flex-column" style="max-height: 520px; overflow-y: hidden;">
+          <div class="px-3 pt-2 pb-2 border-bottom">
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control" id="newChatUsername" placeholder="Search by username">
+              <button class="btn btn-outline-secondary" type="button" id="startChatBtn">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                </svg>
+              </button>
+            </div>
+            <small class="text-muted d-block mt-1">You can message riders or customers by their username.</small>
+          </div>
+          <div id="conversationList" class="list-group list-group-flush flex-grow-1" style="overflow-y: auto;">
+            <div class="list-group-item py-3 d-flex justify-content-center text-muted">
+              <span>No conversations yet. Start a new one above.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0" id="conversationTitle" style="font-size: 1rem;">Conversation</h5>
+            <small class="text-muted" id="conversationSubtitle">Select a conversation or start a new one.</small>
+          </div>
+        </div>
+        <div class="card-body d-flex flex-column" style="height: 520px;">
+          <div id="messagesContainer" class="flex-grow-1 mb-3" style="overflow-y: auto;">
+            <div class="d-flex justify-content-center align-items-center h-100 text-muted text-center px-3" id="noConversationPlaceholder">
+              <p class="mb-0">Select a conversation on the left or start a new chat to begin messaging.</p>
+            </div>
+          </div>
+          <form id="sendMessageForm" class="border-top pt-3 no-validation" data-no-loading>
+            <div class="d-flex gap-2">
+              <input type="text" class="form-control" id="messageInput" placeholder="Type a message..." disabled>
+              <button type="submit" class="btn btn-success" id="sendMessageButton" disabled>Send</button>
+            </div>
+            <small class="text-muted d-block mt-2">Messages are visible to the other user when they open their messaging page.</small>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const CURRENT_USERNAME = "{{ current_username }}";
+    const conversationListEl = document.getElementById('conversationList');
+    const messagesContainer = document.getElementById('messagesContainer');
+    const conversationTitle = document.getElementById('conversationTitle');
+    const conversationSubtitle = document.getElementById('conversationSubtitle');
+    const noConversationPlaceholder = document.getElementById('noConversationPlaceholder');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageButton = document.getElementById('sendMessageButton');
+    const sendMessageForm = document.getElementById('sendMessageForm');
+    const newChatUsernameInput = document.getElementById('newChatUsername');
+    const startChatBtn = document.getElementById('startChatBtn');
+
+    let activeConversation = null;
+
+    function renderConversationList(conversations) {
+      if (!conversationListEl) {
+        return;
+      }
+      conversationListEl.innerHTML = '';
+      if (!conversations || conversations.length === 0) {
+        const emptyItem = document.createElement('div');
+        emptyItem.className = 'list-group-item py-3 d-flex justify-content-center text-muted';
+        emptyItem.textContent = 'No conversations yet. Start a new one above.';
+        conversationListEl.appendChild(emptyItem);
+        return;
+      }
+      conversations.forEach(function (conv) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-start p-3';
+        if (conv.other_username === activeConversation) {
+          item.classList.add('active');
+        }
+        item.dataset.username = conv.other_username;
+
+        const mainDiv = document.createElement('div');
+        mainDiv.className = 'd-flex align-items-center flex-grow-1';
+
+        // Profile picture
+        const profileDiv = document.createElement('div');
+        profileDiv.className = 'me-2';
+        const profileImg = document.createElement('img');
+        
+        // Handle profile picture URL
+        if (conv.profile_picture) {
+          // Construct the full URL for the profile picture
+          profileImg.src = conv.profile_picture && conv.profile_picture.startsWith('http') 
+            ? conv.profile_picture 
+            : `/static/uploads/profiles/${conv.profile_picture}`;
+        } else {
+          profileImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=32`;
+        }
+        
+        profileImg.alt = conv.other_username;
+        profileImg.className = 'rounded-circle';
+        profileImg.style.width = '32px';
+        profileImg.style.height = '32px';
+        profileImg.style.objectFit = 'cover';
+        
+        // Handle image loading errors
+        profileImg.onerror = function() {
+          this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=32`;
+        };
+        
+        profileDiv.appendChild(profileImg);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'flex-grow-1 text-start';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'fw-semibold d-flex align-items-center justify-content-between';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = conv.other_username;
+        nameDiv.appendChild(nameSpan);
+
+        // Active status
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'small text-muted';
+        if (conv.is_online) {
+          statusDiv.innerHTML = '<span class="text-success">● Active now</span>';
+        } else if (conv.last_seen) {
+          const lastSeen = new Date(conv.last_seen);
+          const now = new Date();
+          const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
+          if (diffMinutes < 5) {
+            statusDiv.innerHTML = '<span class="text-warning">● Active a few minutes ago</span>';
+          } else if (diffMinutes < 60) {
+            statusDiv.textContent = `Active ${diffMinutes} minutes ago`;
+          } else if (diffMinutes < 1440) {
+            statusDiv.textContent = `Active ${Math.floor(diffMinutes / 60)} hours ago`;
+          } else {
+            statusDiv.textContent = `Active ${Math.floor(diffMinutes / 1440)} days ago`;
+          }
+        } else {
+          statusDiv.textContent = 'Offline';
+        }
+        nameDiv.appendChild(statusDiv);
+
+        contentDiv.appendChild(nameDiv);
+
+        if (conv.last_message) {
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'small text-muted message-preview';
+          previewDiv.textContent = conv.last_message;
+          contentDiv.appendChild(previewDiv);
+        }
+
+        mainDiv.appendChild(profileDiv);
+        mainDiv.appendChild(contentDiv);
+
+        item.appendChild(mainDiv);
+
+        if (conv.unread_count && conv.unread_count > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'badge bg-success rounded-pill ms-2';
+          badge.textContent = conv.unread_count;
+          item.appendChild(badge);
+        }
+
+        item.addEventListener('click', function () {
+          openConversation(this.dataset.username);
+        });
+
+        conversationListEl.appendChild(item);
+      });
+    }
+
+    function renderMessages(messages, otherUsername) {
+      if (!messagesContainer) {
+        return;
+      }
+      messagesContainer.innerHTML = '';
+      if (!messages || messages.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'd-flex justify-content-center align-items-center h-100 text-muted text-center px-3';
+        placeholder.innerHTML = '<p class="mb-0">No messages yet. Send the first message to ' + otherUsername + '.</p>';
+        messagesContainer.appendChild(placeholder);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'd-flex flex-column gap-2';
+      messages.forEach(function (msg) {
+        const row = document.createElement('div');
+        const isOwn = msg.sender_username === CURRENT_USERNAME;
+        row.className = 'd-flex ' + (isOwn ? 'justify-content-end' : 'justify-content-start');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'px-3 py-2 rounded-3';
+        bubble.style.maxWidth = '75%';
+        bubble.style.whiteSpace = 'pre-wrap';
+        bubble.textContent = msg.message_text;
+
+        if (isOwn) {
+          bubble.classList.add('bg-success', 'text-white');
+        } else {
+          bubble.classList.add('bg-light', 'text-body');
+        }
+
+        row.appendChild(bubble);
+        list.appendChild(row);
+      });
+
+      messagesContainer.appendChild(list);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function loadConversations() {
+      fetch('/api/messages/conversations')
+        .then(function (resp) {
+          return resp.json();
+        })
+        .then(function (data) {
+          if (!data.success) {
+            return;
+          }
+          renderConversationList(data.conversations || []);
+        })
+        .catch(function (err) {
+          console.error('Error loading conversations', err);
+        });
+    }
+
+    function openConversation(username) {
+      if (!username) {
+        return;
+      }
+      activeConversation = username;
+      if (conversationTitle) {
+        conversationTitle.textContent = 'Conversation with ' + username;
+      }
+      if (conversationSubtitle) {
+        conversationSubtitle.textContent = 'Messages between you and ' + username;
+      }
+      if (messageInput) {
+        messageInput.disabled = false;
+      }
+      if (sendMessageButton) {
+        sendMessageButton.disabled = false;
+      }
+      if (noConversationPlaceholder) {
+        noConversationPlaceholder.remove();
+      }
+
+      fetch('/api/messages/thread/' + encodeURIComponent(username))
+        .then(function (resp) {
+          return resp.json();
+        })
+        .then(function (data) {
+          if (!data.success) {
+            return;
+          }
+          renderMessages(data.messages || [], username);
+          loadConversations();
+        })
+        .catch(function (err) {
+          console.error('Error loading thread', err);
+        });
+    }
+
+    function sendMessage(text) {
+      if (!activeConversation || !text) {
+        return;
+      }
+      
+      // Immediately show the message in UI for instant feedback
+      const existingList = messagesContainer.querySelector('.d-flex.flex-column');
+      if (!existingList) {
+        renderMessages([{
+          id: Date.now(),
+          sender_username: CURRENT_USERNAME,
+          receiver_username: activeConversation,
+          message_text: text,
+          created_at: new Date().toISOString()
+        }], activeConversation);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-end';
+        const bubble = document.createElement('div');
+        bubble.className = 'px-3 py-2 rounded-3 bg-success text-white';
+        bubble.style.maxWidth = '75%';
+        bubble.style.setProperty('white-space', 'pre-wrap');
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        existingList.appendChild(row);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      // Send to backend
+      fetch('/api/messages/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          receiver_username: activeConversation,
+          message_text: text
+        })
+      })
+        .then(function (resp) {
+          return resp.json();
+        })
+        .then(function (data) {
+          if (!data.success) {
+            alert(data.message || 'Failed to send message');
+            // Remove the message if it failed
+            const lastMessage = existingList?.lastElementChild;
+            if (lastMessage && lastMessage.querySelector('.bg-success')) {
+              lastMessage.remove();
+            }
+            return;
+          }
+          // Message already shown in UI, just update conversation list
+          loadConversations();
+        })
+        .catch(function (err) {
+          console.error('Error sending message', err);
+          alert('Error sending message');
+          // Remove the message if it failed
+          const lastMessage = existingList?.lastElementChild;
+          if (lastMessage && lastMessage.querySelector('.bg-success')) {
+            lastMessage.remove();
+          }
+        });
+    }
+
+    if (sendMessageForm && messageInput) {
+      sendMessageForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) {
+          return;
+        }
+        
+        // Clear input immediately for better UX
+        messageInput.value = '';
+        
+        // Send message without any loading states
+        sendMessage(text);
+      });
+
+      // Add Enter key functionality for message input
+      messageInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const text = messageInput.value.trim();
+          if (text) {
+            // Clear input immediately for better UX
+            messageInput.value = '';
+            sendMessage(text);
+          }
+        }
+      });
+    }
+
+    if (startChatBtn && newChatUsernameInput) {
+      startChatBtn.addEventListener('click', function () {
+        const username = newChatUsernameInput.value.trim();
+        if (!username) {
+          return;
+        }
+        activeConversation = null;
+        openConversation(username);
+      });
+
+      newChatUsernameInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          startChatBtn.click();
+        }
+      });
+    }
+
+    loadConversations();
+  })();
+</script>
+{% endblock %}

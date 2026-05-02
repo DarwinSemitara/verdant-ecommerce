@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ store.name if store else 'Store' }} - Verdant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <style>
+    body { background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%); min-height: 100vh; }
+    .store-page { max-width: 1200px; margin: 2rem auto; padding: 0 1rem 3rem; }
+    .store-hero { position: relative; margin-bottom: 2.5rem; }
+    .store-cover { width: 100%; height: 220px; border-radius: 16px; object-fit: cover; }
+    .store-cover-placeholder { width: 100%; height: 220px; border-radius: 16px; background: linear-gradient(135deg,#e2e8f0,#f8fafc); display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:500; }
+    .store-avatar-wrap { position: absolute; left: 24px; bottom: -56px; display:flex; align-items:center; gap:1rem; }
+    .store-avatar { width: 120px; height: 120px; border-radius: 999px; background:#fff; border:4px solid #fff; overflow:hidden; box-shadow:0 10px 25px rgba(15,23,42,0.18); display:flex; align-items:center; justify-content:center; }
+    .store-avatar img { width:100%; height:100%; object-fit:cover; }
+    .store-avatar-placeholder { font-size:1.8rem; color:#9ca3af; }
+    .store-heading { margin-left: 160px; padding-top: 1.75rem; }
+    .store-heading h1 { margin:0; font-size:1.7rem; color:#111827; }
+    .store-heading p { margin:0.3rem 0 0; font-size:0.95rem; color:#6b7280; }
+    .store-layout { display:grid; grid-template-columns:minmax(0, 2.5fr) minmax(0, 1fr); gap:2rem; margin-top:2rem; }
+    .store-card { background:#fff; border-radius:1.25rem; box-shadow:0 10px 30px rgba(15,23,42,0.06); padding:1.5rem 1.75rem; border:1px solid #e5e7eb; }
+    .store-card h2 { margin:0 0 1rem; font-size:1.2rem; color:#111827; }
+    .store-description { white-space:pre-line; color:#4b5563; font-size:0.95rem; line-height:1.6; }
+    .store-description.empty { color:#9ca3af; font-style:italic; }
+    .store-products-header { display:flex; gap:0.75rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap; }
+    .store-products-search-input { flex:1; min-width:200px; padding:0.55rem 0.9rem; border-radius:999px; border:1px solid #d1d5db; font-size:0.9rem; }
+    .store-products-search-btn { padding:0.55rem 1.2rem; border-radius:999px; border:none; background:#198754; color:#fff; font-size:0.85rem; font-weight:600; cursor:pointer; }
+    .store-products-search-btn:hover { background:#157347; }
+    .products-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:1rem; }
+    .product-card { background:#fff; border-radius:1rem; box-shadow:0 6px 18px rgba(15,23,42,0.06); overflow:hidden; border:1px solid #e5e7eb; cursor:pointer; display:flex; flex-direction:column; }
+    .product-card img { width:100%; height:170px; object-fit:cover; }
+    .product-image-placeholder { height:170px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#cbd5f5; }
+    .product-body { padding:0.9rem 1rem 1.1rem; display:flex; flex-direction:column; gap:0.2rem; }
+    .product-title { font-size:0.98rem; font-weight:600; color:#111827; margin:0; }
+    .product-price { font-weight:700; color:#15803d; font-size:0.95rem; }
+    .product-meta { font-size:0.8rem; color:#9ca3af; }
+    .product-actions { margin-top:0.7rem; }
+    .view-btn { border-radius:999px; border:1px solid #0d6efd; background:transparent; color:#0d6efd; padding:0.4rem 0.9rem; font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s ease; }
+    .view-btn:hover { background:#0d6efd; color:#fff; }
+    .see-more-wrap { margin-top:1rem; text-align:center; }
+    .see-more-btn { border-radius:999px; border:none; background:#f3f4f6; color:#111827; padding:0.5rem 1.4rem; font-size:0.85rem; font-weight:600; cursor:pointer; }
+    .see-more-btn:hover { background:#e5e7eb; }
+    .store-meta-tag { display:inline-flex; align-items:center; gap:0.4rem; padding:0.25rem 0.6rem; border-radius:999px; background:#ecfdf3; color:#166534; font-size:0.75rem; font-weight:600; text-transform:uppercase; }
+    .not-found { text-align:center; padding:4rem 1rem; color:#6b7280; }
+    .not-found h1 { margin-bottom:0.75rem; color:#111827; }
+    .back-link { text-decoration:none; color:#15803d; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:0.25rem; }
+    .back-link:hover { text-decoration:underline; }
+    .contact-btn { display:inline-flex; align-items:center; justify-content:center; border-radius:999px; padding:0.5rem 1.4rem; background:#0d6efd; color:#fff; font-size:0.85rem; font-weight:600; text-decoration:none; }
+    .contact-btn:hover { background:#0b5ed7; text-decoration:none; }
+    @media (max-width: 1200px) { .products-grid { grid-template-columns:repeat(4, minmax(0,1fr)); } }
+    @media (max-width: 960px) { .store-layout { grid-template-columns:1fr; } .store-heading { margin-left:120px; } .products-grid { grid-template-columns:repeat(3, minmax(0,1fr)); } }
+    @media (max-width: 768px) { .products-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 640px) { .store-avatar-wrap { position:static; margin-top:-40px; margin-bottom:0.75rem; } .store-heading { margin-left:0; padding-top:0; } .products-grid { grid-template-columns:repeat(1, minmax(0,1fr)); } }
+  </style>
+</head>
+<body class="has-main-header">
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('homepage') if session.get('role') == 'user' else url_for('guest_home') }}" class="nav-logo">Verdant</a>
+      </div>
+    </nav>
+  </header>
+
+  {% if not store or not_found %}
+    <main class="store-page">
+      <a href="javascript:history.back()" class="back-link">← Back</a>
+      <div class="not-found">
+        <h1>Store not available</h1>
+        <p>This store either does not exist or is not available to view.</p>
+      </div>
+    </main>
+  {% else %}
+    <main class="store-page">
+      <a href="javascript:history.back()" class="back-link">← Back</a>
+      <div class="store-hero">
+        {% if store.cover_photo %}
+          <img src="{{ img(store.cover_photo, 'store') }}" alt="Store cover" class="store-cover" />
+        {% else %}
+          <div class="store-cover-placeholder">Explore items from this seller's store.</div>
+        {% endif %}
+
+        <div class="store-avatar-wrap">
+          <div class="store-avatar">
+            {% if store.store_profile %}
+              <img src="{{ img(store.store_profile, 'store') }}" alt="Store logo" />
+            {% else %}
+              <div class="store-avatar-placeholder">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                  <path d="M3 21V8l9-6 9 6v13h-6v-6h-6v6H3z" />
+                </svg>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="store-heading">
+          <h1>{{ store.name }}</h1>
+          <p>@{{ store.username }} · <span class="store-meta-tag">Verified seller</span></p>
+        </div>
+      </div>
+
+      <div class="store-layout">
+        <!-- Products Section (Left) -->
+        <section class="store-card">
+          <h2>Items from this store</h2>
+          {% if products and products|length > 0 %}
+            <div class="store-products-header">
+              <input type="text" id="storeProductSearch" class="store-products-search-input" placeholder="Search items in this store">
+              <button type="button" id="storeProductSearchBtn" class="store-products-search-btn">Search</button>
+            </div>
+            <div class="products-grid" id="storeProductsGrid">
+              {% for p in products %}
+              <div class="product-card {% if loop.index > 8 %}is-extra{% endif %}" data-product-url="{{ url_for('product_detail', product_id=p.id) }}" onclick="window.location.href=this.dataset.productUrl">
+                {% if p.image %}
+                  <img src="{{ img(p.image) }}" alt="{{ p.name }}" />
+                {% else %}
+                  <div class="product-image-placeholder">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                      <path d="M21 15l-5-5L5 21" stroke-width="2" />
+                    </svg>
+                  </div>
+                {% endif %}
+                <div class="product-body">
+                  <h3 class="product-title">{{ p.name }}</h3>
+                  <div class="product-price">₱{{ '%.2f'|format(p.price|float) }}</div>
+                  <div class="product-meta">In stock: {{ p.stock }}</div>
+                  <div class="product-actions">
+                    <button class="view-btn" data-product-url="{{ url_for('product_detail', product_id=p.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% if products|length > 8 %}
+            <div class="see-more-wrap">
+              <button type="button" class="see-more-btn" id="storeSeeMoreBtn">See more items</button>
+            </div>
+            {% endif %}
+          {% else %}
+            <div class="store-description empty" style="margin-top: 0.5rem;">This store doesn't have any available items right now.</div>
+          {% endif %}
+        </section>
+
+        <!-- Store Info Section (Right) -->
+        <section class="store-card">
+          <h2>About this store</h2>
+          {% if store.description %}
+            <div class="store-description">{{ store.description }}</div>
+          {% else %}
+            <div class="store-description empty">This seller hasn't added a description yet.</div>
+          {% endif %}
+
+          <hr style="margin: 1.5rem 0; border-color: #e5e7eb;" />
+
+          <h2>Store info</h2>
+          <div class="store-description">
+            <strong>Store name:</strong> {{ store.name }}<br />
+            <strong>Seller username:</strong> {{ store.username }}
+          </div>
+
+          <div style="margin-top: 1rem;">
+            {% if session.get('role') == 'user' %}
+              <a href="{{ url_for('user_messages') }}?with={{ store.username }}" class="contact-btn">Contact this seller</a>
+            {% else %}
+              <a href="{{ url_for('login_page') }}" class="contact-btn">Contact this seller</a>
+            {% endif %}
+          </div>
+        </section>
+      </div>
+    </main>
+  {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const productsGrid = document.getElementById('storeProductsGrid');
+      if (!productsGrid) return;
+
+      const cards = Array.from(productsGrid.querySelectorAll('.product-card'));
+      const searchInput = document.getElementById('storeProductSearch');
+      const searchBtn = document.getElementById('storeProductSearchBtn');
+      const seeMoreBtn = document.getElementById('storeSeeMoreBtn');
+      const hasExtra = cards.some(function(card) { return card.classList.contains('is-extra'); });
+      let seeMoreExpanded = false;
+
+      function applyFilter() {
+        const query = (searchInput && searchInput.value.trim().toLowerCase()) || '';
+        cards.forEach(function(card) {
+          const titleEl = card.querySelector('.product-title');
+          const name = titleEl ? titleEl.textContent.toLowerCase() : '';
+          const matches = !query || name.indexOf(query) !== -1;
+          if (!matches) {
+            card.style.display = 'none';
+          } else if (!query && !seeMoreExpanded && card.classList.contains('is-extra')) {
+            card.style.display = 'none';
+          } else {
+            card.style.display = '';
+          }
+        });
+
+        if (seeMoreBtn) {
+          if (!query && hasExtra && !seeMoreExpanded) {
+            seeMoreBtn.style.display = '';
+          } else {
+            seeMoreBtn.style.display = 'none';
+          }
+        }
+      }
+
+      if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', applyFilter);
+        searchInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilter();
+          }
+        });
+      }
+
+      if (seeMoreBtn) {
+        seeMoreBtn.addEventListener('click', function() {
+          seeMoreExpanded = true;
+          applyFilter();
+        });
+      }
+
+      applyFilter();
+    });
+  </script>
+
+  {% include 'footer_verdant.html' %}
+</body>
+</html>

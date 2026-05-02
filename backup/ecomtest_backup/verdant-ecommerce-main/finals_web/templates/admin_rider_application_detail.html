@@ -1,0 +1,130 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('admin_rider_applications') }}" class="text-muted small">
+    &larr; Back to rider applications
+  </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h2 class="h5 text-light mb-1">{{ application.full_name }}</h2>
+    <p class="text-muted small mb-0">
+      Username: {{ application.username }}{% if application.email %} &bull; {{ application.email }}{% endif %}
+      {% if application.created_at %}
+        &bull; {{ application.created_at.strftime('%Y-%m-%d %H:%M') }}
+      {% endif %}
+    </p>
+  </div>
+  <div>
+    {% if application.status == 'pending' %}
+      <span class="badge bg-warning text-dark text-uppercase small">Pending</span>
+    {% elif application.status == 'approved' %}
+      <span class="badge bg-success text-uppercase small">Approved</span>
+    {% else %}
+      <span class="badge bg-secondary text-uppercase small">Rejected</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-6">
+    <div class="admin-placeholder-card h-100">
+      <div class="admin-placeholder-title">Rider information</div>
+      <dl class="mb-0 small">
+        <dt class="text-muted">Full name</dt>
+        <dd class="text-white mb-2">{{ application.full_name }}</dd>
+
+        <dt class="text-muted">Username</dt>
+        <dd class="text-white mb-2">{{ application.username }}</dd>
+
+        <dt class="text-muted">Email</dt>
+        <dd class="text-white mb-2">{{ application.email or 'N/A' }}</dd>
+
+        <dt class="text-muted">Phone</dt>
+        <dd class="text-white mb-2">{{ application.phone or 'Not provided' }}</dd>
+
+        <dt class="text-muted">Address</dt>
+        <dd class="text-white mb-0">{{ application.address or 'Not provided' }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="admin-placeholder-card h-100">
+      <div class="admin-placeholder-title">Vehicle & license</div>
+      <dl class="mb-0 small">
+        <dt class="text-muted">Vehicle type</dt>
+        <dd class="text-white mb-2">{{ application.vehicle_type or 'N/A' }}</dd>
+
+        <dt class="text-muted">Vehicle registration</dt>
+        <dd class="text-white mb-2">{{ application.vehicle_registration or 'Not provided' }}</dd>
+
+        <dt class="text-muted">License number</dt>
+        <dd class="text-white mb-2">{{ application.license_number or 'Not provided' }}</dd>
+
+        <dt class="text-muted">License image</dt>
+        <dd class="text-white mb-0">
+          {% if application.license_image %}
+            <a href="{{ application.license_image if application.license_image.startswith('http') else url_for('static', filename='uploads/documents/' ~ application.license_image) }}" target="_blank">View file</a>
+          {% else %}
+            <span class="text-muted">Not provided</span>
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+  </div>
+</div>
+
+{% if application.status == 'pending' %}
+<div class="d-flex gap-2">
+  <button type="button" class="btn btn-success" onclick="handleRiderApplication('{{ application.id }}', 'approve', this)">
+    Approve application
+  </button>
+  <button type="button" class="btn btn-outline-danger" onclick="handleRiderApplication('{{ application.id }}', 'reject', this)">
+    Reject application
+  </button>
+</div>
+{% endif %}
+
+<script>
+  function handleRiderApplication(userId, action, btn) {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    if (!confirm(`Are you sure you want to ${actionText} this rider application?`)) {
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+    }
+
+    fetch(`/admin/rider-application/${userId}/${action}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.href = "{{ url_for('admin_rider_applications') }}";
+      } else {
+        alert(data.message || 'An error occurred.');
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = action === 'approve' ? 'Approve application' : 'Reject application';
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error updating rider application:', error);
+      alert('An error occurred. Please try again.');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = action === 'approve' ? 'Approve application' : 'Reject application';
+      }
+    });
+  }
+</script>
+{% endblock %}

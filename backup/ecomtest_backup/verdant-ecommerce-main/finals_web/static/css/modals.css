@@ -1,0 +1,641 @@
+/* ============================================================================
+   MODAL STYLES
+   All modal and popup styles used across the application
+   ============================================================================ */
+
+/* Base Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #6c757d;
+  transition: color 0.3s ease;
+}
+
+.close:hover {
+  color: #2d5016;
+}
+
+.modal h2 {
+  margin-bottom: 1.5rem;
+  color: #2d5016;
+  font-size: 1.5rem;
+}
+
+.modal p {
+  margin-bottom: 2rem;
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+.modal .btn-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.modal .btn-primary,
+.modal .btn-secondary {
+  width: auto;
+  padding: 0.875rem 1.5rem;
+}
+
+.info-content-placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 0.5rem;
+}
+
+/* Login Page Modals */
+.info-modal,
+.signup-modal,
+.error-modal,
+.forgot-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(5px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.info-content,
+.signup-content,
+.error-content,
+.forgot-content {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1rem;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  animation: modalSlideIn 0.3s ease;
+}
+
+/* Forgot Password Modal - compact, clean card style */
+.forgot-content {
+  max-width: 420px;
+  padding: 2rem 2.25rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.forgot-content h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.forgot-content p {
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.9rem;
+}
+
+.forgot-content label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.forgot-content input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 2px solid #e9ecef;
+  font-size: 0.9rem;
+  margin-bottom: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.forgot-content input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.18);
+}
+
+.forgot-content .form-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.forgot-content .form-col {
+  flex: 1;
+}
+
+.forgot-message {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  text-align: center;
+  color: #6c757d;
+  min-height: 1.2em;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #6c757d;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: #2d5016;
+}
+
+.info-content h2,
+.signup-content h2,
+.error-content h2 {
+  margin-bottom: 1.5rem;
+  color: #2d5016;
+  font-size: 1.5rem;
+}
+
+.info-steps ol {
+  padding-left: 1.5rem;
+}
+
+.info-steps li {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.info-steps ul {
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+/* Login help modal role selector */
+.help-role-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.help-role-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.help-role-tab.active {
+  background: #ecfdf5;
+  border-color: #16a34a;
+  color: #166534;
+  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.2);
+}
+
+.help-role-panel {
+  display: none;
+}
+
+.help-role-panel.active {
+  display: block;
+}
+
+.help-role-panel h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.help-role-panel ul {
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.help-role-panel li {
+  margin-bottom: 0.4rem;
+  line-height: 1.5;
+}
+
+/* Signup Modal Styles */
+.terms-step,
+.role-select,
+.role-form {
+  margin-bottom: 2rem;
+}
+
+.terms-box {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.terms-box p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.terms-agree {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.role-select-subtitle {
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.role-card:nth-child(3) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  max-width: 200px;
+}
+
+.role-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.role-card[data-role="user"]:hover {
+  border-color: #28a745;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.role-card[data-role="seller"]:hover {
+  border-color: #4a90e2;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
+}
+
+.role-card[data-role="rider"]:hover {
+  border-color: #dc3545;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+}
+
+.role-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.role-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d5016;
+  margin-bottom: 0.5rem;
+}
+
+.role-desc {
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.role-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.role-form-header .back-to-select {
+  margin-bottom: 0;
+}
+
+.role-form h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+  flex: 1;
+}
+
+.role-header-icon,
+.role-header-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #374151;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.role-header-icon:hover,
+.role-header-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.role-header-icon:focus,
+.role-header-close:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.4);
+}
+
+/* Role-specific header colors */
+#userFormContainer .role-form-header h3 {
+  color: #15803d;
+}
+
+#sellerFormContainer .role-form-header h3 {
+  color: #2563eb;
+}
+
+#riderFormContainer .role-form-header h3 {
+  color: #b91c1c;
+}
+
+.role-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.role-form input,
+.role-form select,
+.role-form textarea {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e9ecef;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: #fff;
+}
+
+.role-form input:focus,
+.role-form select:focus,
+.role-form textarea:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.back-to-select {
+  color: #166534;
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  font-size: 0.95rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.back-to-select:hover {
+  color: #14532d;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-col label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form-col input {
+  margin-bottom: 0;
+  padding: 0.875rem;
+  border: 2px solid #e9ecef;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: #fff;
+}
+
+.form-col input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.signupbutton {
+  width: 100%;
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  padding: 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+  box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.signupbutton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #357abd 0%, #2c5aa0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+.signupbutton:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Terms step continue button - green to match Verdant theme */
+#continueToRole.signupbutton {
+  background: linear-gradient(135deg, #166534 0%, #22c55e 100%);
+  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.35);
+}
+
+#continueToRole.signupbutton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45);
+}
+
+/* Role-specific submit buttons matching role hover colors */
+#userFormContainer .signupbutton {
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+#userFormContainer .signupbutton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+#sellerFormContainer .signupbutton {
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+}
+
+#sellerFormContainer .signupbutton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #357abd 0%, #2c5aa0 100%);
+}
+
+#riderFormContainer .signupbutton {
+  background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+#riderFormContainer .signupbutton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b02a37 0%, #9f1239 100%);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+}
+
+/* Error Modal */
+.error-content {
+  max-width: 400px;
+}
+
+.error-content p {
+  color: #dc3545;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Responsive Design for Modals */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  
+  .modal .btn-group {
+    flex-direction: column;
+  }
+  
+  .role-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .info-content,
+  .signup-content,
+  .error-content {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+}

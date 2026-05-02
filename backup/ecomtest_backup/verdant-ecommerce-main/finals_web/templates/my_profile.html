@@ -1,0 +1,269 @@
+{% extends 'base_user.html' %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header Section -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="mb-1 fw-bold" style="font-size: 2rem; color: #212529;">My Profile</h1>
+      <small class="text-muted">Manage your personal information and account settings</small>
+    </div>
+    <div>
+      <a href="{{ url_for('homepage') }}" class="text-muted text-decoration-none" style="font-size: 0.9rem;">
+        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content Row -->
+  <div class="row g-4">
+    <!-- Left Column - Profile Info -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <!-- Profile Picture -->
+          <div class="profile-picture-container mb-3">
+            <div class="profile-picture-placeholder mx-auto mb-3" style="width: 120px; height: 120px; border-radius: 50%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border: 3px solid #e9ecef; overflow: hidden;">
+              {% if seller.profile_picture %}
+                <img src="{{ img(seller.profile_picture, 'profiles') }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                <i class="bi bi-person text-muted" style="font-size: 3rem;"></i>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Basic Info -->
+          <h5 class="mb-1">{{ seller.first_name or seller.username }} {{ seller.last_name or '' }}</h5>
+          <div class="text-muted mb-2">{{ seller.email }}</div>
+          <div class="mb-3">
+            <span class="badge bg-primary">Seller</span>
+          </div>
+
+          <!-- Account Stats -->
+          <div class="row g-2 text-center">
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <div class="fw-bold">{{ product_count or 0 }}</div>
+                <small class="text-muted">Products</small>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="border rounded p-2">
+                <div class="fw-bold">{{ order_count or 0 }}</div>
+                <small class="text-muted">Orders</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Store Info -->
+      <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-white border-0">
+          <h6 class="mb-0">Store Information</h6>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted">Store Name:</span>
+            <span class="fw-semibold">{{ seller.store_name or 'Not Set' }}</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted">Username:</span>
+            <span class="fw-semibold">{{ seller.username }}</span>
+          </div>
+          <!-- Setup Store button removed - will be integrated into View Store page -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Edit Form -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Account Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="text-muted">Email Address</div>
+                <div class="fw-semibold">{{ seller.email }}</div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-muted">Username</div>
+                <div class="fw-semibold">{{ seller.username }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="text-muted">Role</div>
+                <div class="fw-semibold">Seller</div>
+              </div>
+              <div class="col-md-6">
+                <div class="text-muted">Store Name</div>
+                <div class="fw-semibold">{{ seller.store_name or 'Not set' }}</div>
+              </div>
+            </div>
+          </div>
+
+          {% if seller.address %}
+          <div class="mb-4">
+            <div class="row g-3">
+              <div class="col-md-12">
+                <div class="text-muted">Address</div>
+                <div class="fw-semibold">{{ seller.address }}</div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if seller.latitude and seller.longitude %}
+          <div class="mb-4">
+            <div class="row g-3 mt-2">
+              <div class="col-md-12">
+                <label class="form-label fw-semibold">Location on Map</label>
+                <div id="sellerLocationMap" style="width: 100%; height: 300px; border-radius: 0.5rem;"></div>
+                <div class="form-text text-muted mt-1">
+                  Store location is managed via your store setup and cannot be changed here.
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if not seller_approved %}
+            {% if application_status == 'pending' %}
+              <div class="border rounded p-3 mt-3 text-center">
+                <div class="mb-2">
+                  <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
+                </div>
+                <div class="fw-semibold">Seller application submitted</div>
+                <div class="text-muted small">Awaiting admin review{% if application_submitted_at %} • Submitted: {{ application_submitted_at }}{% endif %}</div>
+              </div>
+            {% else %}
+              <div class="mt-4">
+                <h6 class="fw-semibold mb-3">Seller Application</h6>
+                <form id="sellerProfileApplicationForm" method="POST" action="{{ url_for('submit_seller_application') }}" enctype="multipart/form-data">
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Store Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="store_name" placeholder="Enter your store name" required>
+                    <small class="text-muted">This will be displayed to customers</small>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Store Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="store_description" rows="4" placeholder="Describe what your store sells..." required></textarea>
+                    <small class="text-muted">Tell customers about your products and services</small>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Store Category <span class="text-danger">*</span></label>
+                      <select class="form-select" name="store_category" required>
+                        <option value="">Select category</option>
+                        <option value="Home & Garden">Home & Garden</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Food & Beverages">Food & Beverages</option>
+                        <option value="Health & Beauty">Health & Beauty</option>
+                        <option value="Sports & Outdoors">Sports & Outdoors</option>
+                        <option value="Books & Media">Books & Media</option>
+                        <option value="Toys & Games">Toys & Games</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Store Phone Number <span class="text-danger">*</span></label>
+                      <input type="tel" class="form-control" name="store_phone" placeholder="09XXXXXXXXX" required>
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Business Permit/DTI Registration (Optional)</label>
+                    <input type="file" class="form-control" name="business_permit" accept="image/*,.pdf">
+                    <small class="text-muted">Upload your business permit or DTI registration (JPG, PNG, PDF)</small>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Valid ID <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" name="valid_id" accept="image/*,.pdf" required>
+                    <small class="text-muted">Upload a clear photo of your valid government-issued ID</small>
+                  </div>
+
+                  <div class="mb-3 form-check">
+                    <input class="form-check-input" type="checkbox" id="profileAgreeTerms" required>
+                    <label class="form-check-label" for="profileAgreeTerms">
+                      I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Seller Policy</a>
+                    </label>
+                  </div>
+
+                  <div class="d-grid">
+                    <button id="sellerProfileSubmitBtn" type="submit" class="btn btn-success">
+                      <i class="bi bi-check-circle me-2"></i>Submit Application
+                    </button>
+                  </div>
+                </form>
+                <script>
+                  (function(){
+                    var form = document.getElementById('sellerProfileApplicationForm');
+                    var btn = document.getElementById('sellerProfileSubmitBtn');
+                    if (form && btn) {
+                      form.addEventListener('submit', function(){
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+                      });
+                    }
+                  })();
+                </script>
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.profile-picture-container {
+  position: relative;
+}
+
+.profile-picture-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #e9ecef;
+}
+</style>
+
+{% if seller.latitude and seller.longitude %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('sellerLocationMap').setView([{{ seller.latitude }}, {{ seller.longitude }}], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    L.marker([{{ seller.latitude }}, {{ seller.longitude }}])
+      .addTo(map)
+      .bindPopup('Store Location')
+      .openPopup();
+  });
+</script>
+{% endif %}
+{% endblock %}

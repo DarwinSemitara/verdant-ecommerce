@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Cart - Verdant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%);
+      min-height: 100vh;
+    }
+
+    .cart-page {
+      max-width: 1800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .cart-header h1 {
+      color: #2d5016;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .cart-summary {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      text-align: right;
+    }
+
+    .cart-container-wrapper {
+      background: white;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      /* Fixed height always — tall enough for 5 items */
+      height: calc(5 * 160px + 60px + 70px); /* 5 items + date header + footer */
+      min-height: 600px;
+      position: relative;
+    }
+
+    .cart-items-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      flex: 1;
+      /* No padding here — padding on inner items */
+    }
+
+    .cart-items {
+      background: white;
+      border-radius: 1rem;
+      overflow: visible;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 44px 130px 1fr 100px 130px 100px;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e9ecef;
+      align-items: center;
+      min-height: 150px;
+      transition: background 0.2s;
+    }
+
+    .cart-item.selected { background: #f0f8f0; }
+    .cart-item:hover { background: #f8f9fa; }
+    .cart-item:last-child { border-bottom: none; }
+
+    .cart-item-image {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      background: #f8f9fa;
+      flex-shrink: 0;
+    }
+
+    .cart-item-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 0; /* allow text truncation */
+    }
+
+    .cart-item-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #2d5016;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Date group — NOT sticky, scrolls with content */
+    .date-group { margin-bottom: 0; }
+    .date-group-header {
+      padding: 0.6rem 1.5rem;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      /* removed position:sticky */
+    }
+    .date-group-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      color: #2d5016;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .date-group-checkbox { width: 18px; height: 18px; accent-color: #198754; cursor: pointer; }
+    .date-group-items { padding: 0; }
+
+    .cart-item-description {
+      color: #6c757d;
+      font-size: 0.95rem;
+    }
+
+    .cart-item-price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #2d5016;
+    }
+
+    .cart-item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .quantity-btn {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #2d5016;
+      background: white;
+      color: #2d5016;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .quantity-btn:hover {
+      background: #2d5016;
+      color: white;
+    }
+
+    .quantity-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .cart-item-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: #198754;
+    }
+
+    .delete-selected-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .delete-selected-btn.show {
+      display: flex;
+    }
+
+    .delete-selected-btn:hover {
+      background: #c82333;
+      transform: translateY(-2px);
+    }
+
+    .delete-selected-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .cart-empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #6c757d;
+    }
+
+    .cart-empty h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #2d5016;
+    }
+
+    .cart-empty p {
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+
+    .cart-footer {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 2px solid #e9ecef;
+      padding: 1rem 2rem;
+      border-radius: 0 0 1.5rem 1.5rem;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      flex-shrink: 0;
+    }
+
+    .cart-total-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cart-total-amount {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #2d5016;
+    }
+
+    /* Quantity controls on cart items */
+    .cart-item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    /* Hide number input spinners */
+    input[type=number].quantity-input::-webkit-outer-spin-button,
+    input[type=number].quantity-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number].quantity-input { -moz-appearance: textfield; appearance: textfield; }
+
+    .cart-item-line-total {
+      font-weight: 700;
+      color: #2d5016;
+      font-size: 1rem;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .checkout-btn {
+      background: #2d5016;
+      color: white;
+      padding: 1rem 3rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .checkout-btn:hover {
+      background: #1a3d0a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(45, 80, 22, 0.3);
+    }
+
+    .checkout-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Highlight cart icon when on cart page */
+    .icon-button.cart-active {
+      background: #e8f5e8;
+      border-radius: 0.5rem;
+    }
+
+    .cart-header .icon-button:hover {
+      background: #c82333 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-menu-item {
+      display: block;
+      padding: 0.875rem 1.25rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    @media (max-width: 768px) {
+      .cart-item {
+        grid-template-columns: 80px 1fr;
+        gap: 1rem;
+      }
+
+      .cart-item-price,
+      .cart-item-quantity,
+      .remove-btn {
+        grid-column: 2;
+      }
+
+      .cart-item-image {
+        width: 80px;
+        height: 80px;
+      }
+    }
+  </style>
+</head>
+<body class="has-main-header">
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('homepage') }}" class="nav-logo">Verdant</a>
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('cart') }}" class="icon-button active" aria-label="Cart" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
+            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <span id="cartCount" class="badge">0</span>
+        </a>
+        {% include 'notification_component.html' %}
+        <a href="{{ url_for('user_messages') }}" class="icon-button" aria-label="Messages" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 5h16v10H6l-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <button id="helpButton" class="icon-button" aria-label="Help">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1" fill="currentColor"/>
+          </svg>
+          <span>Help</span>
+        </button>
+        <div class="profile-dropdown">
+          <button class="profile-btn" aria-label="Profile" id="profileButton">
+            {% if profile_picture %}
+              <img alt="Profile" src="{{ img(profile_picture, 'profiles') }}" style="width: 100%; height: 100%; object-fit: cover;" />
+            {% else %}
+              <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+            {% endif %}
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
+            <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
+            <div class="profile-menu-divider"></div>
+            <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+              <button type="submit" class="profile-menu-item logout">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="cart-page">
+    <div class="cart-header">
+      <h1>My Cart</h1>
+      <div style="display: flex; gap: 1rem; align-items: center; flex: 1; max-width: 600px;">
+        <input type="text" class="search-input" placeholder="Search cart items..." aria-label="Search cart items" style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 1rem;" />
+        <button id="deleteSelectedBtn" class="delete-selected-btn">
+          <svg style="width: 20px; height: 20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 11v6M14 11v6" stroke-linecap="round"/>
+          </svg>
+          Delete Selected
+        </button>
+      </div>
+    </div>
+
+    <div class="cart-container-wrapper">
+      {% if cart_items and cart_items|length > 0 %}
+        <div class="cart-items-scroll">
+          <div class="cart-items">
+            {% set ns = namespace(current_date='', group_idx=0) %}
+            {% for item in cart_items %}
+              {# Compute date label #}
+              {% if item.created_at %}
+                {% set item_date = item.created_at.strftime('%Y-%m-%d') %}
+              {% else %}
+                {% set item_date = 'Unknown' %}
+              {% endif %}
+
+              {% if item_date != ns.current_date %}
+                {# Close previous group if any #}
+                {% if ns.current_date != '' %}
+                  </div>{# close .date-group-items #}
+                  </div>{# close .date-group #}
+                {% endif %}
+                {% set ns.current_date = item_date %}
+                {% set ns.group_idx = ns.group_idx + 1 %}
+
+                {# Date label #}
+                {% if item.created_at %}
+                  {% if item_date == today_str %}
+                    {% set date_label = 'Today' %}
+                  {% elif item_date == yesterday_str %}
+                    {% set date_label = 'Yesterday' %}
+                  {% else %}
+                    {% set date_label = item.created_at.strftime('%B %d, %Y') %}
+                  {% endif %}
+                {% else %}
+                  {% set date_label = 'Added earlier' %}
+                {% endif %}
+
+                <div class="date-group" data-group="{{ ns.group_idx }}">
+                  <div class="date-group-header">
+                    <label class="date-group-label">
+                      <input type="checkbox" class="date-group-checkbox" data-group="{{ ns.group_idx }}"
+                             onchange="toggleGroupItems(this)">
+                      <span>{{ date_label }}</span>
+                    </label>
+                  </div>
+                  <div class="date-group-items">
+              {% endif %}
+
+              <div class="cart-item" data-cart-id="{{ item.id }}" data-product-id="{{ item.product_id }}"
+                   data-price="{{ item.price }}" data-quantity="{{ item.quantity }}"
+                   data-stock="{{ item.stock }}"
+                   data-variation-id="{{ item.variation_id or '' }}"
+                   data-group="{{ ns.group_idx }}">
+                <input type="checkbox" class="cart-item-checkbox"
+                       data-cart-id="{{ item.id }}" data-price="{{ item.price }}"
+                       data-quantity="{{ item.quantity }}" data-stock="{{ item.stock }}"
+                       data-group="{{ ns.group_idx }}"
+                       onchange="onItemCheckChange(this)">
+
+                {% if item.image %}
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="cart-item-image" id="img-{{ item.id }}">
+                {% else %}
+                  <div class="cart-item-image" id="img-{{ item.id }}" style="display:flex;align-items:center;justify-content:center;background:#f8f9fa;">
+                    <svg style="width:60px;height:60px;color:#dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                      <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                    </svg>
+                  </div>
+                {% endif %}
+
+                <div class="cart-item-details">
+                  <div class="cart-item-name" data-base-name="{{ item.name.split('—')[0].strip() if '—' in item.name else item.name }}">{{ item.name }}</div>
+                  <div style="color:#6c757d;font-size:0.85rem;margin-top:0.2rem;">{{ item.seller_username }}</div>
+                  {% if item.all_variations and item.all_variations|length > 0 %}
+                    <div style="margin-top:0.5rem;">
+                      <select class="variation-select" data-cart-id="{{ item.id }}"
+                              style="font-size:0.85rem;padding:0.25rem 0.5rem;border:1px solid #dee2e6;border-radius:0.375rem;">
+                        {% for v in item.all_variations %}
+                          <option value="{{ v.id }}" data-price="{{ v.price }}"
+                                  data-image="{{ img(v.image) if v.image else '' }}"
+                                  {% if v.id == item.variation_id %}selected{% endif %}>
+                            {{ v.name }} — ₱{{ '%.2f'|format(v.price) }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="cart-item-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+
+                <div class="cart-item-quantity">
+                  <button class="quantity-btn" id="btn-minus-{{ item.id }}"
+                          onclick="changeQty('{{ item.id }}', -1, this)"
+                          {% if item.quantity <= 1 %}disabled{% endif %}
+                          style="{% if item.quantity <= 1 %}opacity:0.35;cursor:not-allowed;{% endif %}">-</button>
+                  <input type="number" class="quantity-input" id="qty-{{ item.id }}"
+                         value="{{ item.quantity }}" min="1" max="{{ item.stock }}"
+                         data-cart-id="{{ item.id }}" data-stock="{{ item.stock }}"
+                         onchange="onQtyInput(this)"
+                         style="width:52px;text-align:center;border:1px solid #dee2e6;border-radius:0.375rem;padding:0.25rem;font-size:0.95rem;-moz-appearance:textfield;appearance:textfield;">
+                  <style>
+                    #qty-{{ item.id }}::-webkit-outer-spin-button,
+                    #qty-{{ item.id }}::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                  </style>
+                  <button class="quantity-btn" id="btn-plus-{{ item.id }}"
+                          onclick="changeQty('{{ item.id }}', 1, this)"
+                          {% if item.quantity >= item.stock %}disabled{% endif %}
+                          style="{% if item.quantity >= item.stock %}opacity:0.35;cursor:not-allowed;{% endif %}">+</button>
+                </div>
+
+                <div class="cart-item-line-total" id="total-{{ item.id }}">
+                  ₱{{ '%.2f'|format(item.price * item.quantity) }}
+                </div>
+              </div>
+            {% endfor %}
+            {# Close last group #}
+            {% if ns.current_date != '' %}
+              </div>{# close .date-group-items #}
+              </div>{# close .date-group #}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="cart-footer">
+          <div class="cart-total-bar">
+            <div>
+              <span style="font-size:0.9rem;color:#6c757d;">Selected Total</span><br>
+              <span class="cart-total-amount" id="cartSelectedTotal">₱0.00</span>
+            </div>
+            <button class="checkout-btn" id="checkoutBtn">Proceed to Checkout</button>
+          </div>
+        </div>
+      {% else %}
+        <div class="cart-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:3rem 2rem;">
+          <h2>Your cart is empty</h2>
+          <p>Add some items to your cart to get started!</p>
+          <a href="{{ url_for('homepage') }}" class="btn-primary" style="text-decoration:none;padding:1rem 2rem;width:auto;display:inline-block;">Browse Products</a>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <!-- Help modal -->
+  <div class="modal" id="helpModal" style="display:none;">
+    <div class="modal-content">
+      <span class="close" id="closeHelpModal">&times;</span>
+      <h2>Help & FAQs</h2>
+      <div class="info-content-placeholder">This is a placeholder. FAQs coming soon.</div>
+    </div>
+  </div>
+
+  {% include 'verification_modal.html' %}
+
+  {% include 'footer_verdant.html' %}
+
+  <script>
+    // ── GLOBAL STATE & HELPERS ───────────────────────────────────────────────
+    let _pendingRemoveCartId = null;
+
+    function showRemoveModal(cartId) {
+      _pendingRemoveCartId = cartId;
+      const m = document.getElementById('removeItemModal');
+      if (m) { m.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; }
+    }
+    function hideRemoveModal() {
+      _pendingRemoveCartId = null;
+      const m = document.getElementById('removeItemModal');
+      if (m) { m.style.display = 'none'; document.documentElement.style.overflow = ''; }
+    }
+    function showModal(id) {
+      const m = document.getElementById(id);
+      if (m) { m.style.display = 'flex'; document.documentElement.style.overflow = 'hidden'; }
+    }
+    function hideModal(id) {
+      const m = document.getElementById(id);
+      if (m) { m.style.display = 'none'; document.documentElement.style.overflow = ''; }
+    }
+
+    function updateTotal() {
+      let total = 0;
+      document.querySelectorAll('.cart-item-checkbox:checked').forEach(cb => {
+        const price = parseFloat(cb.dataset.price) || 0;
+        const qty = parseInt(document.getElementById('qty-' + cb.dataset.cartId)?.value) || 0;
+        total += price * qty;
+      });
+      const el = document.getElementById('cartSelectedTotal');
+      if (el) el.textContent = '₱' + total.toFixed(2);
+    }
+
+    // Group checkbox — select/deselect all items in a date group
+    function toggleGroupItems(groupCb) {
+      const group = groupCb.dataset.group;
+      document.querySelectorAll(`.cart-item-checkbox[data-group="${group}"]`).forEach(cb => {
+        cb.checked = groupCb.checked;
+        const row = cb.closest('.cart-item');
+        if (row) row.classList.toggle('selected', groupCb.checked);
+      });
+      updateTotal();
+    }
+
+    // Individual item checkbox
+    function onItemCheckChange(cb) {
+      const row = cb.closest('.cart-item');
+      if (row) row.classList.toggle('selected', cb.checked);
+      // Update group checkbox state
+      const group = cb.dataset.group;
+      const groupCb = document.querySelector(`.date-group-checkbox[data-group="${group}"]`);
+      if (groupCb) {
+        const all = document.querySelectorAll(`.cart-item-checkbox[data-group="${group}"]`);
+        groupCb.checked = Array.from(all).every(c => c.checked);
+      }
+      updateTotal();
+    }
+
+    // +/- quantity buttons
+    function changeQty(cartId, delta, btn) {
+      const input = document.getElementById('qty-' + cartId);
+      if (!input) return;
+      const currentQty = parseInt(input.value) || 1;
+      const stock = parseInt(input.dataset.stock) || 999;
+      const newQty = currentQty + delta;
+      applyQtyChange(cartId, newQty, stock);
+    }
+
+    // Typed quantity input
+    function onQtyInput(input) {
+      const cartId = input.dataset.cartId;
+      const stock = parseInt(input.dataset.stock) || 999;
+      const newQty = parseInt(input.value);
+      if (isNaN(newQty)) return;
+      if (newQty > stock) {
+        const prevQty = parseInt(document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`)?.dataset.quantity) || 1;
+        input.value = prevQty;
+        showModal('stockExceededModal');
+        return;
+      }
+      applyQtyChange(cartId, newQty, stock);
+    }
+
+    function updateButtonStates(cartId, qty, stock) {
+      const minus = document.getElementById('btn-minus-' + cartId);
+      const plus = document.getElementById('btn-plus-' + cartId);
+      if (minus) { minus.disabled = qty <= 1; minus.style.opacity = qty <= 1 ? '0.35' : '1'; minus.style.cursor = qty <= 1 ? 'not-allowed' : ''; }
+      if (plus)  { plus.disabled = qty >= stock; plus.style.opacity = qty >= stock ? '0.35' : '1'; plus.style.cursor = qty >= stock ? 'not-allowed' : ''; }
+    }
+
+    function applyQtyChange(cartId, newQty, stock) {
+      const input = document.getElementById('qty-' + cartId);
+      const totalEl = document.getElementById('total-' + cartId);
+      const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+      const effectiveStock = stock || parseInt(input?.dataset.stock) || 999;
+
+      if (newQty <= 0) {
+        if (input) input.value = parseInt(cb?.dataset.quantity) || 1;
+        showRemoveModal(cartId);
+        return;
+      }
+      if (newQty > effectiveStock) {
+        if (input) input.value = parseInt(cb?.dataset.quantity) || 1;
+        showModal('stockExceededModal');
+        return;
+      }
+
+      // Instant UI update
+      if (input) input.value = newQty;
+      if (cb) cb.dataset.quantity = String(newQty);
+      const price = cb ? parseFloat(cb.dataset.price) : 0;
+      if (totalEl) totalEl.textContent = '₱' + (price * newQty).toFixed(2);
+      updateButtonStates(cartId, newQty, effectiveStock);
+      updateTotal();
+
+      // Background sync
+      fetch(`/update_cart_quantity/${cartId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQty })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) {
+          const prevQty = parseInt(cb?.dataset.quantity) || 1;
+          if (input) input.value = prevQty;
+          if (totalEl) totalEl.textContent = '₱' + (price * prevQty).toFixed(2);
+          updateButtonStates(cartId, prevQty, effectiveStock);
+          updateTotal();
+          alert(data.message || 'Could not update quantity');
+        }
+      })
+      .catch(() => {});
+    }
+
+    // ── PAGE READY (after full DOM including bottom modals) ─────────────────
+    window.addEventListener('load', function() {
+
+      // Cart button reload
+      const cartButton = document.getElementById('cartButton');
+      if (cartButton) cartButton.addEventListener('click', () => window.location.reload());
+
+      // Help modal
+      const helpButton = document.getElementById('helpButton');
+      const helpModal = document.getElementById('helpModal');
+      const closeHelpModal = document.getElementById('closeHelpModal');
+      if (helpButton) helpButton.addEventListener('click', () => { helpModal.style.display = 'flex'; });
+      if (closeHelpModal) closeHelpModal.addEventListener('click', () => { helpModal.style.display = 'none'; });
+
+      // Profile dropdown
+      const profileButton = document.getElementById('profileButton');
+      const profileMenu = document.getElementById('profileMenu');
+      if (profileButton) {
+        profileButton.addEventListener('click', (e) => { e.stopPropagation(); profileMenu.classList.toggle('show'); });
+      }
+      window.addEventListener('click', (e) => {
+        if (helpModal && e.target === helpModal) helpModal.style.display = 'none';
+        if (profileButton && profileMenu && !profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+          profileMenu.classList.remove('show');
+        }
+      });
+
+      // Load cart count
+      fetch('{{ url_for("get_cart_count") }}')
+        .then(r => r.json())
+        .then(data => {
+          const cartCount = document.getElementById('cartCount');
+          if (cartCount) {
+            if (data.cart_count > 0) { cartCount.textContent = data.cart_count; cartCount.style.display = 'flex'; }
+            else cartCount.style.display = 'none';
+          }
+        });
+
+      // Delete selected
+      const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+      if (deleteSelectedBtn) deleteSelectedBtn.classList.add('show');
+
+      const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+      const deleteConfirmCount = document.getElementById('deleteConfirmCount');
+      const closeDeleteModal = document.getElementById('closeDeleteModal');
+      const cancelDeleteBtn = document.getElementById('cancelDelete');
+      const confirmDeleteBtn = document.getElementById('confirmDelete');
+      let pendingDeleteIds = [];
+
+      function openDeleteModal(count) {
+        if (deleteConfirmCount) deleteConfirmCount.textContent = String(count);
+        deleteConfirmModal.style.display = 'flex';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
+      function closeDelete() {
+        deleteConfirmModal.style.display = 'none';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        if (confirmDeleteBtn) { confirmDeleteBtn.disabled = false; confirmDeleteBtn.textContent = 'Remove'; }
+      }
+
+      if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', () => {
+          const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+          if (!selected.length) { alert('Please select items to delete'); return; }
+          pendingDeleteIds = selected.map(cb => cb.dataset.cartId);
+          openDeleteModal(selected.length);
+        });
+      }
+      if (closeDeleteModal) closeDeleteModal.addEventListener('click', closeDelete);
+      if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDelete);
+      if (deleteConfirmModal) deleteConfirmModal.addEventListener('click', e => { if (e.target === deleteConfirmModal) closeDelete(); });
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', () => {
+          if (!pendingDeleteIds.length) { closeDelete(); return; }
+          confirmDeleteBtn.disabled = true;
+          confirmDeleteBtn.textContent = 'Removing...';
+          Promise.all(pendingDeleteIds.map(id => fetch(`/remove_from_cart/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })))
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            .then(results => {
+              if (results.every(r => r && r.success)) {
+                if (typeof showNotification === 'function') showNotification('Selected items removed from cart', 'error');
+                setTimeout(() => location.reload(), 600);
+              } else {
+                alert('Some items could not be removed.');
+                closeDelete();
+              }
+            })
+            .catch(() => { alert('An error occurred.'); closeDelete(); });
+        });
+      }
+
+      // Remove item modal
+      const removeItemModal = document.getElementById('removeItemModal');
+      const closeRemoveModal = document.getElementById('closeRemoveModal');
+      const cancelRemoveItem = document.getElementById('cancelRemoveItem');
+      const confirmRemoveItem = document.getElementById('confirmRemoveItem');
+
+      if (closeRemoveModal) closeRemoveModal.addEventListener('click', hideRemoveModal);
+      if (cancelRemoveItem) cancelRemoveItem.addEventListener('click', hideRemoveModal);
+      if (removeItemModal) removeItemModal.addEventListener('click', e => { if (e.target === removeItemModal) hideRemoveModal(); });
+      if (confirmRemoveItem) {
+        confirmRemoveItem.addEventListener('click', () => {
+          if (!_pendingRemoveCartId) { hideRemoveModal(); return; }
+          const cartId = _pendingRemoveCartId;
+          confirmRemoveItem.disabled = true;
+          confirmRemoveItem.textContent = 'Removing...';
+          fetch(`/remove_from_cart/${cartId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+              hideRemoveModal();
+              confirmRemoveItem.disabled = false;
+              confirmRemoveItem.textContent = 'Remove';
+              if (data && data.success) {
+                const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+                const row = cb ? cb.closest('.cart-item') : null;
+                if (row) row.remove();
+                updateTotal();
+                if (!document.querySelector('.cart-item')) location.reload();
+              }
+            })
+            .catch(() => { hideRemoveModal(); location.reload(); });
+        });
+      }
+
+      // Variation change — optimistic UI update (instant), then sync backend
+      document.querySelectorAll('.variation-select').forEach(sel => {
+        sel.addEventListener('change', function() {
+          const cartId = this.dataset.cartId;
+          const opt = this.options[this.selectedIndex];
+          const newVariationId = this.value;
+          const newPrice = parseFloat(opt.dataset.price) || 0;
+          const newImage = opt.dataset.image || '';
+          const varName = opt.textContent.trim().split('—')[0].trim();
+
+          // Instant UI update
+          const cb = document.querySelector(`.cart-item-checkbox[data-cart-id="${cartId}"]`);
+          const row = cb ? cb.closest('.cart-item') : null;
+          if (cb) cb.dataset.price = String(newPrice);
+          if (row) {
+            const priceEl = row.querySelector('.cart-item-price');
+            if (priceEl) priceEl.textContent = '₱' + newPrice.toFixed(2);
+            const qty = parseInt(document.getElementById('qty-' + cartId)?.value) || 1;
+            const totalEl = document.getElementById('total-' + cartId);
+            if (totalEl) totalEl.textContent = '₱' + (newPrice * qty).toFixed(2);
+            const nameEl = row.querySelector('.cart-item-name');
+            if (nameEl && varName) {
+              // Show only the variation name, not base — variation
+              nameEl.textContent = varName;
+            }            if (newImage) {
+              const imgEl = document.getElementById('img-' + cartId);
+              if (imgEl) {
+                if (imgEl.tagName === 'IMG') { imgEl.src = newImage; }
+                else {
+                  const ni = document.createElement('img');
+                  ni.src = newImage; ni.alt = ''; ni.className = 'cart-item-image'; ni.id = 'img-' + cartId;
+                  imgEl.replaceWith(ni);
+                }
+              }
+            }
+          }
+          updateTotal();
+
+          // Background sync
+          fetch(`/update_cart_variation/${cartId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ variation_id: newVariationId })
+          }).catch(() => {});
+        });
+      });
+
+      // Checkout modal
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      const checkoutConfirmModal = document.getElementById('checkoutConfirmModal');
+      const closeCheckoutModal = document.getElementById('closeCheckoutModal');
+      const cancelCheckout = document.getElementById('cancelCheckout');
+      const confirmCheckout = document.getElementById('confirmCheckout');
+      const checkoutItemsSummary = document.getElementById('checkoutItemsSummary');
+      let checkoutItemsData = [];
+      let checkoutCheckboxMap = {};
+
+      function renderCheckoutSummary() {
+        if (!checkoutItemsSummary) return;
+        if (!checkoutItemsData.length) { checkoutItemsSummary.innerHTML = '<div>No items selected.</div>'; return; }
+        let total = 0;
+        const linesHtml = checkoutItemsData.map(item => {
+          const lineTotal = item.price * item.quantity;
+          total += lineTotal;
+          const safeName = (item.name || 'Item').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:0.5rem 0;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid #f0f0f0;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:500;">${safeName}</div>
+                <div style="font-size:0.85rem;color:#6c757d;">₱${item.price.toFixed(2)} × ${item.quantity}</div>
+              </div>
+              <span style="font-weight:600;min-width:70px;text-align:right;">₱${lineTotal.toFixed(2)}</span>
+            </div>`;
+        }).join('');
+        checkoutItemsSummary.innerHTML = `
+          <div style="font-weight:600;margin-bottom:0.5rem;color:#2d5016;">${checkoutItemsData.length} item(s)</div>
+          <div>${linesHtml}</div>
+          <div style="margin-top:0.75rem;padding-top:0.5rem;display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;">
+            <span>Total</span><span style="color:#2d5016;">₱${total.toFixed(2)}</span>
+          </div>`;
+      }
+
+      function openCheckoutModal() {
+        const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+        if (!selected.length) { alert('Please select items to checkout'); return; }
+        checkoutItemsData = [];
+        checkoutCheckboxMap = {};
+        selected.forEach(cb => {
+          const row = cb.closest('.cart-item');
+          if (!row) return;
+          const nameEl = row.querySelector('.cart-item-name');
+          const price = parseFloat(cb.dataset.price);
+          const qty = parseInt(document.getElementById('qty-' + cb.dataset.cartId)?.value) || 1;
+          const cartId = parseInt(cb.dataset.cartId);
+          const name = nameEl ? nameEl.textContent.trim() : 'Item';
+          checkoutItemsData.push({ cartId, name, price, quantity: qty });
+          checkoutCheckboxMap[cartId] = cb;
+        });
+        renderCheckoutSummary();
+        checkoutConfirmModal.style.display = 'flex';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeCheckout() {
+        checkoutConfirmModal.style.display = 'none';
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+      }
+
+      if (checkoutBtn) checkoutBtn.addEventListener('click', openCheckoutModal);
+      if (closeCheckoutModal) closeCheckoutModal.addEventListener('click', closeCheckout);
+      if (cancelCheckout) cancelCheckout.addEventListener('click', closeCheckout);
+      if (checkoutConfirmModal) checkoutConfirmModal.addEventListener('click', e => { if (e.target === checkoutConfirmModal) closeCheckout(); });
+
+      // Auto-select for buy-now flow
+      const params = new URLSearchParams(window.location.search);
+      const buyProductId = params.get('buy_product_id');
+      if (buyProductId) {
+        document.querySelectorAll('.cart-item').forEach(row => {
+          const cb = row.querySelector('.cart-item-checkbox');
+          if (!cb) return;
+          const checked = row.getAttribute('data-product-id') === buyProductId;
+          cb.checked = checked;
+          row.classList.toggle('selected', checked);
+        });
+        if (params.get('buy_now') === '1' && checkoutBtn) openCheckoutModal();
+      }
+
+      if (confirmCheckout) {
+        confirmCheckout.addEventListener('click', () => {
+          const selected = Array.from(document.querySelectorAll('.cart-item-checkbox:checked'));
+          if (!selected.length) { alert('Please select items to checkout'); return; }
+          confirmCheckout.disabled = true;
+          confirmCheckout.textContent = 'Placing order...';
+
+          const cartIds = selected.map(cb => cb.dataset.cartId);
+          const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value || 'cod';
+
+          fetch('/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cart_ids: cartIds, payment_method: paymentMethod })
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.success) {
+              if (typeof showNotification === 'function') showNotification('Order placed successfully! The seller will review your order.', 'success');
+              setTimeout(() => location.reload(), 900);
+            } else {
+              if (data.requires_verification) {
+                closeCheckout();
+                if (data.verification_status === 'not_verified') {
+                  if (typeof openVerificationModal === 'function') openVerificationModal();
+                } else if (data.verification_status === 'pending_approval') {
+                  alert('Your verification application is under review. Please wait for admin approval before placing orders. You will be notified once approved.');
+                } else {
+                  if (typeof openVerificationModal === 'function') openVerificationModal();
+                }
+              } else {
+                if (typeof showNotification === 'function') showNotification(data.message || 'Failed to place order', 'error');
+                else alert(data.message || 'Failed to place order');
+              }
+              confirmCheckout.disabled = false;
+              confirmCheckout.textContent = 'Confirm & Place Order';
+            }
+          })
+          .catch(() => {
+            alert('An error occurred. Please try again.');
+            confirmCheckout.disabled = false;
+            confirmCheckout.textContent = 'Confirm & Place Order';
+          });
+        });
+      }
+
+    }); // end load
+
+    // Real-time cart sync
+    (function() {
+      const currentUser = "{{ session.get('username', '') }}";
+      if (!currentUser || typeof firebase === 'undefined') return;
+      try {
+        const db = firebase.firestore();
+        db.collection('cart').where('user_id', '==', currentUser).onSnapshot(function(snapshot) {
+          snapshot.docChanges().forEach(function(change) {
+            if (change.type === 'removed') {
+              clearTimeout(window._cartReloadTimer);
+              window._cartReloadTimer = setTimeout(function() { window.location.reload(); }, 800);
+            }
+          });
+        });
+      } catch(e) { console.log('Cart real-time sync not available:', e); }
+    })();
+  </script>
+
+  <!-- ── ALL MODALS (outside header/nav for correct DOM placement) ── -->
+
+  <!-- Stock exceeded modal -->
+  <div id="stockExceededModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:1rem;padding:1.75rem;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 style="font-size:1.3rem;font-weight:700;color:#2d5016;margin:0;">Stock Limit Reached</h2>
+        <button type="button" onclick="hideModal('stockExceededModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+      </div>
+      <p style="color:#495057;margin:0 0 1.5rem;">The quantity you entered exceeds the available stock for this item. The quantity has been reset to the previous value.</p>
+      <div style="display:flex;justify-content:flex-end;">
+        <button type="button" onclick="hideModal('stockExceededModal')" style="padding:0.6rem 1.6rem;border-radius:0.5rem;border:none;background:#2d5016;color:white;font-weight:600;cursor:pointer;">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div id="deleteConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:1rem;padding:1.5rem;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+        <h3 style="margin:0;font-size:1.25rem;color:#2d5016;">Remove from Cart</h3>
+        <button type="button" id="closeDeleteModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+      </div>
+      <p style="color:#495057;margin:0 0 1rem;">Remove <strong id="deleteConfirmCount">0</strong> item(s) from your cart?</p>
+      <div style="display:flex;justify-content:flex-end;gap:0.5rem;">
+        <button type="button" id="cancelDelete" style="padding:0.5rem 1rem;border:1px solid #ced4da;background:white;color:#495057;border-radius:0.5rem;cursor:pointer;">Cancel</button>
+        <button type="button" id="confirmDelete" style="padding:0.5rem 1rem;border:none;background:#dc3545;color:white;border-radius:0.5rem;font-weight:600;cursor:pointer;">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remove single item modal -->
+  <div id="removeItemModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:1rem;padding:1.75rem;max-width:420px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 style="font-size:1.3rem;font-weight:700;color:#2d5016;margin:0;">Remove Item</h2>
+        <button type="button" id="closeRemoveModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+      </div>
+      <p style="color:#495057;margin:0 0 1.5rem;">Are you sure you want to remove this item from your cart?</p>
+      <div style="display:flex;justify-content:flex-end;gap:0.75rem;">
+        <button type="button" id="cancelRemoveItem" style="padding:0.6rem 1.4rem;border-radius:0.5rem;border:1px solid #ced4da;background:white;color:#495057;font-weight:500;cursor:pointer;">Cancel</button>
+        <button type="button" id="confirmRemoveItem" style="padding:0.6rem 1.6rem;border-radius:0.5rem;border:none;background:#dc3545;color:white;font-weight:600;cursor:pointer;">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout confirmation modal -->
+  <div id="checkoutConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:white;border-radius:1rem;padding:1.75rem;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h2 style="font-size:1.4rem;font-weight:700;color:#2d5016;margin:0;">Confirm Checkout</h2>
+        <button type="button" id="closeCheckoutModal" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+      </div>
+      <p style="color:#6c757d;font-size:0.95rem;margin-bottom:1rem;">Review your selected items and choose your payment method before placing the order.</p>
+      <div style="background:#f8f9fa;border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;color:#495057;">
+        <div style="font-weight:600;margin-bottom:0.25rem;">Delivery location</div>
+        <div>{{ shipping_address or 'No address saved. Update in Settings.' }}</div>
+        <div style="margin-top:0.5rem;"><a href="{{ url_for('settings') }}" style="font-size:0.85rem;color:#0d6efd;text-decoration:none;">Update location</a></div>
+      </div>
+      <div id="checkoutItemsSummary" style="background:#f8f9fa;border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;color:#495057;"></div>
+      <div style="margin-bottom:1.25rem;">
+        <div style="font-weight:600;margin-bottom:0.5rem;">Payment method</div>
+        <!-- Cash on Delivery — active -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #198754;background:#e9f7ef;cursor:pointer;margin-bottom:0.5rem;">
+          <input type="radio" name="payment_method" value="cod" checked style="margin-top:0.15rem;" />
+          <div><div style="font-weight:600;">Cash on Delivery</div><div style="font-size:0.85rem;color:#198754;">Pay when your order arrives</div></div>
+        </label>
+        <!-- GCash — coming soon -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #dee2e6;background:#f8f9fa;cursor:not-allowed;opacity:0.55;margin-bottom:0.5rem;">
+          <input type="radio" name="payment_method" value="gcash" disabled style="margin-top:0.15rem;" />
+          <div>
+            <div style="font-weight:600;">GCash</div>
+            <div style="font-size:0.85rem;color:#6c757d;">Coming soon</div>
+          </div>
+        </label>
+        <!-- Bank Transfer — coming soon -->
+        <label style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.6rem 0.75rem;border-radius:0.75rem;border:1px solid #dee2e6;background:#f8f9fa;cursor:not-allowed;opacity:0.55;">
+          <input type="radio" name="payment_method" value="bank" disabled style="margin-top:0.15rem;" />
+          <div>
+            <div style="font-weight:600;">Bank Transfer</div>
+            <div style="font-size:0.85rem;color:#6c757d;">Coming soon</div>
+          </div>
+        </label>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:0.75rem;margin-top:1rem;">
+        <button type="button" id="cancelCheckout" style="padding:0.6rem 1.4rem;border-radius:0.5rem;border:1px solid #ced4da;background:white;color:#495057;font-weight:500;cursor:pointer;">Cancel</button>
+        <button type="button" id="confirmCheckout" style="padding:0.6rem 1.6rem;border-radius:0.5rem;border:none;background:#2d5016;color:white;font-weight:600;cursor:pointer;">Confirm & Place Order</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

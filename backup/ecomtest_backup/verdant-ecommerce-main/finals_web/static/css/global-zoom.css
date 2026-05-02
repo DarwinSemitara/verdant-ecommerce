@@ -1,0 +1,39 @@
+/* Global 80% Zoom Effect - Applied to All Pages */
+
+html {
+  zoom: 0.8;
+  -moz-transform: scale(0.8);
+  -moz-transform-origin: 0 0;
+}
+
+/* Alternative method for better browser compatibility */
+body {
+  transform: scale(0.8);
+  transform-origin: top left;
+  width: 125%; /* 100% / 0.8 to maintain full width */
+  height: 125%; /* 100% / 0.8 to maintain full height */
+}
+
+/* Ensure centered elements stay centered */
+body > * {
+  transform-origin: center center;
+}
+
+/* Fix for forms and centered content */
+.container,
+.form-container,
+.login-container,
+.dashboard-container,
+.product-detail-container,
+.welcome-card {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Maintain viewport meta for proper scaling */
+@media screen {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+}

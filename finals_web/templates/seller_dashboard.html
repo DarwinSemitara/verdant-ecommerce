@@ -64,23 +64,25 @@
 
   {% if not seller_approved %}
   {% if application_status == 'pending' %}
-  <!-- Waiting for approval state -->
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card shadow-sm">
-        <div class="card-body p-5 text-center">
-          <div class="mb-3">
-            <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
-          </div>
-          <h2 class="mt-2 mb-2">Application submitted</h2>
-          <p class="text-muted mb-1">Your seller application is being reviewed by an admin.</p>
-          {% if application_submitted_at %}
-          <p class="text-muted small mb-3">Submitted: {{ application_submitted_at }}</p>
-          {% endif %}
-          <p class="text-muted">We'll notify you once it's approved. You can continue browsing while you wait.</p>
-          <a href="{{ url_for('seller_messages') }}" class="btn btn-outline-secondary mt-2">Open Messages</a>
-        </div>
-      </div>
+  <!-- Application Under Review - Blocking Modal -->
+  <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 1rem; padding: 3rem; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
+      <h2 style="color: #111827; margin-bottom: 1rem;">Application Under Review</h2>
+      <p style="color: #6b7280; margin-bottom: 0.5rem; line-height: 1.6;">
+        Your seller application has been submitted and is currently being reviewed by our admin team.
+      </p>
+      {% if application_submitted_at %}
+      <p style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Submitted: {{ application_submitted_at }}
+      </p>
+      {% endif %}
+      <p style="color: #6b7280; margin-bottom: 2rem; line-height: 1.6;">
+        You will be notified once your application is approved. Please check back later or contact support if you have questions.
+      </p>
+      <a href="{{ url_for('logout') }}" style="display: inline-block; padding: 0.75rem 2rem; background: #111827; color: #fff; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">
+        Logout
+      </a>
     </div>
   </div>
   {% else %}

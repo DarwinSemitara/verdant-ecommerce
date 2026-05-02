@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verdant - Home</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/guest-homepage.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/global-zoom.css') }}" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 50%, #e8f5e8 100%);
+      min-height: 100vh;
+    }
+
+    .profile-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 0.5rem);
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #e9ecef;
+    }
+
+    .profile-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+
+    @keyframes dropdownSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .profile-menu-item {
+      display: block;
+      padding: 0.875rem 1.25rem;
+      color: #333;
+      text-decoration: none;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      font-size: 1rem;
+    }
+
+    .profile-menu-item:hover {
+      background: #f8f9fa;
+    }
+
+    .profile-menu-divider {
+      height: 1px;
+      background: #e9ecef;
+      margin: 0.5rem 0;
+    }
+
+    .profile-menu-item.logout {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    .profile-menu-item.logout:hover {
+      background: #fff5f5;
+    }
+
+    /* Category Dropdown */
+    .category-dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .category-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.3s ease;
+      min-width: 180px;
+      justify-content: space-between;
+    }
+    .category-dropdown-btn:hover {
+      border-color: #2d5016;
+    }
+    .category-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 0.25rem);
+      left: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      min-width: 220px;
+      z-index: 1000;
+      overflow: visible;
+    }
+    .category-dropdown-menu.show {
+      display: block;
+      animation: dropdownSlide 0.2s ease;
+    }
+    .category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      position: relative;
+      font-size: 0.875rem;
+    }
+    .category-item:hover {
+      background: #f8f9fa;
+    }
+    .category-item.has-submenu {
+      position: relative;
+    }
+    .category-item.has-submenu:hover > .category-submenu {
+      display: block;
+    }
+    .category-submenu {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 0;
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      min-width: 240px;
+      z-index: 1001;
+      overflow: hidden;
+      margin-left: 4px;
+    }
+    .category-subitem {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+    .category-subitem:hover {
+      background: #f0fdf4;
+      color: #198754;
+    }
+
+    /* Featured collections */
+    .featured-collections {
+      padding: 2.5rem 1.5rem 1.5rem;
+      background: #f5f7f5;
+    }
+
+    .featured-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .featured-header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1.5rem;
+    }
+
+    .featured-header-main h2 {
+      font-size: 1.5rem;
+      color: #1f2933;
+      margin: 0;
+    }
+
+    .featured-header-main span {
+      font-size: 0.95rem;
+      color: #6c757d;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3rem;
+    }
+
+    .featured-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1rem 1rem 1.25rem;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      min-height: 260px;
+    }
+
+    .featured-card-header {
+      margin-bottom: 0.75rem;
+    }
+
+    .featured-card-header h3 {
+      font-size: 1.1rem;
+      margin: 0;
+      color: #1f2933;
+    }
+
+    .featured-card-header span {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .featured-slide-container {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .featured-slide {
+      display: none;
+      animation: fadeSlide 0.4s ease-in-out;
+      cursor: pointer;
+    }
+
+    .featured-slide.active {
+      display: block;
+    }
+
+    .featured-product {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .featured-thumb {
+      width: 100px;
+      height: 100px;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      background: #f1f5f9;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .featured-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .featured-info h4 {
+      font-size: 0.98rem;
+      margin: 0 0 0.25rem;
+      color: #111827;
+    }
+
+    .featured-info p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .featured-price {
+      margin-top: 0.4rem;
+      font-weight: 700;
+      color: #15803d;
+      font-size: 1rem;
+    }
+
+    .featured-meta {
+      margin-top: 0.2rem;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .featured-actions {
+      margin-top: 0.9rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .featured-view-btn {
+      border-radius: 999px;
+      border: 1px solid #198754;
+      background: transparent;
+      color: #198754;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .featured-view-btn:hover {
+      background: #198754;
+      color: #ffffff;
+    }
+
+    .featured-empty {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      padding-top: 0.5rem;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .featured-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Product card button hover effects */
+    .btn-view:hover {
+      background: #2563eb !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-add-cart:hover,
+    .btn-add-cart-redirect:hover {
+      background: #15803d !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+    }
+  </style>
+</head>
+<body class="has-main-header">
+  <header class="header">
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="{{ url_for('homepage') }}" class="nav-logo">Verdant</a>
+      </div>
+      <div class="nav-right">
+        <a href="{{ url_for('cart') }}" class="icon-button" aria-label="Cart" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
+            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <span id="cartCount" class="badge">0</span>
+        </a>
+        {% include 'notification_component.html' %}
+        <a href="{{ url_for('user_messages') }}" class="icon-button" aria-label="Messages" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M4 5h16v10H6l-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <a id="helpButton" class="icon-button" aria-label="Help" href="{{ url_for('help_redirect') }}" style="text-decoration: none; color: inherit;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="12" cy="17" r="1" fill="currentColor"/>
+          </svg>
+          <span>Help</span>
+        </a>
+        <div class="profile-dropdown">
+          <button class="profile-btn" aria-label="Profile" id="profileButton">
+            {% if session.get('profile_picture') %}
+              <img alt="Profile" src="{{ img(session.get('profile_picture'), 'profiles') }}" style="width: 100%; height: 100%; object-fit: cover;" />
+            {% else %}
+              <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+            {% endif %}
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
+            <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
+            <div class="profile-menu-divider"></div>
+            <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
+              <button type="submit" class="profile-menu-item logout">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main class="guest-hero">
+    <div class="guest-hero-inner">
+      <h1>Welcome back, {{ session.get('username', 'User') }}!</h1>
+      <p>Discover plants, tools, and decor to bring your space to life.</p>
+      <a class="cta" href="#shop" id="startBrowsing">Start Browsing</a>
+    </div>
+  </main>
+  <!-- Featured Collections -->
+  <section class="featured-collections">
+    <div class="featured-inner">
+      <div class="featured-header-main">
+        <h2>Featured Collections</h2>
+        <span>Quickly explore popular, new, and best-value items.</span>
+      </div>
+      <div class="featured-grid">
+        <!-- Best Sellers -->
+        <div class="featured-card" onclick="featuredCardClick(this)">
+          <div class="featured-card-header">
+            <h3>Best Sellers</h3>
+            <span>Most purchased items</span>
+          </div>
+          <div class="featured-slide-container" id="bestSellersCarousel">
+            {% if best_sellers and best_sellers|length > 0 %}
+              {% for item in best_sellers %}
+              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+                <div class="featured-product">
+                  <div class="featured-thumb">
+                    {% if item.image %}
+                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                    {% else %}
+                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                      </svg>
+                    {% endif %}
+                  </div>
+                  <div class="featured-info">
+                    <h4>{{ item.name }}</h4>
+                    <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or item.seller_username }}</a></p>
+                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                    <div class="featured-meta">Stock: {{ item.stock }}</div>
+                    <div class="featured-actions">
+                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="featured-empty">No best sellers yet. Recent orders will appear here.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- New Arrivals -->
+        <div class="featured-card" onclick="featuredCardClick(this)">
+          <div class="featured-card-header">
+            <h3>New Arrivals</h3>
+            <span>Freshly added items</span>
+          </div>
+          <div class="featured-slide-container" id="newArrivalsCarousel">
+            {% if new_arrivals and new_arrivals|length > 0 %}
+              {% for item in new_arrivals %}
+              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+                <div class="featured-product">
+                  <div class="featured-thumb">
+                    {% if item.image %}
+                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                    {% else %}
+                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                      </svg>
+                    {% endif %}
+                  </div>
+                  <div class="featured-info">
+                    <h4>{{ item.name }}</h4>
+                    <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or item.seller_username }}</a></p>
+                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                    <div class="featured-meta">Stock: {{ item.stock }}</div>
+                    <div class="featured-actions">
+                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="featured-empty">Newly added products will appear here.</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Best Deals -->
+        <div class="featured-card" onclick="featuredCardClick(this)">
+          <div class="featured-card-header">
+            <h3>Best Deals</h3>
+            <span>Great prices right now</span>
+          </div>
+          <div class="featured-slide-container" id="bestDealsCarousel">
+            {% if best_deals and best_deals|length > 0 %}
+              {% for item in best_deals %}
+              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+                <div class="featured-product">
+                  <div class="featured-thumb">
+                    {% if item.image %}
+                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                    {% else %}
+                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                      </svg>
+                    {% endif %}
+                  </div>
+                  <div class="featured-info">
+                    <h4>{{ item.name }}</h4>
+                    <p>by {{ item.store_name or item.seller_username }}</p>
+                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                    <div class="featured-meta">Stock: {{ item.stock }}</div>
+                    <div class="featured-actions">
+                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="featured-empty">Lowest-priced items will be highlighted here.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="shop" class="products-section">
+    <div class="products-wrapper">
+      <div class="products-toolbar">
+        <div class="toolbar-left">
+          <div style="display: flex; gap: 0.5rem; flex: 1;">
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category..." aria-label="Search items" />
+            <button type="button" id="searchButton" class="search-button" aria-label="Search">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              Search
+            </button>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <select class="filter-select" aria-label="Sort By">
+            <option value="">Sort By</option>
+            <optgroup label="Date">
+              <option value="date-newest">Newest First</option>
+              <option value="date-oldest">Oldest First</option>
+            </optgroup>
+            <optgroup label="Price">
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </optgroup>
+            <optgroup label="Name">
+              <option value="name-asc">Name: A to Z</option>
+              <option value="name-desc">Name: Z to A</option>
+            </optgroup>
+          </select>
+          <div class="category-dropdown-wrapper">
+            <button type="button" class="category-dropdown-btn" id="categoryDropdownBtn">
+              <span id="selectedCategoryText">All Categories</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="category-dropdown-menu" id="categoryDropdownMenu">
+              <div class="category-item" data-category="">
+                <span>All Categories</span>
+              </div>
+              <div class="category-item has-submenu" data-category="indoor">
+                <span>Indoor</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                <div class="category-submenu">
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Furniture">Furniture</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Decor Accessories">Decor Accessories</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Textiles & Furnishings">Textiles & Furnishings</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Lighting">Lighting</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Housewares">Housewares</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Paint">Paint</div>
+                  <div class="category-subitem" data-category="indoor" data-subcategory="Others">Others</div>
+                </div>
+              </div>
+              <div class="category-item has-submenu" data-category="garden_outdoor">
+                <span>Garden and Outdoor</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+                <div class="category-submenu">
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Plants and Gardening">Plants and Gardening</div>
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Outdoor Furniture">Outdoor Furniture</div>
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Gardening Tools and Equipment">Gardening Tools and Equipment</div>
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Power Equipment">Power Equipment</div>
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Landscaping and Maintenance">Landscaping and Maintenance</div>
+                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Other">Other</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="productsGrid" class="products-grid">
+        {% if products and products|length > 0 %}
+          {% for product in products %}
+          <div class="product-card {% if product.stock <= 0 %}sold-out{% endif %}" 
+               data-product-id="{{ product.id }}"
+               data-product-url="/product/{{ product.id }}"
+               style="{% if product.stock <= 0 %}opacity: 0.6; filter: grayscale(50%);{% endif %}">
+            {% if product.image %}
+              <img src="{{ img(product.image) }}" alt="{{ product.name }}" class="product-image" onclick="window.location.href='/product/{{ product.id }}'" style="cursor: pointer;">
+            {% else %}
+              <div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="window.location.href='/product/{{ product.id }}'">
+                <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                  <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+                </svg>
+              </div>
+            {% endif %}
+            {% if product.stock <= 0 %}
+            <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.875rem;">
+              SOLD OUT
+            </div>
+            {% endif %}
+            <div class="product-info">
+              <h3 class="product-title" onclick="window.location.href='/product/{{ product.id }}'" style="cursor: pointer;">{{ product.name }}</h3>
+              <p class="product-seller">by <a href="{{ url_for('public_store', seller_username=product.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;" onclick="event.stopPropagation();">{{ product.store_name or product.seller_username }}</a></p>
+              <p class="product-price">₱{{ '%.2f'|format(product.price|float) }}</p>
+              <p class="product-stock">Stock: {{ product.stock }}</p>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                <button type="button" class="btn-view" onclick="window.location.href='/product/{{ product.id }}'" style="flex: 1; padding: 0.5rem; background: #3b82f6; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">View</button>
+                {% if product.stock > 0 %}
+                  {% if product.has_variations %}
+                  <button type="button" class="btn-add-cart-redirect" onclick="event.stopPropagation(); window.location.href='/product/{{ product.id }}'" style="flex: 1; padding: 0.5rem; background: #16a34a; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Add to Cart</button>
+                  {% else %}
+                  <button type="button" class="btn-add-cart" data-product-id="{{ product.id }}" onclick="event.stopPropagation(); addToCartFromCard(this);" style="flex: 1; padding: 0.5rem; background: #16a34a; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Add to Cart</button>
+                  {% endif %}
+                {% else %}
+                <button type="button" disabled style="flex: 1; padding: 0.5rem; background: #9ca3af; color: white; border: none; border-radius: 0.5rem; cursor: not-allowed; font-weight: 600;">Out of Stock</button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #6c757d;">
+            <h3>No products available yet</h3>
+            <p>Products from sellers will appear here soon</p>
+          </div>
+        {% endif %}
+      </div>
+      <div class="pagination-inside">
+        <div class="pagination-inner">
+          <button class="page-btn" id="prevPageBtn" type="button">Previous</button>
+          <div class="page-numbers" id="pageNumbers"></div>
+          <button class="page-btn" id="nextPageBtn" type="button">Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% include 'footer_verdant.html' %}
+
+  
+
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+  <script>
+    // Add to cart from product card
+    function addToCartFromCard(button) {
+      const productId = button.getAttribute('data-product-id');
+      if (!productId) return;
+      
+      button.disabled = true;
+      button.textContent = 'Adding...';
+      
+      fetch(`/add_to_cart/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          if (typeof showNotification === 'function') {
+            showNotification(data.message || 'Item added to cart', 'success');
+          }
+          // Update cart count
+          if (data.cart_count !== undefined) {
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+              cartCount.textContent = data.cart_count;
+              cartCount.style.display = data.cart_count > 0 ? 'flex' : 'none';
+            }
+          }
+          button.textContent = 'Added!';
+          setTimeout(() => {
+            button.textContent = 'Add to Cart';
+            button.disabled = false;
+          }, 1500);
+        } else {
+          if (typeof showNotification === 'function') {
+            showNotification(data.message || 'Failed to add item', 'error');
+          } else {
+            alert(data.message || 'Failed to add item');
+          }
+          button.textContent = 'Add to Cart';
+          button.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        button.textContent = 'Add to Cart';
+        button.disabled = false;
+      });
+    }
+
+    function featuredCardClick(cardElement) {
+      if (!cardElement) return;
+      const activeSlide = cardElement.querySelector('.featured-slide.active');
+      if (!activeSlide) return;
+      const productId = activeSlide.getAttribute('data-product-id');
+      if (productId) {
+        window.location.href = '/product/' + productId;
+      }
+    }
+
+    // Profile dropdown
+    const profileButton = document.getElementById('profileButton');
+    const profileMenu = document.getElementById('profileMenu');
+
+    profileButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    window.addEventListener('click', (e) => {
+      if (!profileButton.contains(e.target) && !profileMenu.contains(e.target)) {
+        profileMenu.classList.remove('show');
+      }
+    });
+
+    // Pagination placeholder functionality
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const pageNumbers = document.getElementById('pageNumbers');
+
+    // Placeholder pagination (will be replaced when products are loaded)
+    pageNumbers.innerHTML = '<button class="page-number active">1</button>';
+    prevPageBtn.disabled = true;
+    nextPageBtn.disabled = true;
+
+    // Search, filter, and category functionality
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const productsGrid = document.getElementById('productsGrid');
+    const filterSelect = document.querySelector('.filter-select');
+    const categoryDropdownBtn = document.getElementById('categoryDropdownBtn');
+    const categoryDropdownMenu = document.getElementById('categoryDropdownMenu');
+    const selectedCategoryText = document.getElementById('selectedCategoryText');
+    
+    let selectedCategory = '';
+    let selectedSubcategory = '';
+
+    // Toggle category dropdown
+    if (categoryDropdownBtn && categoryDropdownMenu) {
+      categoryDropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        categoryDropdownMenu.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!categoryDropdownBtn.contains(e.target) && !categoryDropdownMenu.contains(e.target)) {
+          categoryDropdownMenu.classList.remove('show');
+        }
+      });
+
+      // Handle category selection
+      const categoryItems = categoryDropdownMenu.querySelectorAll('.category-item:not(.has-submenu)');
+      categoryItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+          selectedCategory = '';
+          selectedSubcategory = '';
+          selectedCategoryText.textContent = 'All Categories';
+          categoryDropdownMenu.classList.remove('show');
+          performSearch();
+        });
+      });
+
+      // Handle subcategory selection
+      const subcategoryItems = categoryDropdownMenu.querySelectorAll('.category-subitem');
+      subcategoryItems.forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          e.stopPropagation();
+          selectedCategory = this.getAttribute('data-category');
+          selectedSubcategory = this.getAttribute('data-subcategory');
+          selectedCategoryText.textContent = selectedSubcategory;
+          categoryDropdownMenu.classList.remove('show');
+          performSearch();
+        });
+      });
+    }
+
+    function performSearch() {
+      const query = searchInput ? searchInput.value.trim() : '';
+      const sort = filterSelect ? filterSelect.value : '';
+      
+      // Build category string: "category:subcategory" or just "category"
+      let category = '';
+      if (selectedCategory && selectedSubcategory) {
+        category = selectedCategory + ':' + selectedSubcategory;
+      } else if (selectedCategory) {
+        category = selectedCategory;
+      }
+
+      const params = new URLSearchParams();
+      if (query) params.set('q', query);
+      if (sort) params.set('sort', sort);
+      if (category) params.set('category', category);
+
+      const url = params.toString() ? `/search?${params.toString()}` : '/search';
+
+      searchButton.disabled = true;
+      searchButton.innerHTML = '<span>Searching...</span>';
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const products = data.products || [];
+            const sellers = data.sellers || [];
+            displayResults(products, sellers);
+          } else {
+            alert('Search failed. Please try again.');
+          }
+          searchButton.disabled = false;
+          searchButton.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Search`;
+        })
+        .catch(error => {
+          console.error('Search error:', error);
+          alert('An error occurred during search.');
+          searchButton.disabled = false;
+          searchButton.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Search`;
+        });
+    }
+
+    function displayResults(products, sellers) {
+      const productList = products || [];
+      const sellerList = sellers || [];
+
+      if (productList.length === 0 && sellerList.length === 0) {
+        productsGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #6c757d;"><h3>No results found</h3><p>Try a different search term or filter</p></div>';
+        return;
+      }
+
+      const sellerHtml = sellerList.map(seller => `
+        <div class="product-card" onclick="window.location.href='/store/${encodeURIComponent(seller.username)}'" style="cursor: pointer;">
+          <div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+            <svg style="width: 60px; height: 60px; color: #9ca3af;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M3 21V8l9-6 9 6v13h-6v-6h-6v6H3z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="product-info">
+            <h3 class="product-title">${seller.store_name || (seller.username + "'s store")}</h3>
+            <p class="product-seller">@${seller.username}</p>
+            ${seller.store_category ? `<p class="product-stock">Category: ${seller.store_category}</p>` : ''}
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+              <button class="view-btn" onclick="event.stopPropagation(); window.location.href='/store/${encodeURIComponent(seller.username)}'">
+                View Store
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      const productHtml = productList.map(product => `
+        <div class="product-card" onclick="window.location.href='/product/${product.id}'" style="cursor: pointer;">
+          ${product.image ? 
+            `<img src="${product.image.startsWith('http') ? product.image : '/static/uploads/products/' + product.image}" alt="${product.name}" class="product-image">` :
+            `<div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+              <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                <path d="M21 15l-5-5L5 21" stroke-width="2"/>
+              </svg>
+            </div>`
+          }
+          <div class="product-info">
+            <h3 class="product-title">${product.name}</h3>
+            <p class="product-seller">by <a href="/store/${encodeURIComponent(product.seller_username)}" class="seller-link" style="color: #15803d; text-decoration: none;">${product.store_name || product.seller_username}</a></p>
+            <p class="product-price">₱${product.price.toFixed(2)}</p>
+            <p class="product-stock">Stock: ${product.stock}</p>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+              <button class="view-btn buy-now-btn" data-product-id="${product.id}">
+                Buy
+              </button>
+              <button class="add-to-cart-btn" data-product-id="${product.id}" data-has-variations="${product.has_variations ? 'true' : 'false'}">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      productsGrid.innerHTML = sellerHtml + productHtml;
+      
+      // Re-attach event listeners to new buy and add-to-cart buttons
+      attachBuyNowListeners();
+      attachAddToCartListeners();
+    }
+
+    // Simple looping carousel for featured collections
+    function initCarousel(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const slides = container.querySelectorAll('.featured-slide');
+      if (!slides || slides.length <= 1) {
+        if (slides[0]) slides[0].classList.add('active');
+        return;
+      }
+
+      let currentIndex = 0;
+      slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === 0);
+      });
+
+      setInterval(() => {
+        slides[currentIndex].classList.remove('active');
+        currentIndex = (currentIndex + 1) % slides.length;
+        slides[currentIndex].classList.add('active');
+      }, 4000);
+    }
+
+    if (searchButton) {
+      searchButton.addEventListener('click', performSearch);
+    }
+    if (searchInput) {
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+    }
+
+    if (filterSelect) {
+      filterSelect.addEventListener('change', () => {
+        performSearch();
+      });
+    }
+
+    // Add to cart / Buy-now functionality
+    const cartCountBadge = document.getElementById('cartCount');
+
+    function attachAddToCartListeners() {
+      const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+      addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const productId = this.getAttribute('data-product-id');
+          const hasVariations = this.getAttribute('data-has-variations') === 'true';
+          const btn = this;
+
+          // If product has variations, show a quick picker modal
+          if (hasVariations) {
+            showVariationPicker(productId, btn);
+            return;
+          }
+
+          btn.disabled = true;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>Adding...</span>';
+
+          fetch(`/add_to_cart/${productId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              cartCountBadge.textContent = data.cart_count;
+              cartCountBadge.style.display = 'flex';
+              btn.innerHTML = '<span>✓ Added!</span>';
+              btn.style.background = '#198754';
+              if (typeof showNotification === 'function') showNotification('Item added to cart', 'success');
+              setTimeout(() => { btn.innerHTML = originalText; btn.style.background = ''; btn.disabled = false; }, 2000);
+            } else {
+              if (typeof showNotification === 'function') showNotification(data.message || 'Failed to add item to cart', 'error');
+              else alert(data.message || 'Failed to add item to cart');
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          });
+        });
+      });
+    }
+
+    // Quick variation picker modal
+    function showVariationPicker(productId, triggerBtn) {
+      // Fetch variations for this product
+      fetch(`/api/product_variations/${productId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success || !data.variations || !data.variations.length) {
+            // No variations found, add directly
+            addToCartDirect(productId, null, triggerBtn);
+            return;
+          }
+
+          // Build modal
+          let modal = document.getElementById('variationPickerModal');
+          if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'variationPickerModal';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            document.body.appendChild(modal);
+          }
+
+          const varOptions = data.variations.map(v =>
+            `<button type="button" class="var-pick-btn" data-var-id="${v.id}"
+              style="padding:0.6rem 1rem;border:2px solid #dee2e6;border-radius:0.5rem;background:white;cursor:pointer;font-size:0.9rem;transition:all 0.2s;"
+              onmouseover="this.style.borderColor='#198754';this.style.background='#f0fdf4';"
+              onmouseout="this.style.borderColor='#dee2e6';this.style.background='white';">
+              ${v.name} — ₱${parseFloat(v.price).toFixed(2)}
+            </button>`
+          ).join('');
+
+          modal.innerHTML = `
+            <div style="background:white;border-radius:1rem;padding:1.5rem;max-width:400px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3 style="margin:0;color:#2d5016;font-size:1.1rem;">Select a Variation</h3>
+                <button onclick="document.getElementById('variationPickerModal').style.display='none'"
+                  style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6c757d;">&times;</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">${varOptions}</div>
+            </div>`;
+
+          modal.style.display = 'flex';
+
+          // Bind variation buttons
+          modal.querySelectorAll('.var-pick-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+              const varId = this.dataset.varId;
+              modal.style.display = 'none';
+              addToCartDirect(productId, varId, triggerBtn);
+            });
+          });
+
+          // Close on backdrop click
+          modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.style.display = 'none';
+          });
+        })
+        .catch(() => {
+          // Fallback: navigate to product page
+          window.location.href = `/product/${productId}`;
+        });
+    }
+
+    function addToCartDirect(productId, variationId, btn) {
+      const originalText = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span>Adding...</span>'; }
+
+      fetch(`/add_to_cart/${productId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(variationId ? { variation_id: variationId } : {})
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          if (cartCountBadge) { cartCountBadge.textContent = data.cart_count; cartCountBadge.style.display = 'flex'; }
+          if (btn) { btn.innerHTML = '<span>✓ Added!</span>'; btn.style.background = '#198754'; }
+          if (typeof showNotification === 'function') showNotification('Item added to cart', 'success');
+          setTimeout(() => { if (btn) { btn.innerHTML = originalText; btn.style.background = ''; btn.disabled = false; } }, 2000);
+        } else {
+          if (typeof showNotification === 'function') showNotification(data.message || 'Failed to add item to cart', 'error');
+          else alert(data.message || 'Failed to add item to cart');
+          if (btn) { btn.innerHTML = originalText; btn.disabled = false; }
+        }
+      })
+      .catch(() => { if (btn) { btn.innerHTML = originalText; btn.disabled = false; } });
+    }
+
+    function attachBuyNowListeners() {
+      const buyNowButtons = document.querySelectorAll('.buy-now-btn');
+      buyNowButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.stopPropagation();
+          const productId = this.getAttribute('data-product-id');
+          if (!productId) return;
+
+          const btn = this;
+          btn.disabled = true;
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<span>Processing...</span>';
+
+          fetch(`/add_to_cart/${productId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              if (data.cart_count !== undefined && cartCountBadge) {
+                cartCountBadge.textContent = data.cart_count;
+                cartCountBadge.style.display = 'flex';
+              }
+              const cartUrl = '{{ url_for("cart") }}';
+              const redirectUrl = cartUrl + '?buy_product_id=' + encodeURIComponent(productId) + '&buy_now=1';
+              window.location.href = redirectUrl;
+            } else {
+              if (typeof showNotification === 'function') {
+                showNotification(data.message || 'Failed to start checkout', 'error');
+              } else {
+                alert(data.message || 'Failed to start checkout');
+              }
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+            }
+          })
+          .catch(error => {
+            console.error('Error starting checkout:', error);
+            alert('An error occurred. Please try again.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          });
+        });
+      });
+    }
+
+    // Load cart count on page load
+    fetch('{{ url_for("get_cart_count") }}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.cart_count > 0) {
+          cartCountBadge.textContent = data.cart_count;
+          cartCountBadge.style.display = 'flex';
+        }
+      });
+
+    // Initialize buy-now and add-to-cart listeners for existing products
+    attachBuyNowListeners();
+    attachAddToCartListeners();
+
+    // Initialize featured collection carousels
+    initCarousel('bestSellersCarousel');
+    initCarousel('newArrivalsCarousel');
+    initCarousel('bestDealsCarousel');
+  </script>
+</body>
+</html>

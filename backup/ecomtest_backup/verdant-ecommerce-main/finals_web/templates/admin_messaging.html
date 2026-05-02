@@ -1,0 +1,421 @@
+{% extends 'base_admin.html' %}
+
+{% block extra_head %}
+<style>
+  .admin-messaging-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+    gap: 1rem;
+    height: calc(100vh - 120px);
+    max-height: 720px;
+  }
+
+  .admin-messaging-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-messaging-list-header {
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #6b7280;
+  }
+
+  .admin-messaging-search {
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .admin-messaging-search .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .admin-messaging-search input {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .admin-messaging-search button {
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #111827;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .admin-messaging-conversations {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .admin-messaging-conversation {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: default;
+  }
+
+  .admin-messaging-conversation.active {
+    background: #e5f2ff;
+  }
+
+  .admin-messaging-conversation-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .admin-messaging-conversation-meta {
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+
+  .admin-messaging-pane {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+  }
+
+  .admin-messaging-pane-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .admin-messaging-pane-header h3 {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+
+  .admin-messaging-pane-header span {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .admin-messaging-messages {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, #f9fafb, #ffffff);
+  }
+
+  .admin-message-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .admin-message-row {
+    display: flex;
+  }
+
+  .admin-message-bubble {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    max-width: 75%;
+    white-space: pre-wrap;
+    font-size: 0.92rem;
+  }
+
+  .admin-messaging-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #9ca3af;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .admin-messaging-input {
+    border-top: 1px solid #e5e7eb;
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .admin-messaging-input textarea {
+    flex: 1;
+    resize: none;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    min-height: 36px;
+    max-height: 88px;
+  }
+
+  .admin-messaging-input button {
+    border-radius: 999px;
+    border: none;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 900px) {
+    .admin-messaging-shell {
+      grid-template-columns: minmax(0, 1fr);
+      height: auto;
+      max-height: none;
+    }
+
+    .admin-messaging-pane {
+      min-height: 260px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="h5 mb-1 text-dark">Messaging center</h2>
+    <p class="text-muted small mb-0">Message any user by username. Conversations appear as they receive replies.</p>
+  </div>
+</div>
+
+<div class="admin-messaging-shell">
+  <section class="admin-messaging-list">
+    <div class="admin-messaging-list-header">Conversations</div>
+    <div class="admin-messaging-search">
+      <div class="row">
+        <input type="text" id="newChatUsername" placeholder="Search or start chat by username">
+        <button type="button" id="startChatBtn">Search</button>
+      </div>
+      <small class="text-muted d-block mt-1">You can message sellers, riders, or users by their username.</small>
+    </div>
+    <div id="conversationList" class="admin-messaging-conversations"></div>
+  </section>
+
+  <section class="admin-messaging-pane">
+    <div class="admin-messaging-pane-header">
+      <div>
+        <h3 id="conversationTitle">Conversation</h3>
+        <span id="conversationSubtitle">Select a conversation or start a new one.</span>
+      </div>
+      <span class="badge bg-light text-secondary border">Admin</span>
+    </div>
+    <div class="admin-messaging-messages">
+      <div id="messagesContainer">
+        <div class="admin-messaging-empty text-center text-muted" id="noConversationPlaceholder">
+          <div class="mb-1"><i class="bi bi-chat-dots" style="font-size: 1.4rem;"></i></div>
+          <div>Select a conversation on the left or start a new chat to begin messaging.</div>
+        </div>
+      </div>
+    </div>
+    <form id="sendMessageForm" class="admin-messaging-input no-validation" data-no-loading>
+      <textarea id="messageInput" placeholder="Type a reply..." disabled></textarea>
+      <button type="submit" id="sendMessageButton" class="btn btn-success" disabled>Send</button>
+    </form>
+  </section>
+</div>
+<script>
+  (function () {
+    const CURRENT_USERNAME = "{{ current_username }}";
+    const conversationListEl = document.getElementById('conversationList');
+    const messagesContainer = document.getElementById('messagesContainer');
+    const conversationTitle = document.getElementById('conversationTitle');
+    const conversationSubtitle = document.getElementById('conversationSubtitle');
+    const noConversationPlaceholder = document.getElementById('noConversationPlaceholder');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageButton = document.getElementById('sendMessageButton');
+    const sendMessageForm = document.getElementById('sendMessageForm');
+    const newChatUsernameInput = document.getElementById('newChatUsername');
+    const startChatBtn = document.getElementById('startChatBtn');
+
+    let activeConversation = null;
+
+    function renderConversationList(conversations) {
+      conversationListEl.innerHTML = '';
+      if (!conversations || conversations.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'admin-messaging-conversation text-muted';
+        empty.textContent = 'No conversations yet. Start a new one above.';
+        conversationListEl.appendChild(empty);
+        return;
+      }
+
+      conversations.forEach(function (conv) {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'admin-messaging-conversation w-100 text-start';
+        if (conv.other_username === activeConversation) item.classList.add('active');
+        item.dataset.username = conv.other_username;
+
+        const title = document.createElement('div');
+        title.className = 'admin-messaging-conversation-title';
+        title.textContent = conv.other_username;
+
+        const meta = document.createElement('div');
+        meta.className = 'admin-messaging-conversation-meta';
+        meta.textContent = conv.last_message ? conv.last_message : 'No messages yet';
+
+        item.appendChild(title);
+        item.appendChild(meta);
+
+        item.addEventListener('click', function () {
+          openConversation(this.dataset.username);
+        });
+        conversationListEl.appendChild(item);
+      });
+    }
+
+    function renderMessages(messages, otherUsername) {
+      messagesContainer.innerHTML = '';
+      if (!messages || messages.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'admin-messaging-empty text-muted text-center';
+        placeholder.innerHTML = '<div class="mb-1"><i class="bi bi-chat-dots" style="font-size: 1.2rem;"></i></div>\
+          <div>No messages yet. Send the first message to ' + otherUsername + '.</div>';
+        messagesContainer.appendChild(placeholder);
+        return;
+      }
+
+      const list = document.createElement('div');
+      list.className = 'admin-message-list';
+      messages.forEach(function (msg) {
+        const row = document.createElement('div');
+        const isOwn = msg.sender_username === CURRENT_USERNAME;
+        row.className = 'admin-message-row ' + (isOwn ? 'justify-content-end' : 'justify-content-start');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'admin-message-bubble ' + (isOwn ? 'bg-success text-white' : 'bg-light text-body');
+        bubble.textContent = msg.message_text;
+
+        row.appendChild(bubble);
+        list.appendChild(row);
+      });
+
+      messagesContainer.appendChild(list);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function loadConversations() {
+      fetch('/api/messages/conversations')
+        .then(resp => resp.json())
+        .then(data => {
+          if (!data.success) return;
+          renderConversationList(data.conversations || []);
+        })
+        .catch(err => console.error('Error loading conversations', err));
+    }
+
+    function openConversation(username) {
+      if (!username) return;
+      activeConversation = username;
+      if (conversationTitle) conversationTitle.textContent = 'Conversation with ' + username;
+      if (conversationSubtitle) conversationSubtitle.textContent = 'Messages between you and ' + username;
+      if (messageInput) messageInput.disabled = false;
+      if (sendMessageButton) sendMessageButton.disabled = false;
+      if (noConversationPlaceholder) noConversationPlaceholder.remove();
+
+      fetch('/api/messages/thread/' + encodeURIComponent(username))
+        .then(resp => resp.json())
+        .then(data => {
+          if (!data.success) return;
+          renderMessages(data.messages || [], username);
+          loadConversations();
+        })
+        .catch(err => console.error('Error loading thread', err));
+    }
+
+    function sendMessage(text) {
+      if (!activeConversation || !text) return;
+
+      // Optimistic UI
+      const existingList = messagesContainer.querySelector('.admin-message-list');
+      if (!existingList) {
+        renderMessages([{ id: Date.now(), sender_username: CURRENT_USERNAME, receiver_username: activeConversation, message_text: text, created_at: new Date().toISOString() }], activeConversation);
+      } else {
+        const row = document.createElement('div');
+        row.className = 'admin-message-row justify-content-end';
+        const bubble = document.createElement('div');
+        bubble.className = 'admin-message-bubble bg-success text-white';
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        existingList.appendChild(row);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ receiver_username: activeConversation, message_text: text })
+      })
+        .then(resp => resp.json())
+        .then(data => {
+          if (!data.success) {
+            alert(data.message || 'Failed to send message');
+            const lastRow = messagesContainer.querySelector('.admin-message-list .admin-message-row:last-child');
+            if (lastRow && lastRow.querySelector('.bg-success')) lastRow.remove();
+            return;
+          }
+          loadConversations();
+        })
+        .catch(err => {
+          console.error('Error sending message', err);
+          alert('Error sending message');
+          const lastRow = messagesContainer.querySelector('.admin-message-list .admin-message-row:last-child');
+          if (lastRow && lastRow.querySelector('.bg-success')) lastRow.remove();
+        });
+    }
+
+    if (sendMessageForm && messageInput) {
+      sendMessageForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) return;
+        messageInput.value = '';
+        sendMessage(text);
+      });
+
+      messageInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const text = messageInput.value.trim();
+          if (text) {
+            messageInput.value = '';
+            sendMessage(text);
+          }
+        }
+      });
+    }
+
+    if (startChatBtn && newChatUsernameInput) {
+      startChatBtn.addEventListener('click', function () {
+        const username = newChatUsernameInput.value.trim();
+        if (!username) return;
+        activeConversation = null;
+        openConversation(username);
+      });
+      newChatUsernameInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          startChatBtn.click();
+        }
+      });
+    }
+
+    loadConversations();
+  })();
+</script>
+{% endblock %}

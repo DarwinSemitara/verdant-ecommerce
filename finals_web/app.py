@@ -4227,6 +4227,8 @@ def reject_order(order_id):
 def api_get_seller_orders():
     """API endpoint to get orders for seller's products"""
     try:
+        print(f"🔍 Fetching orders for seller: {session['username']}")
+        
         # Get orders for this seller (removed order_by to avoid index requirement)
         orders_query = db.collection('orders')\
             .where('seller_username', '==', session['username'])\
@@ -4237,6 +4239,8 @@ def api_get_seller_orders():
             order_data = order_doc.to_dict()
             order_id = order_doc.id
             
+            print(f"📦 Found order: {order_id} - Status: {order_data.get('status')} - Total: {order_data.get('total_amount')}")
+            
             orders.append({
                 'id': order_id,
                 'total_amount': float(order_data.get('total_amount', 0)),
@@ -4245,6 +4249,8 @@ def api_get_seller_orders():
                 'customer_name': order_data.get('username'),
                 'delivery_address': order_data.get('shipping_address', 'Address not provided')
             })
+        
+        print(f"✅ Total orders found: {len(orders)}")
         
         # Sort by order_date in Python instead of Firestore
         orders.sort(key=lambda x: x.get('order_date') or datetime.min, reverse=True)
@@ -4259,7 +4265,9 @@ def api_get_seller_orders():
         return jsonify({'success': True, 'orders': orders})
         
     except Exception as e:
-        print(f"Error getting seller orders: {e}")
+        print(f"❌ Error getting seller orders: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 def send_order_acceptance_message(customer_id, seller_username, order_id):
@@ -4676,6 +4684,241 @@ def admin_permanent_delete_seller(username):
 
     except Exception as e:
         print(f"Error permanently deleting seller: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ============================================================================
+# RIDER & USER ACCOUNT MANAGEMENT
+# ============================================================================
+
+@app.route('/admin/rider/manage/<username>', methods=['POST'])
+def admin_manage_rider(username):
+    """Ban or delete a rider account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json() or {}
+        action = data.get('action')
+        reason = data.get('reason', '')
+
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+
+        if action == 'delete':
+            user_ref.update({
+                'account_status': 'deleted',
+                'delete_reason': reason,
+                'deleted_at': firestore_module.SERVER_TIMESTAMP,
+                'rider_approved': False,
+            })
+            message = f'Rider account @{username} has been moved to deleted section.'
+
+        elif action == 'ban':
+            ban_count = user_data.get('ban_count', 0) + 1
+            from datetime import datetime as _dt, timedelta as _td
+            if ban_count == 1:
+                ban_days = 1
+            elif ban_count == 2:
+                ban_days = 3
+            else:
+                ban_days = None
+
+            ban_until = None if ban_days is None else (_dt.utcnow() + _td(days=ban_days))
+
+            user_ref.update({
+                'account_status': 'banned',
+                'ban_reason': reason,
+                'ban_count': ban_count,
+                'ban_until': ban_until,
+                'ban_permanent': ban_days is None,
+                'rider_approved': False if ban_days is None else user_data.get('rider_approved', False),
+            })
+            if ban_days is None:
+                message = f'Rider @{username} permanently banned (3rd offence).'
+            else:
+                message = f'Rider @{username} banned for {ban_days} day(s) (ban #{ban_count}).'
+        else:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+
+        return jsonify({'success': True, 'message': message})
+
+    except Exception as e:
+        print(f"Error managing rider: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/rider/undo-delete/<username>', methods=['POST'])
+def admin_undo_delete_rider(username):
+    """Restore a deleted rider account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_ref.update({
+            'account_status': 'active',
+            'delete_reason': firestore_module.DELETE_FIELD,
+            'deleted_at': firestore_module.DELETE_FIELD,
+            'rider_approved': True,
+        })
+
+        return jsonify({'success': True, 'message': f'Rider @{username} has been restored successfully.'})
+
+    except Exception as e:
+        print(f"Error restoring rider: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/rider/permanent-delete/<username>', methods=['POST'])
+def admin_permanent_delete_rider(username):
+    """Permanently delete a rider account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Delete rider application
+        rider_apps = db.collection('rider_applications').where('username', '==', username).stream()
+        for app in rider_apps:
+            app.reference.delete()
+
+        # Delete user
+        user_ref.delete()
+
+        return jsonify({'success': True, 'message': f'Rider @{username} has been permanently deleted.'})
+
+    except Exception as e:
+        print(f"Error permanently deleting rider: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/user/manage/<username>', methods=['POST'])
+def admin_manage_user(username):
+    """Ban or delete a user account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json() or {}
+        action = data.get('action')
+        reason = data.get('reason', '')
+
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_data = user_doc.to_dict()
+
+        if action == 'delete':
+            user_ref.update({
+                'account_status': 'deleted',
+                'delete_reason': reason,
+                'deleted_at': firestore_module.SERVER_TIMESTAMP,
+            })
+            message = f'User account @{username} has been moved to deleted section.'
+
+        elif action == 'ban':
+            ban_count = user_data.get('ban_count', 0) + 1
+            from datetime import datetime as _dt, timedelta as _td
+            if ban_count == 1:
+                ban_days = 1
+            elif ban_count == 2:
+                ban_days = 3
+            else:
+                ban_days = None
+
+            ban_until = None if ban_days is None else (_dt.utcnow() + _td(days=ban_days))
+
+            user_ref.update({
+                'account_status': 'banned',
+                'ban_reason': reason,
+                'ban_count': ban_count,
+                'ban_until': ban_until,
+                'ban_permanent': ban_days is None,
+            })
+            if ban_days is None:
+                message = f'User @{username} permanently banned (3rd offence).'
+            else:
+                message = f'User @{username} banned for {ban_days} day(s) (ban #{ban_count}).'
+        else:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+
+        return jsonify({'success': True, 'message': message})
+
+    except Exception as e:
+        print(f"Error managing user: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/user/undo-delete/<username>', methods=['POST'])
+def admin_undo_delete_user(username):
+    """Restore a deleted user account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_ref.update({
+            'account_status': 'active',
+            'delete_reason': firestore_module.DELETE_FIELD,
+            'deleted_at': firestore_module.DELETE_FIELD,
+        })
+
+        return jsonify({'success': True, 'message': f'User @{username} has been restored successfully.'})
+
+    except Exception as e:
+        print(f"Error restoring user: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/admin/user/permanent-delete/<username>', methods=['POST'])
+def admin_permanent_delete_user(username):
+    """Permanently delete a user account"""
+    if 'username' not in session or session.get('role') != 'admin':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Delete user application if exists
+        user_apps = db.collection('user_applications').where('username', '==', username).stream()
+        for app in user_apps:
+            app.reference.delete()
+
+        # Delete user
+        user_ref.delete()
+
+        return jsonify({'success': True, 'message': f'User @{username} has been permanently deleted.'})
+
+    except Exception as e:
+        print(f"Error permanently deleting user: {e}")
         import traceback; traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 500
 
