@@ -6,12 +6,11 @@ html {
   -moz-transform-origin: 0 0;
 }
 
-/* Alternative method for better browser compatibility */
+/* Use zoom instead of transform to avoid breaking position: fixed */
 body {
-  transform: scale(0.8);
-  transform-origin: top left;
-  width: 125%; /* 100% / 0.8 to maintain full width */
-  height: 125%; /* 100% / 0.8 to maintain full height */
+  zoom: 0.8;
+  /* Removed transform: scale(0.8) - it breaks position: fixed */
+  /* Removed transform-origin, width, height - not needed with zoom */
 }
 
 /* Ensure centered elements stay centered */
