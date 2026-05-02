@@ -2038,6 +2038,8 @@ def seller_dashboard():
     seller_approved = user.get('seller_approved', False)
     user_id = user['id']
     
+    print(f"🔍 Seller Dashboard - Username: {session['username']}, User ID: {user_id}, Approved: {seller_approved}")
+    
     # Get ban information
     account_status = user.get('account_status', 'active')
     ban_reason = user.get('ban_reason', '')
@@ -2064,19 +2066,28 @@ def seller_dashboard():
     application_submitted_at = None
     
     try:
-        # Query seller applications (removed order_by to avoid index requirement)
+        # Query seller applications by user_id
         apps = list(seller_applications_ref.where('user_id', '==', user_id).limit(1).stream())
+        
+        print(f"📋 Found {len(apps)} application(s) for user_id: {user_id}")
         
         if apps:
             app_data = apps[0].to_dict()
             application_status = app_data.get('status')
             created_at = app_data.get('created_at')
+            
+            print(f"✅ Application Status: {application_status}")
+            
             if created_at:
                 application_submitted_at = created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at)
+        else:
+            print(f"⚠️ No application found for user_id: {user_id}")
     except Exception as e:
-        print(f"Error fetching seller application: {e}")
+        print(f"❌ Error fetching seller application: {e}")
         import traceback
         traceback.print_exc()
+
+    print(f"🎯 Rendering template - seller_approved: {seller_approved}, application_status: {application_status}")
 
     return render_template('seller_dashboard.html', 
                          seller_approved=seller_approved, 
@@ -2283,6 +2294,14 @@ def submit_seller_application():
     if 'username' not in session or session.get('role') != 'seller':
         return redirect(url_for('login_page'))
     
+    # Get user info to get user_id
+    user = get_user_by_username(session['username'])
+    if not user:
+        flash('User not found', 'error')
+        return redirect(url_for('login_page'))
+    
+    user_id = user['id']
+    
     store_name = request.form.get('store_name')
     store_description = request.form.get('store_description')
     store_category = request.form.get('store_category')
@@ -2302,9 +2321,10 @@ def submit_seller_application():
         if file and file.filename:
             valid_id_filename = cloud_upload(file, 'verdant/documents')
     
-    # Create seller application in Firestore
+    # Create seller application in Firestore with user_id
     application_ref = db.collection('seller_applications').document()
     application_ref.set({
+        'user_id': user_id,  # Add user_id for querying
         'username': session['username'],
         'store_name': store_name,
         'store_description': store_description,
@@ -2320,6 +2340,8 @@ def submit_seller_application():
     # Update user record with store name (but don't approve yet)
     user_ref = db.collection('users').document(session['username'])
     user_ref.update({'store_name': store_name})
+    
+    print(f"✅ Seller application submitted for user_id: {user_id}, username: {session['username']}")
     
     flash('Your seller application has been submitted successfully! Please wait for admin approval.', 'success')
     return redirect(url_for('seller_dashboard'))
