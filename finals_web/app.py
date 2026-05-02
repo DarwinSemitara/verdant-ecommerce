@@ -1118,11 +1118,14 @@ def add_to_cart_route(product_id):
         data = request.get_json() or {}
         variation_id = data.get('variation_id')
         
-        # Check if product exists in V2 collection
+        # Check if product exists in V2 collection first, then fallback to V1
         product_doc = products_v2_ref.document(product_id).get()
         
         if not product_doc.exists:
-            return {'success': False, 'message': 'Product not found'}, 404
+            # Try V1 collection as fallback
+            product_doc = products_ref.document(product_id).get()
+            if not product_doc.exists:
+                return {'success': False, 'message': 'Product not found'}, 404
         
         product_data = product_doc.to_dict()
         
