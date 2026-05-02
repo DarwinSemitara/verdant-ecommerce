@@ -3,6 +3,9 @@
    Reset and common styles used across all pages
    ============================================================================ */
 
+/* Import Rubik Bubbles font for Verdant logo */
+@import url('https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap');
+
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -29,7 +32,7 @@ body {
 .header {
   background: #ffffff;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  position: sticky;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
