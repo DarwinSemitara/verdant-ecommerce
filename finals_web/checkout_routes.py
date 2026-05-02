@@ -390,6 +390,55 @@ def register_checkout_routes(app):
                 'created_at': SERVER_TIMESTAMP
             })
             
+            # Send automated thank you message to customer
+            try:
+                # Get order items for the message
+                items_query = db.collection('order_items').where('order_id', '==', order_id_str).stream()
+                product_names = []
+                for item_doc in items_query:
+                    item_data = item_doc.to_dict()
+                    product_names.append(item_data.get('product_name', 'product'))
+                
+                # Format order ID for display
+                from app import format_public_order_id
+                public_order_id = format_public_order_id(order_id_str)
+                
+                # Create items text
+                if len(product_names) == 1:
+                    items_text = f"\n\n📦 Product: {product_names[0]}"
+                elif len(product_names) > 1:
+                    items_list = '\n'.join([f"  • {name}" for name in product_names[:3]])
+                    if len(product_names) > 3:
+                        items_list += f"\n  • ...and {len(product_names) - 3} more"
+                    items_text = f"\n\n📦 Products:\n{items_list}"
+                else:
+                    items_text = ""
+                
+                # Create the message with clickable order ID
+                thank_you_message = f"""🎉 Thank you for your order!
+
+Your order #{public_order_id} has been accepted and is being prepared for shipment.{items_text}
+
+I'm here to help if you have any questions about your order or need assistance with anything. Feel free to message me anytime!
+
+Best regards,
+{session['username']}"""
+                
+                # Send message to customer
+                message_ref = db.collection('messages').document()
+                message_ref.set({
+                    'sender_username': session['username'],
+                    'receiver_username': order_data['username'],
+                    'message_text': thank_you_message,
+                    'is_read': False,
+                    'created_at': SERVER_TIMESTAMP
+                })
+                
+                print(f"Successfully sent order acceptance message to {order_data['username']}")
+            except Exception as msg_error:
+                print(f"Error sending order acceptance message: {msg_error}")
+                # Don't fail the order acceptance if message fails
+            
             return jsonify({'success': True, 'message': 'Order accepted successfully'}), 200
             
         except Exception as e:

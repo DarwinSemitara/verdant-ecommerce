@@ -393,6 +393,27 @@
       text-align: left;
     }
 
+    /* Order ID styling - make it look clickable and copyable */
+    .message-bubble .order-id {
+      color: #3b82f6;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.2s;
+    }
+
+    .message-bubble.sent .order-id {
+      color: #60a5fa;
+    }
+
+    .message-bubble .order-id:hover {
+      color: #2563eb;
+    }
+
+    .message-bubble.sent .order-id:hover {
+      color: #93c5fd;
+    }
+
     /* Custom scrollbar styling */
     #conversationList::-webkit-scrollbar,
     #messagesContainer::-webkit-scrollbar {
@@ -622,10 +643,10 @@
         <div class="conversations-body">
           <div class="conversations-search">
             <div class="conversations-search-row">
-              <input type="text" id="newChatUsername" placeholder="Search or start chat by username">
+              <input type="text" id="newChatUsername" placeholder="Search conversations by username">
               <button type="button" id="startChatBtn">Search</button>
             </div>
-            <small>You can message sellers, riders, or other users by their username.</small>
+            <small>Search for users you've messaged before.</small>
           </div>
           <div id="conversationList" class="list-group list-group-flush flex-grow-1">
             <div class="list-group-item py-3 d-flex justify-content-center text-muted">
@@ -983,7 +1004,13 @@
           bubble.className = 'message-bubble ' + (isOwn ? 'sent' : 'received');
           
           const messageText = document.createElement('div');
-          messageText.textContent = msg.message_text;
+          // Format order IDs to be clickable and copyable
+          let formattedText = msg.message_text;
+          // Match order IDs in format #1234567 (7 digits)
+          formattedText = formattedText.replace(/#(\d{7})/g, function(match, orderId) {
+            return '<span class="order-id" onclick="copyOrderId(\'' + orderId + '\')" title="Click to copy">' + match + '</span>';
+          });
+          messageText.innerHTML = formattedText.replace(/\n/g, '<br>');
           bubble.appendChild(messageText);
 
           const timeDiv = document.createElement('div');
@@ -998,6 +1025,37 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
 
+      // Function to copy order ID to clipboard
+      window.copyOrderId = function(orderId) {
+        const fullOrderId = '#' + orderId;
+        navigator.clipboard.writeText(fullOrderId).then(function() {
+          // Show notification if available
+          if (typeof showNotification === 'function') {
+            showNotification('Order ID ' + fullOrderId + ' copied to clipboard!', 'success', 2000);
+          } else {
+            alert('Order ID ' + fullOrderId + ' copied!');
+          }
+        }).catch(function(err) {
+          console.error('Failed to copy:', err);
+          // Fallback for older browsers
+          const textArea = document.createElement('textarea');
+          textArea.value = fullOrderId;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            if (typeof showNotification === 'function') {
+              showNotification('Order ID ' + fullOrderId + ' copied to clipboard!', 'success', 2000);
+            } else {
+              alert('Order ID ' + fullOrderId + ' copied!');
+            }
+          } catch (err) {
+            alert('Failed to copy order ID');
+          }
+          document.body.removeChild(textArea);
+        });
+      };
+
       function loadConversations() {
         fetch('/api/messages/conversations')
           .then(function (resp) {
@@ -1007,7 +1065,8 @@
             if (!data.success) {
               return;
             }
-            renderConversationList(data.conversations || []);
+            allConversations = data.conversations || []; // Store for filtering
+            renderConversationList(allConversations);
           })
           .catch(function (err) {
             console.error('Error loading conversations', err);
@@ -1114,20 +1173,43 @@
         });
       }
 
+      let allConversations = []; // Store all conversations for filtering
+
       if (startChatBtn && newChatUsernameInput) {
+        // Update button text to "Search"
+        startChatBtn.textContent = 'Search';
+        
         startChatBtn.addEventListener('click', function () {
-          const username = newChatUsernameInput.value.trim();
-          if (!username) {
+          const searchTerm = newChatUsernameInput.value.trim().toLowerCase();
+          if (!searchTerm) {
+            // If empty, show all conversations
+            renderConversationList(allConversations);
             return;
           }
-          activeConversation = null;
-          openConversation(username);
+          
+          // Filter conversations by username
+          const filtered = allConversations.filter(conv => 
+            conv.other_username.toLowerCase().includes(searchTerm)
+          );
+          
+          if (filtered.length === 0) {
+            conversationListEl.innerHTML = '<div class="conversation-item"><div class="conversation-content"><div class="conversation-name">No matches found</div><div class="conversation-preview">Try a different username</div></div></div>';
+          } else {
+            renderConversationList(filtered);
+          }
         });
 
         newChatUsernameInput.addEventListener('keydown', function (e) {
           if (e.key === 'Enter') {
             e.preventDefault();
             startChatBtn.click();
+          }
+        });
+        
+        // Clear search on input change
+        newChatUsernameInput.addEventListener('input', function() {
+          if (this.value.trim() === '') {
+            renderConversationList(allConversations);
           }
         });
       }
