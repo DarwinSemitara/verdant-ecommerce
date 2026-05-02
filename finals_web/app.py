@@ -3209,6 +3209,7 @@ def product_detail(product_id):
     
     # Check if user can review (has received this product)
     user_can_review = False
+    show_review_form = False  # New: flag to auto-open review form
     if 'username' in session and session.get('role') == 'user':
         orders_query = db.collection('orders')\
             .where('username', '==', session['username'])\
@@ -3226,6 +3227,10 @@ def product_detail(product_id):
             if any(True for _ in items_query):
                 user_can_review = True
                 break
+        
+        # Check if user came from review notification
+        if request.args.get('review') == '1' and user_can_review:
+            show_review_form = True
 
     return render_template(
         'product_detail.html',
@@ -3238,6 +3243,7 @@ def product_detail(product_id):
         avg_rating=round(avg_rating, 1),
         total_reviews=total_reviews,
         user_can_review=user_can_review,
+        show_review_form=show_review_form,
     )
 
 
@@ -4331,6 +4337,32 @@ def update_delivery_status(order_id):
                 'is_read': False,
                 'created_at': SERVER_TIMESTAMP
             })
+            
+            # If delivered, also create review notifications for each product
+            if new_order_status == 'delivered':
+                # Get all items in this order
+                order_items_query = db.collection('order_items')\
+                    .where('order_id', '==', order_id)\
+                    .stream()
+                
+                for item_doc in order_items_query:
+                    item_data = item_doc.to_dict()
+                    product_id = item_data.get('product_id')
+                    product_name = item_data.get('product_name', 'product')
+                    
+                    if product_id:
+                        # Create a review notification for this product
+                        review_notif_ref = db.collection('notifications').document()
+                        review_notif_ref.set({
+                            'username': customer_username,
+                            'order_id': order_id,
+                            'product_id': product_id,
+                            'type': 'review_request',
+                            'title': 'Leave a Review',
+                            'message': f"How was your experience with {product_name}? Share your review!",
+                            'is_read': False,
+                            'created_at': SERVER_TIMESTAMP
+                        })
 
         return jsonify({'success': True, 'message': 'Delivery status updated successfully'})
     except Exception as e:

@@ -140,6 +140,11 @@
     color: #721c24;
   }
 
+  .notification-item-type.review_request {
+    background: #fff3cd;
+    color: #856404;
+  }
+
   .notification-empty {
     padding: 3rem 2rem;
     text-align: center;
@@ -256,6 +261,13 @@
     function openNotificationModal(notif) {
       if (!notificationModal || !notificationModalTitle || !notificationModalBody) return;
       notificationDropdown.classList.remove('show');
+      
+      // If it's a review request, redirect to product page
+      if (notif.type === 'review_request' && notif.product_id) {
+        window.location.href = `/product/${notif.product_id}?review=1`;
+        return;
+      }
+      
       notificationModalTitle.textContent = notif.title || 'Notification';
       notificationModalBody.textContent = notif.message || '';
       notificationModal.style.display = 'flex';
@@ -372,6 +384,7 @@
         'order_rejected': 'Rejected',
         'order_shipped': 'Shipped',
         'order_delivered': 'Delivered',
+        'review_request': 'Review',
         'general': 'Info'
       };
       return types[type] || type;

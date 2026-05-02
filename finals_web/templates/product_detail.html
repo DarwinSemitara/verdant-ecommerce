@@ -785,6 +785,15 @@
           const isHidden = !reviewFormPanel.style.display || reviewFormPanel.style.display === 'none';
           reviewFormPanel.style.display = isHidden ? 'block' : 'none';
         });
+        
+        // Auto-open review form if user came from review notification
+        {% if show_review_form %}
+        reviewFormPanel.style.display = 'block';
+        // Scroll to review section
+        setTimeout(function() {
+          reviewFormPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+        {% endif %}
       }
 
       if (reviewForm && submitReviewBtn) {
