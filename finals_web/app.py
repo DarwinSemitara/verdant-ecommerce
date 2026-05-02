@@ -3582,10 +3582,17 @@ def admin_user_applications():
                     print(f"⚠️ Error formatting timestamp: {e}")
                     submitted_at_formatted = None
             
+            # Get user data to check account_status and ban_count
+            username = app_data.get('username')
+            user = get_user_by_username(username) if username else None
+            account_status = user.get('account_status', 'active') if user else 'active'
+            ban_count = user.get('ban_count', 0) if user else 0
+            ban_permanent = user.get('ban_permanent', False) if user else False
+            
             applications.append({
                 'id': app_doc.id,
                 'user_id': app_data.get('user_id'),
-                'username': app_data.get('username'),
+                'username': username,
                 'email': app_data.get('email'),
                 'phone': app_data.get('phone'),
                 'first_name': app_data.get('first_name'),
@@ -3594,7 +3601,10 @@ def admin_user_applications():
                 'date_of_birth': app_data.get('date_of_birth'),
                 'gender': app_data.get('gender'),
                 'status': app_data.get('status'),
-                'submitted_at': submitted_at_formatted
+                'submitted_at': submitted_at_formatted,
+                'account_status': account_status,
+                'ban_count': ban_count,
+                'ban_permanent': ban_permanent,
             })
         
         # Sort in Python instead of Firestore
@@ -3738,9 +3748,17 @@ def admin_rider_applications():
         applications = []
         for app_doc in applications_query:
             app_data = app_doc.to_dict()
+            username = app_data.get('username')
+            
+            # Get user data to check account_status and ban_count
+            user = get_user_by_username(username) if username else None
+            account_status = user.get('account_status', 'active') if user else 'active'
+            ban_count = user.get('ban_count', 0) if user else 0
+            ban_permanent = user.get('ban_permanent', False) if user else False
+            
             applications.append({
                 'id': app_doc.id,
-                'user_id': app_data.get('username'),  # Using username as user_id
+                'user_id': username,  # Using username as user_id
                 'full_name': app_data.get('full_name'),
                 'address': app_data.get('address'),
                 'phone': app_data.get('phone'),
@@ -3751,7 +3769,10 @@ def admin_rider_applications():
                 'license_image': app_data.get('license_image'),
                 'status': app_data.get('status'),
                 'created_at': app_data.get('created_at'),
-                'username': app_data.get('username'),
+                'username': username,
+                'account_status': account_status,
+                'ban_count': ban_count,
+                'ban_permanent': ban_permanent,
             })
 
         pending_count = sum(1 for app in applications if app['status'] == 'pending')
