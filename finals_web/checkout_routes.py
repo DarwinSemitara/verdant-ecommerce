@@ -195,10 +195,10 @@ def register_checkout_routes(app):
                 flash('Your seller application is pending approval. You cannot access orders yet.', 'warning')
                 return redirect(url_for('seller_dashboard'))
             
-            # Check if this seller has any products
-            products_query = db.collection('products').where('seller_username', '==', session['username']).limit(1).stream()
+            # Check if this seller has any products in products_v2 (NEW)
+            products_query = products_v2_ref.where('seller_username', '==', session['username']).limit(1).stream()
             product_count = sum(1 for _ in products_query)
-            print(f"DEBUG: Seller has {product_count} products")
+            print(f"DEBUG: Seller has {product_count} products in products_v2")
             
             if product_count == 0:
                 orders = []
@@ -211,6 +211,8 @@ def register_checkout_routes(app):
                     order_data = order_doc.to_dict()
                     order_id = order_doc.id
                     
+                    print(f"DEBUG: Processing order {order_id} for seller {session['username']}")
+                    
                     # Get order items for this order
                     items_query = db.collection('order_items').where('order_id', '==', order_id).stream()
                     items = []
@@ -220,6 +222,8 @@ def register_checkout_routes(app):
                         item_data = item_doc.to_dict()
                         product_id = item_data['product_id']
                         variation_id = item_data.get('variation_id')
+                        
+                        print(f"DEBUG: Order item - product_id: {product_id}, variation_id: {variation_id}")
                         
                         # Get product from V2 collection
                         product_doc = products_v2_ref.document(product_id).get()
