@@ -35,6 +35,13 @@ body.has-main-header {
   text-decoration: none;
 }
 
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
 .nav-right {
   display: flex;
   align-items: center;
@@ -201,7 +208,7 @@ body.has-main-header {
 /* Products Section */
 .products-section {
   padding: 3rem 2rem;
-  background: #f8f9fa;
+  background: transparent;  /* Changed from #f8f9fa to transparent to show body gradient */
 }
 
 .products-wrapper {

@@ -104,65 +104,68 @@
     }
 
     .featured-collections {
-      padding: 2.5rem 1.5rem 1.5rem;
+      padding: 3.5rem 1.5rem 2.5rem;  /* Increased padding for more height */
       background: #f5f7f5;
+      min-height: 500px;  /* Added minimum height */
     }
 
     .featured-inner {
-      max-width: 1400px;
+      max-width: 100%;  /* Changed from 1400px to use full width */
       margin: 0 auto;
+      padding: 0 2rem;  /* Added horizontal padding */
     }
 
     .featured-header-main {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;  /* Increased from 1.5rem */
     }
 
     .featured-header-main h2 {
-      font-size: 1.5rem;
+      font-size: 1.75rem;  /* Increased from 1.5rem */
       color: #1f2933;
       margin: 0;
     }
 
     .featured-header-main span {
-      font-size: 0.95rem;
+      font-size: 1rem;  /* Increased from 0.95rem */
       color: #6c757d;
     }
 
     .featured-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 3rem;
+      gap: 2rem;  /* Reduced from 3rem for better use of space */
     }
 
     .featured-card {
       background: #ffffff;
-      border-radius: 1rem;
-      padding: 1rem 1rem 1.25rem;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      border-radius: 1.25rem;  /* Increased border radius */
+      padding: 1.5rem;  /* Increased from 1rem */
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);  /* Enhanced shadow */
       border: 1px solid #e5e7eb;
       display: flex;
       flex-direction: column;
-      min-height: 260px;
+      min-height: 380px;  /* Increased from 260px */
       cursor: pointer;
     }
 
     .featured-card-header {
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;  /* Increased from 0.75rem */
     }
 
     .featured-card-header h3 {
-      font-size: 1.1rem;
+      font-size: 1.3rem;  /* Increased from 1.1rem */
       margin: 0;
       color: #1f2933;
+      font-weight: 700;
     }
 
     .featured-card-header span {
       display: block;
-      margin-top: 0.2rem;
-      font-size: 0.85rem;
+      margin-top: 0.3rem;
+      font-size: 0.95rem;  /* Increased from 0.85rem */
       color: #94a3b8;
     }
 
@@ -175,6 +178,7 @@
     .featured-slide {
       display: none;
       animation: fadeSlide 0.4s ease-in-out;
+      cursor: pointer;
     }
 
     .featured-slide.active {
@@ -183,13 +187,13 @@
 
     .featured-product {
       display: flex;
-      gap: 0.75rem;
+      gap: 1.25rem;  /* Increased from 0.75rem */
     }
 
     .featured-thumb {
-      width: 100px;
-      height: 100px;
-      border-radius: 0.75rem;
+      width: 160px;  /* Increased from 100px */
+      height: 160px;  /* Increased from 100px */
+      border-radius: 1rem;  /* Increased from 0.75rem */
       overflow: hidden;
       background: #f1f5f9;
       flex-shrink: 0;
@@ -205,32 +209,33 @@
     }
 
     .featured-info h4 {
-      font-size: 0.98rem;
-      margin: 0 0 0.25rem;
+      font-size: 1.1rem;  /* Increased from 0.98rem */
+      margin: 0 0 0.35rem;
       color: #111827;
+      font-weight: 600;
     }
 
     .featured-info p {
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.95rem;  /* Increased from 0.85rem */
       color: #6b7280;
     }
 
     .featured-price {
-      margin-top: 0.4rem;
+      margin-top: 0.5rem;  /* Increased from 0.4rem */
       font-weight: 700;
       color: #15803d;
-      font-size: 1rem;
+      font-size: 1.25rem;  /* Increased from 1rem */
     }
 
     .featured-meta {
-      margin-top: 0.2rem;
-      font-size: 0.8rem;
+      margin-top: 0.3rem;  /* Increased from 0.2rem */
+      font-size: 0.9rem;  /* Increased from 0.8rem */
       color: #9ca3af;
     }
 
     .featured-actions {
-      margin-top: 0.9rem;
+      margin-top: 1.25rem;  /* Increased from 0.9rem */
       display: flex;
       gap: 0.5rem;
     }
@@ -240,8 +245,8 @@
       border: 1px solid #198754;
       background: transparent;
       color: #198754;
-      padding: 0.45rem 0.9rem;
-      font-size: 0.85rem;
+      padding: 0.6rem 1.25rem;  /* Increased from 0.45rem 0.9rem */
+      font-size: 0.95rem;  /* Increased from 0.85rem */
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;

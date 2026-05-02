@@ -578,7 +578,7 @@
             <path d="M8 9h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </a>
-        <button id="helpButton" class="icon-button" aria-label="Help">
+        <button id="helpButton" class="icon-button" aria-label="Help" onclick="openHelpModal()" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: inherit;">
           <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
             <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
@@ -671,6 +671,22 @@
   </div>
 
   <script>
+    function openHelpModal() {
+      const modal = document.getElementById('helpModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeHelpModalFunc() {
+      const modal = document.getElementById('helpModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
     (function () {
       const CURRENT_USERNAME = "{{ current_username }}";
       const urlParams = new URLSearchParams(window.location.search);
