@@ -1180,8 +1180,10 @@ def add_to_cart_route(product_id):
             if available_stock <= 0:
                 return {'success': False, 'message': 'Product out of stock'}, 400
             
-            # Check if item already in cart
-            existing_cart = list(cart_ref.where('user_id', '==', user_id).where('product_id', '==', product_id).limit(1).stream())
+            # Check if item already in cart (without variation)
+            # Need to check for items where variation_id is None or doesn't exist
+            all_cart_items = list(cart_ref.where('user_id', '==', user_id).where('product_id', '==', product_id).stream())
+            existing_cart = [item for item in all_cart_items if not item.to_dict().get('variation_id')]
             
             if existing_cart:
                 cart_doc = existing_cart[0]
@@ -1196,7 +1198,7 @@ def add_to_cart_route(product_id):
                     'updated_at': firestore_module.SERVER_TIMESTAMP
                 })
             else:
-                # Add new cart item
+                # Add new cart item (without variation_id field)
                 cart_ref.add({
                     'user_id': user_id,
                     'product_id': product_id,
@@ -1909,6 +1911,83 @@ def update_profile():
                     session['profile_picture'] = url
 
     return redirect(url_for('profile'))
+
+
+@app.route('/submit_report', methods=['POST'])
+def submit_report():
+    """Handle user report submissions (report user/seller/rider)"""
+    if 'username' not in session or session.get('role') != 'user':
+        return jsonify({'success': False, 'message': 'Please login to submit a report'}), 401
+    
+    try:
+        # Get JSON data from request
+        data = request.get_json() or {}
+        
+        report_type = data.get('report_type')
+        reported_username = data.get('reported_username', '').strip()
+        reason = data.get('reason', '').strip()
+        details = data.get('details', '').strip()
+        
+        # Validate required fields
+        if not report_type or not reported_username or not reason:
+            return jsonify({'success': False, 'message': 'Please fill in all required fields'}), 400
+        
+        # Validate report type
+        valid_report_types = ['user', 'seller', 'rider']
+        if report_type not in valid_report_types:
+            return jsonify({'success': False, 'message': 'Invalid report type'}), 400
+        
+        # Check if reported user exists
+        reported_user = get_user_by_username(reported_username)
+        if not reported_user:
+            return jsonify({'success': False, 'message': f'User "{reported_username}" not found'}), 404
+        
+        # Verify the reported user has the correct role
+        reported_user_role = reported_user.get('role')
+        if report_type == 'seller' and reported_user_role != 'seller':
+            return jsonify({'success': False, 'message': f'"{reported_username}" is not a seller'}), 400
+        elif report_type == 'rider' and reported_user_role != 'rider':
+            return jsonify({'success': False, 'message': f'"{reported_username}" is not a rider'}), 400
+        elif report_type == 'user' and reported_user_role not in ['user', 'seller', 'rider']:
+            return jsonify({'success': False, 'message': f'"{reported_username}" is not a valid user'}), 400
+        
+        # Get reporter username from session
+        reporter_username = session['username']
+        
+        # Prevent self-reporting
+        if reporter_username == reported_username:
+            return jsonify({'success': False, 'message': 'You cannot report yourself'}), 400
+        
+        # Create report document in Firestore
+        issue_reports_ref = db.collection('issue_reports')
+        report_data = {
+            'reporter_username': reporter_username,
+            'report_type': report_type,
+            'reported_username': reported_username,
+            'reason': reason,
+            'details': details,
+            'status': 'pending',
+            'created_at': firestore_module.SERVER_TIMESTAMP,
+            'updated_at': firestore_module.SERVER_TIMESTAMP
+        }
+        
+        # Add report to Firestore
+        doc_ref = issue_reports_ref.add(report_data)
+        
+        print(f"Report submitted: {reporter_username} reported {reported_username} ({report_type}) for {reason}")
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Report submitted successfully. Our team will review it.',
+            'report_id': doc_ref[1].id
+        }), 200
+        
+    except Exception as e:
+        print(f"Error submitting report: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': 'Error submitting report. Please try again.'}), 500
+
 
 @app.route('/settings')
 def settings():
