@@ -1178,7 +1178,8 @@ def add_to_cart_route(product_id):
                 })
         else:
             # For products without variations, check stock
-            available_stock = product_data.get('stock', 0)
+            # Try different stock field names for compatibility
+            available_stock = product_data.get('stock', 0) or product_data.get('stock_quantity', 0)
             
             if available_stock <= 0:
                 return {'success': False, 'message': 'Product out of stock'}, 400
@@ -1936,7 +1937,7 @@ def submit_report():
             return jsonify({'success': False, 'message': 'Please fill in all required fields'}), 400
         
         # Validate report type
-        valid_report_types = ['user', 'seller', 'rider']
+        valid_report_types = ['seller', 'rider']
         if report_type not in valid_report_types:
             return jsonify({'success': False, 'message': 'Invalid report type'}), 400
         
@@ -1951,8 +1952,6 @@ def submit_report():
             return jsonify({'success': False, 'message': f'"{reported_username}" is not a seller'}), 400
         elif report_type == 'rider' and reported_user_role != 'rider':
             return jsonify({'success': False, 'message': f'"{reported_username}" is not a rider'}), 400
-        elif report_type == 'user' and reported_user_role not in ['user', 'seller', 'rider']:
-            return jsonify({'success': False, 'message': f'"{reported_username}" is not a valid user'}), 400
         
         # Get reporter username from session
         reporter_username = session['username']

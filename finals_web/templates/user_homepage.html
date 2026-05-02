@@ -679,7 +679,7 @@
   </section>
 
   <!-- Help Modal -->
-  <div id="helpModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+  <div id="helpModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100000; align-items: center; justify-content: center; overflow: hidden;">
     <div style="background: #fff; border-radius: 1rem; padding: 2rem; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
         <h3 style="margin: 0; color: #111827; font-size: 1.5rem;">How can we help you?</h3>
@@ -688,10 +688,6 @@
       
       <div id="helpMainMenu">
         <p style="color: #6b7280; margin-bottom: 1.5rem;">Select what you need help with:</p>
-        <button onclick="showReportForm('user')" style="width: 100%; padding: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.75rem; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s;">
-          <strong style="display: block; color: #111827; margin-bottom: 0.25rem;">Report a User</strong>
-          <span style="color: #6b7280; font-size: 0.875rem;">Report harassment, inappropriate content, or scams</span>
-        </button>
         <button onclick="showReportForm('seller')" style="width: 100%; padding: 1rem; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.75rem; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s;">
           <strong style="display: block; color: #111827; margin-bottom: 0.25rem;">Report a Seller</strong>
           <span style="color: #6b7280; font-size: 0.875rem;">Report fake listings, non-delivery, or fraud</span>
@@ -759,7 +755,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({})  // Send empty object for products without variations
       })
       .then(response => response.json())
       .then(data => {
@@ -1249,6 +1246,8 @@
         modal.style.display = 'flex';
         document.getElementById('helpMainMenu').style.display = 'block';
         document.getElementById('helpReportForm').style.display = 'none';
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
       } else {
         console.error('Help modal element not found');
       }
@@ -1256,6 +1255,8 @@
 
     function closeHelpModal() {
       document.getElementById('helpModal').style.display = 'none';
+      // Restore body scroll
+      document.body.style.overflow = '';
     }
 
     function backToHelpMenu() {
@@ -1275,21 +1276,7 @@
       // Clear existing options
       reasonSelect.innerHTML = '<option value="">Select a reason</option>';
       
-      if (type === 'user') {
-        titleElement.textContent = 'Report a User';
-        const reasons = [
-          { value: 'harassment', label: 'Harassment' },
-          { value: 'nudity', label: 'Nudity' },
-          { value: 'profanity', label: 'Profanity' },
-          { value: 'scam_fraud', label: 'Scam or Fraud' }
-        ];
-        reasons.forEach(r => {
-          const option = document.createElement('option');
-          option.value = r.value;
-          option.textContent = r.label;
-          reasonSelect.appendChild(option);
-        });
-      } else if (type === 'seller') {
+      if (type === 'seller') {
         titleElement.textContent = 'Report a Seller';
         const reasons = [
           { value: 'harassment', label: 'Harassment' },

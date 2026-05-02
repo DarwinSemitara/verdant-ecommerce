@@ -557,31 +557,33 @@ function debounce(func, wait) {
     };
 }
 
-function showNotification(message, type = 'info', durationMs = 3000) {
+function showNotification(message, type = 'info', durationMs = 4000) {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
     notification.style.cssText = `
         position: fixed !important;
-        top: 80px !important;
+        top: 20px !important;
         right: 20px !important;
         background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
         color: white;
         padding: 1rem 1.5rem;
         border-radius: 0.5rem;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        z-index: 99999 !important;
+        z-index: 999999 !important;
         max-width: 350px;
         animation: slideInRight 0.3s ease;
         pointer-events: auto;
+        font-weight: 600;
+        font-size: 1rem;
     `;
     
     // Always append to body, not to any container
     document.body.appendChild(notification);
     
     // Remove after the requested duration
-    const timeout = typeof durationMs === 'number' && durationMs > 0 ? durationMs : 3000;
+    const timeout = typeof durationMs === 'number' && durationMs > 0 ? durationMs : 4000;
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => {
@@ -597,9 +599,9 @@ const style = document.createElement('style');
 style.textContent = `
     .notification {
         position: fixed !important;
-        top: 80px !important;
+        top: 20px !important;
         right: 20px !important;
-        z-index: 99999 !important;
+        z-index: 999999 !important;
         max-width: 350px !important;
         pointer-events: auto !important;
     }
