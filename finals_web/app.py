@@ -2066,10 +2066,16 @@ def seller_dashboard():
     application_submitted_at = None
     
     try:
-        # Query seller applications by user_id
+        # Try to query by user_id first (new applications)
         apps = list(seller_applications_ref.where('user_id', '==', user_id).limit(1).stream())
         
         print(f"📋 Found {len(apps)} application(s) for user_id: {user_id}")
+        
+        # If no application found by user_id, try by username (old applications)
+        if not apps:
+            print(f"🔄 Trying to find application by username: {session['username']}")
+            apps = list(seller_applications_ref.where('username', '==', session['username']).limit(1).stream())
+            print(f"📋 Found {len(apps)} application(s) for username: {session['username']}")
         
         if apps:
             app_data = apps[0].to_dict()
@@ -2081,7 +2087,7 @@ def seller_dashboard():
             if created_at:
                 application_submitted_at = created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at)
         else:
-            print(f"⚠️ No application found for user_id: {user_id}")
+            print(f"⚠️ No application found for user_id: {user_id} or username: {session['username']}")
     except Exception as e:
         print(f"❌ Error fetching seller application: {e}")
         import traceback
