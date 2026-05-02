@@ -522,6 +522,125 @@ def search_products():
         traceback.print_exc()
         return {'success': False, 'products': [], 'sellers': [], 'error': str(e)}, 500
 
+@app.route('/search-results')
+def search_results_page():
+    """Render search results page with products"""
+    if 'username' not in session or session.get('role') != 'user':
+        return redirect(url_for('login_page'))
+    
+    search_query = request.args.get('q', '').strip()
+    
+    # Get user profile picture from Firestore
+    user = get_user_by_username(session['username'])
+    profile_picture = user.get('profile_picture') if user else None
+    
+    products = []
+    
+    try:
+        from firestore_db import products_v2_ref, product_variations_ref
+        
+        # Fetch V2 products (same logic as homepage)
+        all_v2_products = products_v2_ref.stream()
+        
+        products_list = []
+        for prod_doc in all_v2_products:
+            prod_data = prod_doc.to_dict()
+            
+            # Get seller info and check if approved
+            seller = get_user_by_username(prod_data.get('seller_username', ''))
+            if not seller or not seller.get('seller_approved', False):
+                continue
+            
+            store_name = seller.get('store_name', '') if seller else ''
+            
+            if prod_data.get('has_variations'):
+                # Get all variations for this product
+                variations_query = product_variations_ref.where('parent_product_id', '==', prod_doc.id).stream()
+                variations_list = []
+                total_stock = 0
+                for var_doc in variations_query:
+                    var_data = var_doc.to_dict()
+                    variations_list.append({
+                        'id': var_doc.id,
+                        'name': var_data.get('variation_name', ''),
+                        'price': var_data.get('price', 0),
+                        'stock': var_data.get('stock', 0),
+                        'description': var_data.get('description', ''),
+                        'image': var_data.get('image', 'default.jpg')
+                    })
+                    total_stock += var_data.get('stock', 0)
+                
+                if variations_list and total_stock > 0:
+                    # Use first variation as default
+                    first_var = variations_list[0]
+                    product_name = first_var['name'].lower()
+                    specifications = first_var['description'].lower()
+                    
+                    # Apply search filter if query exists
+                    if search_query:
+                        search_lower = search_query.lower()
+                        if not (search_lower in product_name or 
+                               search_lower in specifications or 
+                               search_lower in store_name.lower() or 
+                               search_lower in prod_data.get('seller_username', '').lower()):
+                            continue
+                    
+                    products_list.append({
+                        'id': prod_doc.id,
+                        'name': first_var['name'],
+                        'price': first_var['price'],
+                        'stock': total_stock,
+                        'specifications': first_var['description'],
+                        'image': first_var['image'],
+                        'seller_username': prod_data.get('seller_username', ''),
+                        'store_name': store_name,
+                        'created_at': prod_data.get('created_at'),
+                        'has_variations': True,
+                        'variations': variations_list
+                    })
+            else:
+                # Single product
+                if prod_data.get('stock', 0) > 0:
+                    product_name = prod_data.get('product_name', '').lower()
+                    specifications = prod_data.get('description', '').lower()
+                    
+                    # Apply search filter if query exists
+                    if search_query:
+                        search_lower = search_query.lower()
+                        if not (search_lower in product_name or 
+                               search_lower in specifications or 
+                               search_lower in store_name.lower() or 
+                               search_lower in prod_data.get('seller_username', '').lower()):
+                            continue
+                    
+                    products_list.append({
+                        'id': prod_doc.id,
+                        'name': prod_data.get('product_name', ''),
+                        'price': prod_data.get('price', 0),
+                        'stock': prod_data.get('stock', 0),
+                        'specifications': prod_data.get('description', ''),
+                        'image': prod_data.get('image', 'default.jpg'),
+                        'seller_username': prod_data.get('seller_username', ''),
+                        'store_name': store_name,
+                        'created_at': prod_data.get('created_at'),
+                        'has_variations': False,
+                        'variations': []
+                    })
+        
+        # Sort by created_at (newest first)
+        products_list.sort(key=lambda x: x.get('created_at') or datetime.min, reverse=True)
+        products = products_list
+        
+    except Exception as e:
+        print(f"Error fetching products for search results: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    return render_template('search_results.html',
+                           profile_picture=profile_picture,
+                           products=products,
+                           search_query=search_query)
+
 @app.route('/login_page')
 def login_page():
     error = request.args.get('error')
