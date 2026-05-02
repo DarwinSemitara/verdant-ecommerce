@@ -281,6 +281,18 @@
       <div class="nav-left">
         <a href="/" class="nav-logo">Verdant</a>
       </div>
+      <div class="nav-center">
+        <div style="display: flex; gap: 0.5rem; flex: 1; max-width: 600px;">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category..." aria-label="Search items" style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 1rem;" />
+          <button type="button" id="searchButton" class="search-button" aria-label="Search" onclick="showLoginModal()" style="padding: 0.75rem 1.5rem; background: #198754; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            Search
+          </button>
+        </div>
+      </div>
       <div class="nav-right">
         <div class="nav-auth">
           <a href="{{ url_for('login_page') }}" class="nav-item">Login</a>
@@ -451,33 +463,19 @@
   <section id="shop" class="products-section">
     <div class="products-wrapper">
       <div class="products-toolbar">
-        <div class="toolbar-left">
-          <div style="display: flex; gap: 0.5rem; flex: 1;">
-            <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category..." aria-label="Search items" />
-            <button type="button" id="searchButton" class="search-button" aria-label="Search">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
-              Search
-            </button>
-          </div>
-        </div>
-        <div class="toolbar-right">
-          <select class="filter-select" aria-label="Sort By">
-            <option value="">Sort By</option>
-            <optgroup label="Date">
-              <option value="date-newest">Newest First</option>
-              <option value="date-oldest">Oldest First</option>
-            </optgroup>
-            <optgroup label="Price">
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </optgroup>
-            <optgroup label="Name">
-              <option value="name-asc">Name: A to Z</option>
-              <option value="name-desc">Name: Z to A</option>
-            </optgroup>
+        <div class="toolbar-right" style="display: flex; gap: 1rem; width: 100%; justify-content: flex-end;">
+          <select class="filter-select" id="priceFilter" aria-label="Price Filter">
+            <option value="">Price</option>
+            <option value="price-asc">Low to High</option>
+            <option value="price-desc">High to Low</option>
+            <option value="under-50">Under ₱50</option>
+            <option value="50-100">₱50 - ₱100</option>
+            <option value="over-100">Over ₱100</option>
+          </select>
+          <select class="filter-select" id="dateFilter" aria-label="Date Filter">
+            <option value="">Date</option>
+            <option value="date-newest">Newest First</option>
+            <option value="date-oldest">Oldest First</option>
           </select>
           <div class="category-dropdown-wrapper">
             <button type="button" class="category-dropdown-btn" id="categoryDropdownBtn">
