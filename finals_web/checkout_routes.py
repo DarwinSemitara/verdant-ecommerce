@@ -392,32 +392,44 @@ def register_checkout_routes(app):
             
             # Send automated thank you message to customer
             try:
+                from datetime import datetime
+                
                 # Get order items for the message
                 items_query = db.collection('order_items').where('order_id', '==', order_id_str).stream()
-                product_names = []
+                product_details = []
                 for item_doc in items_query:
                     item_data = item_doc.to_dict()
-                    product_names.append(item_data.get('product_name', 'product'))
+                    product_name = item_data.get('product_name', 'Unknown Product')
+                    variation_name = item_data.get('variation_name', '')
+                    quantity = item_data.get('quantity', 1)
+                    
+                    if variation_name:
+                        product_details.append(f"{product_name} ({variation_name}) x{quantity}")
+                    else:
+                        product_details.append(f"{product_name} x{quantity}")
                 
                 # Format order ID for display
                 from app import format_public_order_id
                 public_order_id = format_public_order_id(order_id_str)
                 
+                # Get current date
+                current_date = datetime.now().strftime("%B %d, %Y")
+                
                 # Create items text
-                if len(product_names) == 1:
-                    items_text = f"\n\n📦 Product: {product_names[0]}"
-                elif len(product_names) > 1:
-                    items_list = '\n'.join([f"  • {name}" for name in product_names[:3]])
-                    if len(product_names) > 3:
-                        items_list += f"\n  • ...and {len(product_names) - 3} more"
+                if len(product_details) == 1:
+                    items_text = f"\n\n📦 Product: {product_details[0]}"
+                elif len(product_details) > 1:
+                    items_list = '\n'.join([f"  • {detail}" for detail in product_details[:5]])
+                    if len(product_details) > 5:
+                        items_list += f"\n  • ...and {len(product_details) - 5} more"
                     items_text = f"\n\n📦 Products:\n{items_list}"
                 else:
                     items_text = ""
                 
-                # Create the message with clickable order ID
+                # Create the message with actual product names and date
                 thank_you_message = f"""🎉 Thank you for your order!
 
-Your order #{public_order_id} has been accepted and is being prepared for shipment.{items_text}
+Your order #{public_order_id} has been accepted on {current_date} and is being prepared for shipment.{items_text}
 
 I'm here to help if you have any questions about your order or need assistance with anything. Feel free to message me anytime!
 

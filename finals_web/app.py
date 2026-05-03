@@ -2363,14 +2363,16 @@ def api_list_conversations():
             other = receiver if sender == username else sender
 
             if other not in conversations:
-                # Get profile picture for the other user
+                # Get profile picture and role for the other user
                 other_user = get_user_by_username(other)
                 profile_picture = other_user.get('profile_picture') if other_user else None
                 last_seen = other_user.get('last_seen') if other_user else None
                 is_online = other_user.get('is_online', False) if other_user else False
+                other_role = other_user.get('role', 'user') if other_user else 'user'
 
                 conversations[other] = {
                     'other_username': other,
+                    'other_role': other_role,
                     'profile_picture': profile_picture,
                     'is_online': bool(is_online),
                     'last_seen': last_seen.isoformat() if last_seen and hasattr(last_seen, 'isoformat') else None,

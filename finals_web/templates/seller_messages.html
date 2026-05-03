@@ -47,14 +47,63 @@
   .list-group-item {
     max-width: 100%;
     width: 100%;
+    min-height: 80px;
+    max-height: 80px;
   }
   
   .conversation-item .message-preview {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
-    display: inline-block;
+    max-width: 100%;
+    display: block;
+  }
+  
+  /* Role filter toggle */
+  .role-filter-toggle {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  
+  .role-filter-btn {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .role-filter-btn:hover {
+    background: #e9ecef;
+  }
+  
+  .role-filter-btn.active {
+    background: #198754;
+    color: white;
+    border-color: #198754;
+  }
+  
+  /* Conversation header with profile */
+  .conversation-header-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .conversation-header-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e9ecef;
   }
 </style>
 
@@ -78,14 +127,19 @@
         <div class="card-body p-0 d-flex flex-column" style="max-height: 520px; overflow-y: hidden;">
           <div class="px-3 pt-2 pb-2 border-bottom">
             <div class="input-group input-group-sm">
-              <input type="text" class="form-control" id="newChatUsername" placeholder="Search by username">
+              <input type="text" class="form-control" id="newChatUsername" placeholder="Search conversations">
               <button class="btn btn-outline-secondary" type="button" id="startChatBtn">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                 </svg>
               </button>
             </div>
-            <small class="text-muted d-block mt-1">You can message riders or customers by their username.</small>
+            <div class="role-filter-toggle">
+              <button type="button" class="role-filter-btn active" data-role="all">All</button>
+              <button type="button" class="role-filter-btn" data-role="user">Users</button>
+              <button type="button" class="role-filter-btn" data-role="rider">Riders</button>
+            </div>
+            <small class="text-muted d-block mt-2">Search existing conversations only</small>
           </div>
           <div id="conversationList" class="list-group list-group-flush flex-grow-1" style="overflow-y: auto;">
             <div class="list-group-item py-3 d-flex justify-content-center text-muted">
@@ -99,9 +153,12 @@
     <div class="col-lg-8 mb-4">
       <div class="card shadow-sm border-0 h-100">
         <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-          <div>
+          <div class="flex-grow-1">
             <h5 class="card-title mb-0" id="conversationTitle" style="font-size: 1rem;">Conversation</h5>
             <small class="text-muted" id="conversationSubtitle">Select a conversation or start a new one.</small>
+          </div>
+          <div id="conversationHeaderProfile" class="conversation-header-profile" style="display: none;">
+            <img id="conversationProfilePic" src="" alt="Profile" />
           </div>
         </div>
         <div class="card-body d-flex flex-column" style="height: 520px;">
@@ -136,8 +193,45 @@
     const sendMessageForm = document.getElementById('sendMessageForm');
     const newChatUsernameInput = document.getElementById('newChatUsername');
     const startChatBtn = document.getElementById('startChatBtn');
+    const conversationHeaderProfile = document.getElementById('conversationHeaderProfile');
+    const conversationProfilePic = document.getElementById('conversationProfilePic');
 
     let activeConversation = null;
+    let allConversations = [];
+    let currentRoleFilter = 'all';
+
+    // Role filter buttons
+    const roleFilterBtns = document.querySelectorAll('.role-filter-btn');
+    roleFilterBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        roleFilterBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentRoleFilter = this.dataset.role;
+        filterAndRenderConversations();
+      });
+    });
+
+    function filterAndRenderConversations() {
+      let filtered = allConversations;
+      
+      // Apply role filter
+      if (currentRoleFilter !== 'all') {
+        filtered = filtered.filter(conv => conv.other_role === currentRoleFilter);
+      }
+      
+      // Apply search filter
+      const searchTerm = newChatUsernameInput.value.trim().toLowerCase();
+      if (searchTerm) {
+        filtered = filtered.filter(conv => 
+          conv.other_username.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      renderConversationList(filtered);
+    }
+
+    // Search input handler
+    newChatUsernameInput.addEventListener('input', filterAndRenderConversations);
 
     function renderConversationList(conversations) {
       if (!conversationListEl) {
@@ -246,7 +340,7 @@
         }
 
         item.addEventListener('click', function () {
-          openConversation(this.dataset.username);
+          openConversation(this.dataset.username, conv.profile_picture);
         });
 
         conversationListEl.appendChild(item);
@@ -302,14 +396,15 @@
           if (!data.success) {
             return;
           }
-          renderConversationList(data.conversations || []);
+          allConversations = data.conversations || [];
+          filterAndRenderConversations();
         })
         .catch(function (err) {
           console.error('Error loading conversations', err);
         });
     }
 
-    function openConversation(username) {
+    function openConversation(username, profilePicture) {
       if (!username) {
         return;
       }
@@ -320,6 +415,22 @@
       if (conversationSubtitle) {
         conversationSubtitle.textContent = 'Messages between you and ' + username;
       }
+      
+      // Show profile picture in header
+      if (conversationHeaderProfile && conversationProfilePic) {
+        if (profilePicture) {
+          conversationProfilePic.src = profilePicture && profilePicture.startsWith('http') 
+            ? profilePicture 
+            : `/static/uploads/profiles/${profilePicture}`;
+          conversationProfilePic.onerror = function() {
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=40`;
+          };
+        } else {
+          conversationProfilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=40`;
+        }
+        conversationHeaderProfile.style.display = 'flex';
+      }
+      
       if (messageInput) {
         messageInput.disabled = false;
       }
@@ -448,8 +559,14 @@
         if (!username) {
           return;
         }
-        activeConversation = null;
-        openConversation(username);
+        // Search in existing conversations only
+        const existingConv = allConversations.find(c => c.other_username.toLowerCase() === username.toLowerCase());
+        if (existingConv) {
+          activeConversation = null;
+          openConversation(existingConv.other_username, existingConv.profile_picture);
+        } else {
+          alert('No conversation found with this user. You can only message users you have existing conversations with.');
+        }
       });
 
       newChatUsernameInput.addEventListener('keydown', function (e) {
