@@ -248,93 +248,96 @@
       conversations.forEach(function (conv) {
         const item = document.createElement('button');
         item.type = 'button';
-        item.className = 'list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-start p-3';
+        item.className = 'list-group-item list-group-item-action border-0 d-flex align-items-center p-3';
         if (conv.other_username === activeConversation) {
           item.classList.add('active');
         }
         item.dataset.username = conv.other_username;
 
-        const mainDiv = document.createElement('div');
-        mainDiv.className = 'd-flex align-items-center flex-grow-1';
-
         // Profile picture
         const profileDiv = document.createElement('div');
-        profileDiv.className = 'me-2';
+        profileDiv.className = 'me-3 flex-shrink-0';
         const profileImg = document.createElement('img');
         
         // Handle profile picture URL
         if (conv.profile_picture) {
-          // Construct the full URL for the profile picture
           profileImg.src = conv.profile_picture && conv.profile_picture.startsWith('http') 
             ? conv.profile_picture 
             : `/static/uploads/profiles/${conv.profile_picture}`;
         } else {
-          profileImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=32`;
+          profileImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=48`;
         }
         
         profileImg.alt = conv.other_username;
         profileImg.className = 'rounded-circle';
-        profileImg.style.width = '32px';
-        profileImg.style.height = '32px';
+        profileImg.style.width = '48px';
+        profileImg.style.height = '48px';
         profileImg.style.objectFit = 'cover';
         
         // Handle image loading errors
         profileImg.onerror = function() {
-          this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=32`;
+          this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.other_username)}&background=2d5016&color=fff&size=48`;
         };
         
         profileDiv.appendChild(profileImg);
 
+        // Content div (name, status, message)
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'flex-grow-1 text-start';
+        contentDiv.className = 'flex-grow-1 text-start overflow-hidden';
+        contentDiv.style.minWidth = '0';
 
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'fw-semibold d-flex align-items-center justify-content-between';
+        // Top row: name and status
+        const topRow = document.createElement('div');
+        topRow.className = 'd-flex align-items-center justify-content-between mb-1';
         
         const nameSpan = document.createElement('span');
+        nameSpan.className = 'fw-semibold';
+        nameSpan.style.fontSize = '0.95rem';
         nameSpan.textContent = conv.other_username;
-        nameDiv.appendChild(nameSpan);
-
+        
         // Active status
-        const statusDiv = document.createElement('div');
-        statusDiv.className = 'small text-muted';
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'small text-muted ms-2';
+        statusSpan.style.fontSize = '0.75rem';
         if (conv.is_online) {
-          statusDiv.innerHTML = '<span class="text-success">● Active now</span>';
+          statusSpan.innerHTML = '<span class="text-success">● Online</span>';
         } else if (conv.last_seen) {
           const lastSeen = new Date(conv.last_seen);
           const now = new Date();
           const diffMinutes = Math.floor((now - lastSeen) / (1000 * 60));
           if (diffMinutes < 5) {
-            statusDiv.innerHTML = '<span class="text-warning">● Active a few minutes ago</span>';
+            statusSpan.textContent = 'Active recently';
           } else if (diffMinutes < 60) {
-            statusDiv.textContent = `Active ${diffMinutes} minutes ago`;
+            statusSpan.textContent = `${diffMinutes}m ago`;
           } else if (diffMinutes < 1440) {
-            statusDiv.textContent = `Active ${Math.floor(diffMinutes / 60)} hours ago`;
+            statusSpan.textContent = `${Math.floor(diffMinutes / 60)}h ago`;
           } else {
-            statusDiv.textContent = `Active ${Math.floor(diffMinutes / 1440)} days ago`;
+            statusSpan.textContent = `${Math.floor(diffMinutes / 1440)}d ago`;
           }
         } else {
-          statusDiv.textContent = 'Offline';
+          statusSpan.textContent = 'Offline';
         }
-        nameDiv.appendChild(statusDiv);
+        
+        topRow.appendChild(nameSpan);
+        topRow.appendChild(statusSpan);
+        contentDiv.appendChild(topRow);
 
-        contentDiv.appendChild(nameDiv);
-
+        // Message preview
         if (conv.last_message) {
           const previewDiv = document.createElement('div');
           previewDiv.className = 'small text-muted message-preview';
+          previewDiv.style.fontSize = '0.85rem';
           previewDiv.textContent = conv.last_message;
           contentDiv.appendChild(previewDiv);
         }
 
-        mainDiv.appendChild(profileDiv);
-        mainDiv.appendChild(contentDiv);
+        item.appendChild(profileDiv);
+        item.appendChild(contentDiv);
 
-        item.appendChild(mainDiv);
-
+        // Unread badge
         if (conv.unread_count && conv.unread_count > 0) {
           const badge = document.createElement('span');
-          badge.className = 'badge bg-success rounded-pill ms-2';
+          badge.className = 'badge bg-success rounded-pill ms-2 flex-shrink-0';
           badge.textContent = conv.unread_count;
           item.appendChild(badge);
         }
