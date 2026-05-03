@@ -263,7 +263,7 @@
               <span class="status-count" id="metricDeliveredOrders">0</span>
             </div>
           </div>
-          <a href="{{ url_for('seller_orders') }}" class="btn btn-outline-primary w-100 mt-3">View all orders</a>
+          <a href="{{ url_for('seller_orders') }}" class="btn w-100 mt-3 text-white" style="background-color: #2c3e50; border-color: #2c3e50;">View all orders</a>
         </div>
       </div>
     </div>
@@ -360,12 +360,12 @@
                 label: 'Revenue',
                 data: series,
                 fill: true,
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.12)',
+                borderColor: '#2c3e50',
+                backgroundColor: 'rgba(44, 62, 80, 0.12)',
                 tension: 0.35,
                 borderWidth: 2,
                 pointRadius: 3,
-                pointBackgroundColor: '#0d6efd'
+                pointBackgroundColor: '#2c3e50'
               }]
             },
             options: {
@@ -453,7 +453,7 @@
   margin: 0 auto 1rem;
 }
 
-.metric-icon.primary { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+.metric-icon.primary { background: rgba(44, 62, 80, 0.1); color: #2c3e50; }
 .metric-icon.success { background: rgba(25, 135, 84, 0.1); color: #198754; }
 .metric-icon.warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
 .metric-icon.danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
