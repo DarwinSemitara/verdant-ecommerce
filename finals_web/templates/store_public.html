@@ -53,11 +53,9 @@
     .contact-btn:hover { background:#0b5ed7; text-decoration:none; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(13,110,253,0.35); }
     
     /* Store info section styling */
-    .store-info-section { background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; border-left: 4px solid #198754; }
-    .store-info-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .store-info-row { margin-bottom: 0.75rem; }
     .store-info-row:last-child { margin-bottom: 0; }
-    .store-info-icon { width: 20px; height: 20px; color: #198754; flex-shrink: 0; }
-    .store-info-label { font-weight: 600; color: #495057; min-width: 120px; }
+    .store-info-label { font-weight: 600; color: #495057; }
     .store-info-value { color: #212529; }
     
     /* Profile dropdown styles */
@@ -226,28 +224,17 @@
           <hr style="margin: 2rem 0; border: none; border-top: 2px solid #e5e7eb;" />
 
           <h2>Store info</h2>
-          <div class="store-info-section">
+          <div style="margin-top: 1rem;">
             <div class="store-info-row">
-              <svg class="store-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 21V8l9-6 9 6v13h-6v-6h-6v6H3z"/>
-              </svg>
               <span class="store-info-label">Store name:</span>
-              <span class="store-info-value">{{ store.name }}</span>
+              <span class="store-info-value"> {{ store.name }}</span>
             </div>
             <div class="store-info-row">
-              <svg class="store-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4M12 8h.01"/>
-              </svg>
               <span class="store-info-label">Seller username:</span>
-              <span class="store-info-value">{{ store.username }}</span>
+              <span class="store-info-value"> {{ store.username }}</span>
             </div>
             {% if store.seller_id %}
             <div class="store-info-row">
-              <svg class="store-info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
               <span class="store-info-label">Seller ID:</span>
               <span class="store-info-value">
                 <span onclick="copySellerID('{{ store.seller_id }}')" style="color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#3b82f6'" title="Click to copy Seller ID">{{ store.seller_id }}</span>
