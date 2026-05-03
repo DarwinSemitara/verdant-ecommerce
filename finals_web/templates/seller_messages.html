@@ -51,7 +51,8 @@
     max-height: 80px;
   }
   
-  .conversation-item .message-preview {
+  .conversation-item .message-preview,
+  .message-preview {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -327,7 +328,9 @@
           const previewDiv = document.createElement('div');
           previewDiv.className = 'small text-muted message-preview';
           previewDiv.style.fontSize = '0.85rem';
-          previewDiv.textContent = conv.last_message;
+          // Truncate message to 15 characters
+          const message = conv.last_message;
+          previewDiv.textContent = message.length > 15 ? message.substring(0, 15) + '...' : message;
           contentDiv.appendChild(previewDiv);
         }
 
