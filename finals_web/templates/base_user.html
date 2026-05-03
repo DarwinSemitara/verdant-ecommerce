@@ -37,6 +37,11 @@
     .sidebar h4 {
       text-align: center;
       margin-bottom: 30px;
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 1.8rem;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      color: #fff;
     }
     .sidebar a {
       display: block;
@@ -179,13 +184,20 @@
     .header-bar {
       background: #ffffff;
       border-bottom: 1px solid #ddd;
-      padding: 10px 20px;
+      padding: 6px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: relative;
       z-index: 10;
       margin: 0 -24px;
+      height: 50px;
+    }
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-left: 12px;
     }
     .header-search {
       flex-grow: 1;
@@ -220,6 +232,28 @@
     .profile-dropdown {
       position: relative;
       display: inline-block;
+    }
+    .profile-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+    .profile-btn:hover {
+      transform: scale(1.05);
+    }
+    .profile-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .profile-menu {
       display: none;
@@ -294,21 +328,26 @@
       background: none;
       border: none;
       cursor: pointer;
-      padding: 0.5rem;
+      padding: 0.35rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.35rem;
       color: inherit;
       transition: all 0.2s;
       border-radius: 0.5rem;
+      font-size: 0.85rem;
     }
     .icon-button:hover {
       background-color: #f0f8f0;
       transform: translateY(-1px);
     }
     .icon-button .icon {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
+    }
+    .icon-button svg {
+      width: 20px;
+      height: 20px;
     }
     /* Content fade and slide transitions for seamless navigation */
     .page-shell { 
@@ -344,7 +383,7 @@
     /* Loading Overlay */
     .page-loading-overlay {
       position: fixed;
-      top: 57px;
+      top: 50px;
       left: 220px;
       right: 0;
       bottom: 0;
@@ -391,7 +430,7 @@
     /* Progress bar indicator */
     .page-loading-indicator {
       position: fixed;
-      top: 57px;
+      top: 50px;
       left: 220px;
       right: 0;
       height: 3px;
@@ -422,7 +461,7 @@
   <div class="sidebar">
     <div class="menu">
       <div class="active-indicator" id="activeIndicator" style="opacity:0"></div>
-      <h4 class="px-3">Seller Dashboard</h4>
+      <h4 class="px-3">Verdant</h4>
       <a href="{{ url_for('seller_dashboard') }}" class="{% if request.endpoint == 'seller_dashboard' %}active{% endif %}" aria-current="{% if request.endpoint == 'seller_dashboard' %}page{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="Dashboard" data-no-pjax><i class="bi bi-house-door"></i> <span class="label">Dashboard</span></a>
       {% if seller_approved %}
       <a href="{{ url_for('store_preview') }}" class="{% if request.endpoint == 'store_preview' %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="right" title="View Store" data-no-pjax><i class="bi bi-shop"></i> <span class="label">View Store</span></a>
@@ -438,17 +477,16 @@
   </div>
 
   <div class="modal fade" id="sellerLogoutModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered rider-logout-dialog">
-      <div class="modal-content py-4 position-relative">
-        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-        <div class="modal-body text-center pt-3">
-          <div class="logout-modal-icon-wrap">
-            <i class="bi bi-box-arrow-right logout-icon"></i>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 320px;">
+      <div class="modal-content py-3 position-relative">
+        <div class="modal-body text-center pt-2">
+          <div class="logout-modal-icon-wrap" style="margin-bottom: 1rem;">
+            <i class="bi bi-box-arrow-right" style="font-size: 2.5rem; color: #dc3545;"></i>
           </div>
-          <p class="mb-4">Are you sure you want to log out?</p>
-          <div class="d-flex justify-content-center gap-3">
-            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">No</button>
-            <button type="button" class="btn btn-danger px-4" id="confirmSellerLogout">Yes</button>
+          <p class="mb-3" style="font-size: 0.95rem;">Are you sure you want to log out?</p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-outline-secondary px-3 py-2" style="font-size: 0.9rem;" data-bs-dismiss="modal">No</button>
+            <button type="button" class="btn btn-danger px-3 py-2" style="font-size: 0.9rem;" id="confirmSellerLogout">Yes</button>
           </div>
         </div>
       </div>
@@ -471,9 +509,12 @@
 
     <!-- Header -->
     <div class="header-bar d-flex align-items-center">
-      <button class="sidebar-toggle-btn me-2" id="toggleSidebar" title="Toggle sidebar">
-        <i class="bi bi-list fs-3"></i>
-      </button>
+      <div class="d-flex align-items-center">
+        <button class="sidebar-toggle-btn me-2" id="toggleSidebar" title="Toggle sidebar">
+          <i class="bi bi-list fs-4"></i>
+        </button>
+        <span class="header-title">Seller Dashboard</span>
+      </div>
 
       <!-- Header Right Side: Brand Identity -->
       <div class="header-icons">
@@ -481,13 +522,13 @@
         {% include 'notification_component.html' %}
         
         <!-- Help Button -->
-        <button id="sellerHelpButton" class="icon-button" aria-label="Help" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; color: inherit; padding: 0.5rem;">
-          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width: 24px; height: 24px;">
+        <button id="sellerHelpButton" class="icon-button" aria-label="Help" style="background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.35rem; color: inherit; padding: 0.35rem;">
+          <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width: 20px; height: 20px;">
             <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
             <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
             <circle cx="12" cy="17" r="1" fill="currentColor"/>
           </svg>
-          <span>Help</span>
+          <span style="font-size: 0.85rem;">Help</span>
         </button>
 
         <!-- Profile Picture with Dropdown -->

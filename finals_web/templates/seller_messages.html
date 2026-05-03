@@ -100,8 +100,8 @@
   }
   
   .conversation-header-profile img {
-    width: 40px;
-    height: 40px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #e9ecef;
@@ -429,10 +429,10 @@
             ? profilePicture 
             : `/static/uploads/profiles/${profilePicture}`;
           conversationProfilePic.onerror = function() {
-            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=40`;
+            this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=56`;
           };
         } else {
-          conversationProfilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=40`;
+          conversationProfilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=2d5016&color=fff&size=56`;
         }
         conversationHeaderProfile.style.display = 'flex';
       }
