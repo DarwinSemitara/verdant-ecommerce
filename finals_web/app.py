@@ -2047,12 +2047,12 @@ def submit_report():
         data = request.get_json() or {}
         
         report_type = data.get('report_type')
-        reported_username = data.get('reported_username', '').strip()
+        reported_identifier = data.get('reported_username', '').strip()  # Can be username or seller_id
         reason = data.get('reason', '').strip()
         details = data.get('details', '').strip()
         
         # Validate required fields
-        if not report_type or not reported_username or not reason:
+        if not report_type or not reported_identifier or not reason:
             return jsonify({'success': False, 'message': 'Please fill in all required fields'}), 400
         
         # Validate report type
@@ -2060,17 +2060,27 @@ def submit_report():
         if report_type not in valid_report_types:
             return jsonify({'success': False, 'message': 'Invalid report type'}), 400
         
-        # Check if reported user exists
-        reported_user = get_user_by_username(reported_username)
+        # Check if reported user exists - try by username first, then by seller_id
+        reported_user = get_user_by_username(reported_identifier)
+        
+        # If not found by username and looks like a seller ID, try finding by seller_id
+        if not reported_user and reported_identifier.startswith('VRD-'):
+            sellers_query = users_ref.where('seller_id', '==', reported_identifier).limit(1).get()
+            if sellers_query:
+                reported_user = sellers_query[0].to_dict()
+                reported_user['username'] = sellers_query[0].id  # Add username from document ID
+        
         if not reported_user:
-            return jsonify({'success': False, 'message': f'User "{reported_username}" not found'}), 404
+            return jsonify({'success': False, 'message': f'User or Seller ID "{reported_identifier}" not found'}), 404
+        
+        reported_username = reported_user.get('username')
         
         # Verify the reported user has the correct role
         reported_user_role = reported_user.get('role')
         if report_type == 'seller' and reported_user_role != 'seller':
-            return jsonify({'success': False, 'message': f'"{reported_username}" is not a seller'}), 400
+            return jsonify({'success': False, 'message': f'"{reported_identifier}" is not a seller'}), 400
         elif report_type == 'rider' and reported_user_role != 'rider':
-            return jsonify({'success': False, 'message': f'"{reported_username}" is not a rider'}), 400
+            return jsonify({'success': False, 'message': f'"{reported_identifier}" is not a rider'}), 400
         
         # Get reporter username from session
         reporter_username = session['username']
@@ -2085,6 +2095,7 @@ def submit_report():
             'reporter_username': reporter_username,
             'report_type': report_type,
             'reported_username': reported_username,
+            'reported_identifier': reported_identifier,  # Store what was entered (username or seller_id)
             'reason': reason,
             'details': details,
             'status': 'pending',
@@ -3105,6 +3116,7 @@ def product_detail(product_id):
     # Get seller information
     seller = get_user_by_username(product_doc.get('seller_username', ''))
     store_name = seller.get('store_name', '') if seller else ''
+    seller_id = seller.get('seller_id', '') if seller else ''
     if not store_name and seller:
         store_name = f"{seller.get('first_name', '')} {seller.get('last_name', '')}".strip()
     
@@ -3136,6 +3148,7 @@ def product_detail(product_id):
             'specifications': first_var['description'] if first_var else '',
             'image': first_var['image'] if first_var else 'default.jpg',
             'seller_username': product_doc.get('seller_username', ''),
+            'seller_id': seller_id,
             'created_at': product_doc.get('created_at'),
             'store_name': store_name,
             'store_profile': seller.get('store_profile', '') if seller else '',
@@ -3152,6 +3165,7 @@ def product_detail(product_id):
             'specifications': product_doc.get('description', ''),
             'image': product_doc.get('image', 'default.jpg'),
             'seller_username': product_doc.get('seller_username', ''),
+            'seller_id': seller_id,
             'created_at': product_doc.get('created_at'),
             'store_name': store_name,
             'store_profile': seller.get('store_profile', '') if seller else '',
@@ -3736,14 +3750,28 @@ def handle_seller_application(application_id, action):
         username = app_data.get('username')
         
         if action == 'approve':
+            # Generate unique seller ID (format: VRD-XXXXXX where X is alphanumeric)
+            import string
+            seller_id = 'VRD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            
+            # Check if seller_id already exists (very unlikely but good practice)
+            while True:
+                existing = users_ref.where('seller_id', '==', seller_id).limit(1).get()
+                if not existing:
+                    break
+                seller_id = 'VRD-' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            
             # Update seller_applications status
             app_ref.update({'status': 'approved'})
             
-            # Update user's seller_approved status
+            # Update user's seller_approved status and add seller_id
             user_ref = db.collection('users').document(username)
-            user_ref.update({'seller_approved': True})
+            user_ref.update({
+                'seller_approved': True,
+                'seller_id': seller_id
+            })
             
-            message = 'Seller application approved successfully!'
+            message = f'Seller application approved successfully! Seller ID: {seller_id}'
         else:
             # Update seller_applications status
             app_ref.update({'status': 'rejected'})

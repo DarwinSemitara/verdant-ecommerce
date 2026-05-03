@@ -572,9 +572,9 @@ Best regards,
                             variation_doc = product_variations_ref.document(variation_id).get()
                             if variation_doc.exists:
                                 variation_data = variation_doc.to_dict()
-                                print(f"DEBUG: Variation found - name: {variation_data.get('name')}")
+                                print(f"DEBUG: Variation found - variation_name: {variation_data.get('variation_name')}")
                                 # For variations, show variation name only (product name is the parent)
-                                product_name = variation_data.get('name', 'Unknown Variation')
+                                product_name = variation_data.get('variation_name', 'Unknown Variation')
                                 product_image = variation_data.get('image', product_data.get('image', ''))
                             else:
                                 print(f"DEBUG: Variation {variation_id} not found")
