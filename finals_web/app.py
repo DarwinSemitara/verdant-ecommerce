@@ -3444,6 +3444,7 @@ def public_store(seller_username):
             'cover_photo': seller.get('cover_photo'),
             'store_profile': seller.get('store_profile'),
             'description': description,
+            'seller_id': seller.get('seller_id', ''),
         }
 
         products = []

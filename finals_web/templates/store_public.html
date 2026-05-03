@@ -161,7 +161,10 @@
           <h2>Store info</h2>
           <div class="store-description">
             <strong>Store name:</strong> {{ store.name }}<br />
-            <strong>Seller username:</strong> {{ store.username }}
+            <strong>Seller username:</strong> {{ store.username }}<br />
+            {% if store.seller_id %}
+            <strong>Seller ID:</strong> <span onclick="copySellerID('{{ store.seller_id }}')" style="color: #3b82f6; font-weight: 600; cursor: pointer; text-decoration: underline;" title="Click to copy Seller ID">{{ store.seller_id }}</span>
+            {% endif %}
           </div>
 
           <div style="margin-top: 1rem;">
@@ -231,6 +234,57 @@
 
       applyFilter();
     });
+  </script>
+
+  <!-- Small notification modal for copy feedback -->
+  <div id="copyNotification" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #198754; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100000; font-size: 0.9rem; font-weight: 600; animation: slideDown 0.3s ease;">
+    Seller ID copied to clipboard!
+  </div>
+
+  <style>
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+  </style>
+
+  <script>
+    // Function to copy seller ID to clipboard with small modal notification
+    function copySellerID(sellerID) {
+      navigator.clipboard.writeText(sellerID).then(function() {
+        showCopyNotification();
+      }).catch(function(err) {
+        console.error('Failed to copy:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = sellerID;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          showCopyNotification();
+        } catch (err) {
+          alert('Failed to copy seller ID');
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+
+    function showCopyNotification() {
+      const notification = document.getElementById('copyNotification');
+      if (notification) {
+        notification.style.display = 'block';
+        setTimeout(function() {
+          notification.style.display = 'none';
+        }, 2000);
+      }
+    }
   </script>
 
   {% include 'footer_verdant.html' %}
