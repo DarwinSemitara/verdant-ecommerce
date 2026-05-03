@@ -148,6 +148,20 @@ def register_checkout_routes(app):
                 order_ref.set(order_data)
                 order_id = order_ref.id
                 
+                # Create notification for seller about new order
+                from app import format_public_order_id
+                public_order_id = format_public_order_id(order_id)
+                seller_notification_ref = db.collection('notifications').document()
+                seller_notification_ref.set({
+                    'username': seller_username,
+                    'order_id': order_id,
+                    'type': 'new_order',
+                    'title': 'New Order Received',
+                    'message': f'You have a new order #{public_order_id} from {session["username"]}. Total: ₱{total_amount:.2f}',
+                    'is_read': False,
+                    'created_at': SERVER_TIMESTAMP
+                })
+                
                 # Create order items and update stock
                 for item in items:
                     order_item_data = {

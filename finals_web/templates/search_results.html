@@ -408,9 +408,7 @@
             <a href="{{ url_for('user_orders') }}" class="profile-menu-item">Orders</a>
             <a href="{{ url_for('settings') }}" class="profile-menu-item">Settings</a>
             <div class="profile-menu-divider"></div>
-            <form action="{{ url_for('logout') }}" method="GET" style="margin:0;">
-              <button type="submit" class="profile-menu-item logout">Logout</button>
-            </form>
+            <button type="button" onclick="showUserLogoutModal()" class="profile-menu-item logout">Logout</button>
           </div>
         </div>
       </div>
@@ -1344,6 +1342,56 @@
         });
       }
     });
+  </script>
+
+  <!-- Logout Confirmation Modal -->
+  <div id="userLogoutModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100000; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 1rem; padding: 2rem; max-width: 320px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+      <div style="text-align: center;">
+        <div style="margin-bottom: 1rem;">
+          <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" style="margin: 0 auto;">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 1rem 0; color: #111827; font-size: 1.3rem;">Confirm Logout</h3>
+        <p style="color: #6b7280; margin-bottom: 1.5rem; font-size: 0.95rem;">Are you sure you want to log out?</p>
+        <div style="display: flex; gap: 0.75rem; justify-content: center;">
+          <button onclick="closeUserLogoutModal()" style="padding: 0.65rem 1.5rem; background: #f3f4f6; color: #374151; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.9rem;">Cancel</button>
+          <form action="{{ url_for('logout') }}" method="GET" style="margin: 0;">
+            <button type="submit" style="padding: 0.65rem 1.5rem; background: #dc3545; color: #fff; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.9rem;">Logout</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showUserLogoutModal() {
+      const modal = document.getElementById('userLogoutModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeUserLogoutModal() {
+      const modal = document.getElementById('userLogoutModal');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    }
+
+    document.getElementById('userLogoutModal')?.addEventListener('click', function(e) {
+      if (e.target.id === 'userLogoutModal') {
+        closeUserLogoutModal();
+      }
+    });
+
+    window.showUserLogoutModal = showUserLogoutModal;
+    window.closeUserLogoutModal = closeUserLogoutModal;
   </script>
 </body>
 </html>
