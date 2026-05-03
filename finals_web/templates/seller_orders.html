@@ -18,7 +18,7 @@
     }
 
     .orders-header h1 {
-      color: #0d6efd;
+      color: #2c3e50;
       font-size: 2rem;
       font-weight: 700;
     }
@@ -40,14 +40,14 @@
     }
 
     .filter-tab:hover {
-      border-color: #0d6efd;
-      color: #0d6efd;
+      border-color: #2c3e50;
+      color: #2c3e50;
     }
 
     .filter-tab.active {
-      background: #0d6efd;
+      background: #2c3e50;
       color: white;
-      border-color: #0d6efd;
+      border-color: #2c3e50;
     }
 
     .orders-container {
@@ -110,6 +110,11 @@
     .order-status.rejected {
       background: #fef2f2;
       color: #b91c1c;
+    }
+
+    .order-status.delivered {
+      background: #dbeafe;
+      color: #1e40af;
     }
 
     .order-meta-row {
@@ -336,6 +341,7 @@
       <button class="filter-tab" data-filter="pending">Pending</button>
       <button class="filter-tab" data-filter="accepted">Accepted</button>
       <button class="filter-tab" data-filter="rejected">Rejected</button>
+      <button class="filter-tab" data-filter="delivered">Delivered</button>
     </div>
 
     <div class="orders-container">
