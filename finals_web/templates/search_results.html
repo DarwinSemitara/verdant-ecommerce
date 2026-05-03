@@ -777,30 +777,8 @@
       if (sort) params.set('sort', sort);
       if (category) params.set('category', category);
 
-      const url = params.toString() ? `/search?${params.toString()}` : '/search';
-
-      searchButton.disabled = true;
-      searchButton.innerHTML = '<span>Searching...</span>';
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            const products = data.products || [];
-            const sellers = data.sellers || [];
-            displayResults(products, sellers);
-          } else {
-            alert('Search failed. Please try again.');
-          }
-          searchButton.disabled = false;
-          searchButton.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Search`;
-        })
-        .catch(error => {
-          console.error('Search error:', error);
-          alert('An error occurred during search.');
-          searchButton.disabled = false;
-          searchButton.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>Search`;
-        });
+      // Redirect to search results page with new parameters
+      window.location.href = `/search-results?${params.toString()}`;
     }
 
     function displayResults(products, sellers) {
