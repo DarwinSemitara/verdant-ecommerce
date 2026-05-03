@@ -282,19 +282,20 @@
     }
 
     .profile-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      display: flex;  /* Changed from grid to flex */
+      justify-content: space-between;  /* Space items evenly */
       gap: 1rem;
     }
 
     .stat-item {
       text-align: center;
-      padding: 1rem;
+      padding: 1.25rem 1rem;  /* Increased padding */
       background: #ffffff;
       border-radius: 0.75rem;
       border: 1px solid #e9ecef;
       transition: all 0.2s ease;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      flex: 1;  /* Make items equal width */
     }
 
     .stat-item:hover {
@@ -790,8 +791,8 @@
 /* Settings Page Styles */
 .main-content {
   max-width: 1800px;
-  margin: 2rem auto;
-  padding: 2rem;
+  margin: 1rem auto;  /* Reduced from 2rem */
+  padding: 1rem 2rem;  /* Reduced top/bottom padding */
 }
 
 .settings-container {
@@ -810,11 +811,11 @@
 .profile-overview-card {
       background: white;
       border-radius: 1rem;
-      padding: 2rem;  /* Increased from 1.5rem */
+      padding: 2.5rem;  /* Increased from 2rem */
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       border: 1px solid #e9ecef;
       height: fit-content;
-      width: 400px;  /* Increased from 350px */
+      width: 500px;  /* Increased from 400px */
       margin-top: 0;
       transition: none;
     }

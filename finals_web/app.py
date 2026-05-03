@@ -2130,9 +2130,9 @@ def settings():
     user = get_user_by_username(session['username'])
     
     if user:
-        # Get user's order statistics
-        user_id = user['id']
-        all_orders = list(orders_ref.where('user_id', '==', user_id).stream())
+        # Get user's order statistics using username (not user_id)
+        username = session['username']
+        all_orders = list(orders_ref.where('username', '==', username).stream())
         total_orders = len(all_orders)
         delivered_orders = sum(1 for o in all_orders if o.to_dict().get('status') == 'delivered')
         
