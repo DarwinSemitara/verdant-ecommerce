@@ -5049,8 +5049,82 @@ def api_reject_seller_order(order_id):
 register_checkout_routes(app)
 
 
-@app.route('/api/mobile/messages/send', methods=['POST'])
-def api_mobile_send_message():
+@app.route('/api/mobile/stats/<username>', methods=['GET'])
+def api_mobile_get_stats(username):
+    """Get order/cart stats for profile screen."""
+    try:
+        orders = db.collection('orders').where(
+            'username', '==', username).stream()
+        order_list = [o.to_dict() for o in orders]
+        order_count = len(order_list)
+        delivered_count = sum(1 for o in order_list if o.get(
+            'status') in ('delivered', 'completed'))
+        cart_items = db.collection('cart').where(
+            'user_id', '==', username).stream()
+        cart_count = sum(doc.to_dict().get('quantity', 1)
+                         for doc in cart_items)
+        return jsonify({
+            'success': True,
+            'order_count': order_count,
+            'delivered_count': delivered_count,
+            'cart_count': cart_count,
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/mobile/profile/upload_picture', methods=['POST'])def api_mobile_upload_profile_picture():
+    """Upload profile picture for mobile app user."""
+    username = request.form.get('username', '').strip()
+    if not username:
+        return jsonify({'success': False, 'message': 'username required'}), 400
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': 'No file provided'}), 400
+    file = request.files['file']
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'message': 'Empty file'}), 400
+    try:
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        old_pic = user_doc.to_dict().get('profile_picture', '')
+        if old_pic and 'cloudinary.com' in str(old_pic):
+            cloud_delete(old_pic)
+        url = cloud_upload(file, folder='verdant/profiles',
+                           public_id=f'profile_{username}')
+        if not url:
+            return jsonify({'success': False, 'message': 'Upload failed'}), 500
+        user_ref.update(
+            {'profile_picture': url, 'updated_at': SERVER_TIMESTAMP})
+        return jsonify({'success': True, 'url': url})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/mobile/profile/<username>', methods=['GET'])
+def api_mobile_get_profile(username):
+    """Get user profile data for mobile app."""
+    try:
+        user_doc = db.collection('users').document(username).get()
+        if not user_doc.exists:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+        d = user_doc.to_dict()
+        return jsonify({
+            'success': True,
+            'username': username,
+            'email': d.get('email', ''),
+            'fullname': d.get('fullname', ''),
+            'phone': d.get('phone', ''),
+            'address': d.get('address', ''),
+            'profile_picture': d.get('profile_picture', ''),
+            'role': d.get('role', 'user'),
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/mobile/messages/send', methods=['POST'])def api_mobile_send_message():
     """Send message endpoint for Flutter mobile app (no session required)"""
     data = request.get_json() or {}
     sender = (data.get('sender_username') or '').strip()
