@@ -5073,7 +5073,8 @@ def api_mobile_get_stats(username):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@app.route('/api/mobile/profile/upload_picture', methods=['POST'])def api_mobile_upload_profile_picture():
+@app.route('/api/mobile/profile/upload_picture', methods=['POST'])
+def api_mobile_upload_profile_picture():
     """Upload profile picture for mobile app user."""
     username = request.form.get('username', '').strip()
     if not username:
@@ -5124,7 +5125,8 @@ def api_mobile_get_profile(username):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
-@app.route('/api/mobile/messages/send', methods=['POST'])def api_mobile_send_message():
+@app.route('/api/mobile/messages/send', methods=['POST'])
+def api_mobile_send_message():
     """Send message endpoint for Flutter mobile app (no session required)"""
     data = request.get_json() or {}
     sender = (data.get('sender_username') or '').strip()
