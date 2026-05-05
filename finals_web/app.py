@@ -5073,6 +5073,39 @@ def api_mobile_get_stats(username):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@app.route('/api/mobile/cancel_order', methods=['POST'])
+def api_mobile_cancel_order():
+    """Cancel a pending order for mobile app."""
+    data = request.get_json() or {}
+    username = (data.get('username') or '').strip()
+    order_id = (data.get('order_id') or '').strip()
+
+    if not username or not order_id:
+        return jsonify({'success': False, 'message': 'username and order_id required'}), 400
+
+    try:
+        order_ref = db.collection('orders').document(order_id)
+        order_doc = order_ref.get()
+        if not order_doc.exists:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+
+        order_data = order_doc.to_dict()
+        if order_data.get('username') != username:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+        if order_data.get('status') != 'pending':
+            return jsonify({'success': False, 'message': 'Only pending orders can be cancelled'}), 400
+
+        order_ref.delete()
+        items = db.collection('order_items').where(
+            'order_id', '==', order_id).stream()
+        for item in items:
+            item.reference.delete()
+
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @app.route('/api/mobile/profile/upload_picture', methods=['POST'])
 def api_mobile_upload_profile_picture():
     """Upload profile picture for mobile app user."""
