@@ -267,9 +267,8 @@ def guest_home():
     try:
         from firestore_db import products_v2_ref, product_variations_ref
 
-        # Fetch only recent products with limit for faster loading
-        all_v2_products = products_v2_ref.order_by(
-            'created_at', direction='DESCENDING').limit(50).stream()
+        # Fetch recent products with limit (no order_by to avoid index requirement)
+        all_v2_products = products_v2_ref.limit(50).stream()
 
         # Cache seller info to avoid repeated queries
         seller_cache = {}
@@ -341,7 +340,9 @@ def guest_home():
                         'variations': []
                     })
 
-        # Products already sorted by created_at from query
+        # Sort by created_at in Python
+        products_list.sort(key=lambda x: x.get('created_at')
+                           or datetime.min, reverse=True)
         products = products_list
         print(f"Products fetched for guest: {len(products)}")
 
@@ -1190,9 +1191,8 @@ def homepage():
     try:
         from firestore_db import products_v2_ref, product_variations_ref
 
-        # Fetch only recent products with limit for faster loading
-        all_v2_products = products_v2_ref.order_by(
-            'created_at', direction='DESCENDING').limit(50).stream()
+        # Fetch recent products with limit (no order_by to avoid index requirement)
+        all_v2_products = products_v2_ref.limit(50).stream()
 
         # Cache seller info to avoid repeated queries
         seller_cache = {}
@@ -1264,7 +1264,9 @@ def homepage():
                         'variations': []
                     })
 
-        # Products already sorted by created_at from query
+        # Sort by created_at in Python
+        products_list.sort(key=lambda x: x.get('created_at')
+                           or datetime.min, reverse=True)
         products = products_list
 
         # New Arrivals: 3 most recently added
