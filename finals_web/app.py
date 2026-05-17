@@ -269,7 +269,7 @@ def guest_home():
 
         # Fetch only recent products with limit for faster loading
         all_v2_products = products_v2_ref.order_by(
-            'created_at', direction=firestore_module.Query.DESCENDING).limit(50).stream()
+            'created_at', direction='DESCENDING').limit(50).stream()
 
         # Cache seller info to avoid repeated queries
         seller_cache = {}
@@ -1192,7 +1192,7 @@ def homepage():
 
         # Fetch only recent products with limit for faster loading
         all_v2_products = products_v2_ref.order_by(
-            'created_at', direction=firestore_module.Query.DESCENDING).limit(50).stream()
+            'created_at', direction='DESCENDING').limit(50).stream()
 
         # Cache seller info to avoid repeated queries
         seller_cache = {}
