@@ -709,7 +709,14 @@ def handle_login():
         if not user.get('password'):
             return redirect(url_for('login_page', error='invalid'))
 
-        if check_password_hash(user['password'], password) or user['password'] == password:
+        # Try to verify password hash, fallback to plain text comparison
+        try:
+            password_valid = check_password_hash(user['password'], password)
+        except (ValueError, Exception):
+            # If hash verification fails, try plain text comparison
+            password_valid = (user['password'] == password)
+
+        if password_valid:
             # Check if account is deleted
             account_status = user.get('account_status', 'active')
             if account_status == 'deleted':
