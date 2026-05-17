@@ -6419,6 +6419,49 @@ def mobile_rider_update_status():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+@app.route('/api/mobile/rider/cancel_delivery', methods=['POST'])
+def mobile_rider_cancel_delivery():
+    """Rider cancels a delivery (returns order to available pool)"""
+    try:
+        data = request.get_json() or {}
+        order_id = data.get('order_id')
+        rider_username = data.get('rider_username')
+
+        if not order_id or not rider_username:
+            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+
+        # Get order
+        order_ref = db.collection('orders').document(order_id)
+        order_doc = order_ref.get()
+
+        if not order_doc.exists:
+            return jsonify({'success': False, 'message': 'Order not found'}), 404
+
+        order_data = order_doc.to_dict()
+
+        # Verify this rider is assigned to the order
+        if order_data.get('rider_username') != rider_username:
+            return jsonify({'success': False, 'message': 'Unauthorized - not your delivery'}), 403
+
+        # Only allow cancellation if status is picking_up
+        if order_data.get('status') != 'picking_up':
+            return jsonify({'success': False, 'message': 'Can only cancel orders in picking_up status'}), 400
+
+        # Return order to accepted status (available for other riders)
+        order_ref.update({
+            'status': 'accepted',
+            'rider_username': firestore_module.DELETE_FIELD,  # Remove rider assignment
+        })
+
+        return jsonify({'success': True, 'message': 'Delivery cancelled successfully'})
+
+    except Exception as e:
+        print(f"Error cancelling delivery: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @app.route('/api/mobile/rider/deliveries/<rider_username>', methods=['GET'])
 def mobile_rider_get_deliveries(rider_username):
     """Get all deliveries for a rider organized by status"""
