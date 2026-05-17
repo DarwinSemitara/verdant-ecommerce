@@ -267,15 +267,24 @@ def guest_home():
     try:
         from firestore_db import products_v2_ref, product_variations_ref
 
-        # Fetch V2 products (same as user homepage)
-        all_v2_products = products_v2_ref.stream()
+        # Fetch only recent products with limit for faster loading
+        all_v2_products = products_v2_ref.order_by(
+            'created_at', direction=firestore_module.Query.DESCENDING).limit(50).stream()
+
+        # Cache seller info to avoid repeated queries
+        seller_cache = {}
 
         products_list = []
         for prod_doc in all_v2_products:
             prod_data = prod_doc.to_dict()
+            seller_username = prod_data.get('seller_username', '')
 
-            # Get seller info and check if approved
-            seller = get_user_by_username(prod_data.get('seller_username', ''))
+            # Get seller info from cache or fetch once
+            if seller_username not in seller_cache:
+                seller_cache[seller_username] = get_user_by_username(
+                    seller_username)
+
+            seller = seller_cache[seller_username]
             if not seller or not seller.get('seller_approved', False):
                 continue
 
@@ -309,7 +318,7 @@ def guest_home():
                         'stock': total_stock,
                         'specifications': first_var['description'],
                         'image': first_var['image'],
-                        'seller_username': prod_data.get('seller_username', ''),
+                        'seller_username': seller_username,
                         'store_name': store_name,
                         'created_at': prod_data.get('created_at'),
                         'has_variations': True,
@@ -325,20 +334,18 @@ def guest_home():
                         'stock': prod_data.get('stock', 0),
                         'specifications': prod_data.get('description', ''),
                         'image': prod_data.get('image', 'default.jpg'),
-                        'seller_username': prod_data.get('seller_username', ''),
+                        'seller_username': seller_username,
                         'store_name': store_name,
                         'created_at': prod_data.get('created_at'),
                         'has_variations': False,
                         'variations': []
                     })
 
-        # Sort by created_at
-        products_list.sort(key=lambda x: x.get('created_at')
-                           or datetime.min, reverse=True)
+        # Products already sorted by created_at from query
         products = products_list
         print(f"Products fetched for guest: {len(products)}")
 
-        # New Arrivals: 3 most recently added
+        # New Arrivals: 3 most recently added (already sorted)
         new_arrivals = products[:3] if len(products) >= 3 else products
 
         # Best Deals: 3 cheapest
@@ -1183,15 +1190,24 @@ def homepage():
     try:
         from firestore_db import products_v2_ref, product_variations_ref
 
-        # Fetch V2 products
-        all_v2_products = products_v2_ref.stream()
+        # Fetch only recent products with limit for faster loading
+        all_v2_products = products_v2_ref.order_by(
+            'created_at', direction=firestore_module.Query.DESCENDING).limit(50).stream()
+
+        # Cache seller info to avoid repeated queries
+        seller_cache = {}
 
         products_list = []
         for prod_doc in all_v2_products:
             prod_data = prod_doc.to_dict()
+            seller_username = prod_data.get('seller_username', '')
 
-            # Get seller info and check if approved
-            seller = get_user_by_username(prod_data.get('seller_username', ''))
+            # Get seller info from cache or fetch once
+            if seller_username not in seller_cache:
+                seller_cache[seller_username] = get_user_by_username(
+                    seller_username)
+
+            seller = seller_cache[seller_username]
             if not seller or not seller.get('seller_approved', False):
                 continue
 
@@ -1225,7 +1241,7 @@ def homepage():
                         'stock': total_stock,
                         'specifications': first_var['description'],
                         'image': first_var['image'],
-                        'seller_username': prod_data.get('seller_username', ''),
+                        'seller_username': seller_username,
                         'store_name': store_name,
                         'created_at': prod_data.get('created_at'),
                         'has_variations': True,
@@ -1241,16 +1257,14 @@ def homepage():
                         'stock': prod_data.get('stock', 0),
                         'specifications': prod_data.get('description', ''),
                         'image': prod_data.get('image', 'default.jpg'),
-                        'seller_username': prod_data.get('seller_username', ''),
+                        'seller_username': seller_username,
                         'store_name': store_name,
                         'created_at': prod_data.get('created_at'),
                         'has_variations': False,
                         'variations': []
                     })
 
-        # Sort by created_at
-        products_list.sort(key=lambda x: x.get('created_at')
-                           or datetime.min, reverse=True)
+        # Products already sorted by created_at from query
         products = products_list
 
         # New Arrivals: 3 most recently added
