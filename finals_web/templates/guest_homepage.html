@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,6 +21,7 @@
       position: relative;
       display: inline-block;
     }
+
     .category-dropdown-btn {
       display: flex;
       align-items: center;
@@ -34,9 +36,11 @@
       min-width: 180px;
       justify-content: space-between;
     }
+
     .category-dropdown-btn:hover {
       border-color: #2d5016;
     }
+
     .category-dropdown-menu {
       display: none;
       position: absolute;
@@ -45,19 +49,29 @@
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       min-width: 220px;
       z-index: 1000;
       overflow: visible;
     }
+
     .category-dropdown-menu.show {
       display: block;
       animation: dropdownSlide 0.2s ease;
     }
+
     @keyframes dropdownSlide {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .category-item {
       display: flex;
       align-items: center;
@@ -68,15 +82,19 @@
       position: relative;
       font-size: 0.875rem;
     }
+
     .category-item:hover {
       background: #f8f9fa;
     }
+
     .category-item.has-submenu {
       position: relative;
     }
-    .category-item.has-submenu:hover > .category-submenu {
+
+    .category-item.has-submenu:hover>.category-submenu {
       display: block;
     }
+
     .category-submenu {
       display: none;
       position: absolute;
@@ -85,12 +103,13 @@
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       min-width: 240px;
       z-index: 1001;
       overflow: hidden;
       margin-left: 4px;
     }
+
     .category-subitem {
       padding: 0.75rem 1rem;
       cursor: pointer;
@@ -98,65 +117,80 @@
       font-size: 0.875rem;
       white-space: nowrap;
     }
+
     .category-subitem:hover {
       background: #f0fdf4;
       color: #198754;
     }
 
     .featured-collections {
-      padding: 3.5rem 1.5rem 2.5rem;  /* Increased padding for more height */
+      padding: 3.5rem 1.5rem 2.5rem;
+      /* Increased padding for more height */
       background: #f5f7f5;
-      min-height: 500px;  /* Added minimum height */
+      min-height: 500px;
+      /* Added minimum height */
     }
 
     .featured-inner {
-      max-width: 100%;  /* Changed from 1400px to use full width */
+      max-width: 100%;
+      /* Changed from 1400px to use full width */
       margin: 0 auto;
-      padding: 0 2rem;  /* Added horizontal padding */
+      padding: 0 2rem;
+      /* Added horizontal padding */
     }
 
     .featured-header-main {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 2rem;  /* Increased from 1.5rem */
+      margin-bottom: 2rem;
+      /* Increased from 1.5rem */
     }
 
     .featured-header-main h2 {
-      font-size: 1.75rem;  /* Increased from 1.5rem */
+      font-size: 1.75rem;
+      /* Increased from 1.5rem */
       color: #1f2933;
       margin: 0;
     }
 
     .featured-header-main span {
-      font-size: 1rem;  /* Increased from 0.95rem */
+      font-size: 1rem;
+      /* Increased from 0.95rem */
       color: #6c757d;
     }
 
     .featured-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 2rem;  /* Reduced from 3rem for better use of space */
+      gap: 2rem;
+      /* Reduced from 3rem for better use of space */
     }
 
     .featured-card {
       background: #ffffff;
-      border-radius: 1.25rem;  /* Increased border radius */
-      padding: 1.5rem;  /* Increased from 1rem */
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);  /* Enhanced shadow */
+      border-radius: 1.25rem;
+      /* Increased border radius */
+      padding: 1.5rem;
+      /* Increased from 1rem */
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      /* Enhanced shadow */
       border: 1px solid #e5e7eb;
       display: flex;
       flex-direction: column;
-      min-height: 380px;  /* Increased from 260px */
+      min-height: 380px;
+      /* Increased from 260px */
       cursor: pointer;
     }
 
     .featured-card-header {
-      margin-bottom: 1rem;  /* Increased from 0.75rem */
+      margin-bottom: 1rem;
+      /* Increased from 0.75rem */
     }
 
     .featured-card-header h3 {
-      font-size: 1.3rem;  /* Increased from 1.1rem */
+      font-size: 1.3rem;
+      /* Increased from 1.1rem */
       margin: 0;
       color: #1f2933;
       font-weight: 700;
@@ -165,7 +199,8 @@
     .featured-card-header span {
       display: block;
       margin-top: 0.3rem;
-      font-size: 0.95rem;  /* Increased from 0.85rem */
+      font-size: 0.95rem;
+      /* Increased from 0.85rem */
       color: #94a3b8;
     }
 
@@ -187,13 +222,17 @@
 
     .featured-product {
       display: flex;
-      gap: 1.25rem;  /* Increased from 0.75rem */
+      gap: 1.25rem;
+      /* Increased from 0.75rem */
     }
 
     .featured-thumb {
-      width: 160px;  /* Increased from 100px */
-      height: 160px;  /* Increased from 100px */
-      border-radius: 1rem;  /* Increased from 0.75rem */
+      width: 160px;
+      /* Increased from 100px */
+      height: 160px;
+      /* Increased from 100px */
+      border-radius: 1rem;
+      /* Increased from 0.75rem */
       overflow: hidden;
       background: #f1f5f9;
       flex-shrink: 0;
@@ -209,7 +248,8 @@
     }
 
     .featured-info h4 {
-      font-size: 1.1rem;  /* Increased from 0.98rem */
+      font-size: 1.1rem;
+      /* Increased from 0.98rem */
       margin: 0 0 0.35rem;
       color: #111827;
       font-weight: 600;
@@ -217,25 +257,31 @@
 
     .featured-info p {
       margin: 0;
-      font-size: 0.95rem;  /* Increased from 0.85rem */
+      font-size: 0.95rem;
+      /* Increased from 0.85rem */
       color: #6b7280;
     }
 
     .featured-price {
-      margin-top: 0.5rem;  /* Increased from 0.4rem */
+      margin-top: 0.5rem;
+      /* Increased from 0.4rem */
       font-weight: 700;
       color: #15803d;
-      font-size: 1.25rem;  /* Increased from 1rem */
+      font-size: 1.25rem;
+      /* Increased from 1rem */
     }
 
     .featured-meta {
-      margin-top: 0.3rem;  /* Increased from 0.2rem */
-      font-size: 0.9rem;  /* Increased from 0.8rem */
+      margin-top: 0.3rem;
+      /* Increased from 0.2rem */
+      font-size: 0.9rem;
+      /* Increased from 0.8rem */
       color: #9ca3af;
     }
 
     .featured-actions {
-      margin-top: 1.25rem;  /* Increased from 0.9rem */
+      margin-top: 1.25rem;
+      /* Increased from 0.9rem */
       display: flex;
       gap: 0.5rem;
     }
@@ -245,8 +291,10 @@
       border: 1px solid #198754;
       background: transparent;
       color: #198754;
-      padding: 0.6rem 1.25rem;  /* Increased from 0.45rem 0.9rem */
-      font-size: 0.95rem;  /* Increased from 0.85rem */
+      padding: 0.6rem 1.25rem;
+      /* Increased from 0.45rem 0.9rem */
+      font-size: 0.95rem;
+      /* Increased from 0.85rem */
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
@@ -264,8 +312,15 @@
     }
 
     @keyframes fadeSlide {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @media (max-width: 900px) {
@@ -275,6 +330,7 @@
     }
   </style>
 </head>
+
 <body class="has-main-header">
   <header class="header">
     <nav class="navbar">
@@ -283,9 +339,13 @@
       </div>
       <div class="nav-center">
         <div style="display: flex; gap: 0.5rem; flex: 1; max-width: 600px;">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category..." aria-label="Search items" style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 1rem;" />
-          <button type="button" id="searchButton" class="search-button" aria-label="Search" onclick="showLoginModal()" style="padding: 0.75rem 1.5rem; background: #198754; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category..."
+            aria-label="Search items"
+            style="flex: 1; padding: 0.75rem 1rem; border: 2px solid #e9ecef; border-radius: 0.5rem; font-size: 1rem;" />
+          <button type="button" id="searchButton" class="search-button" aria-label="Search" onclick="showLoginModal()"
+            style="padding: 0.75rem 1.5rem; background: #198754; color: white; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
@@ -301,29 +361,36 @@
         </div>
         <button id="cartButton" class="icon-button" aria-label="Cart" onclick="showLoginModal()">
           <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor"/>
-            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
-            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+            <path d="M6 6h15l-1.5 9h-12z" fill="currentColor" />
+            <path d="M6 6L5 3H2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <circle cx="9" cy="20" r="1.5" fill="currentColor" />
+            <circle cx="18" cy="20" r="1.5" fill="currentColor" />
           </svg>
           <span id="cartCount" class="badge">0</span>
         </button>
         <button id="helpButton" class="icon-button" aria-label="Help" onclick="showLoginModal()">
           <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
-            <circle cx="12" cy="17" r="1" fill="currentColor"/>
+            <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M9.5 9a2.5 2.5 0 1 1 4.1 2c-.7.6-1.1 1-1.1 2v.5" stroke="currentColor" stroke-width="2" fill="none"
+              stroke-linecap="round" />
+            <circle cx="12" cy="17" r="1" fill="currentColor" />
           </svg>
           <span>Help</span>
         </button>
         <button class="profile-btn" aria-label="Profile" onclick="showLoginModal()">
-          <img alt="Profile" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
+          <img alt="Profile"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'%3E%3Cdefs/%3E%3Ccircle cx='64' cy='64' r='64' fill='%23dfe7df'/%3E%3Ccircle cx='64' cy='50' r='22' fill='%23ffffff'/%3E%3Cpath d='M20 108c10-22 30-28 44-28s34 6 44 28' fill='%23ffffff'/%3E%3C/svg%3E" />
         </button>
       </div>
     </nav>
   </header>
 
   <main class="guest-hero">
+    <!-- Video background -->
+    <video class="hero-bg-video" autoplay muted loop playsinline>
+      <source src="{{ url_for('static', filename='videos/login.mp4') }}" type="video/mp4">
+    </video>
     <div class="guest-hero-inner">
       <h1>Refresh Your Home & Garden</h1>
       <p>Discover plants, tools, and decor to bring your space to life.</p>
@@ -345,34 +412,39 @@
           </div>
           <div class="featured-slide-container" id="bestSellersCarousel">
             {% if best_sellers and best_sellers|length > 0 %}
-              {% for item in best_sellers %}
-              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
-                <div class="featured-product">
-                  <div class="featured-thumb">
-                    {% if item.image %}
-                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
-                    {% else %}
-                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
-                      </svg>
-                    {% endif %}
-                  </div>
-                  <div class="featured-info">
-                    <h4>{{ item.name }}</h4>
-                    <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or item.seller_username }}</a></p>
-                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
-                    <div class="featured-meta">Stock: {{ item.stock }}</div>
-                    <div class="featured-actions">
-                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
-                    </div>
+            {% for item in best_sellers %}
+            <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+              <div class="featured-product">
+                <div class="featured-thumb">
+                  {% if item.image %}
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                  {% else %}
+                  <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                    <path d="M21 15l-5-5L5 21" stroke-width="2" />
+                  </svg>
+                  {% endif %}
+                </div>
+                <div class="featured-info">
+                  <h4>{{ item.name }}</h4>
+                  <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}"
+                      class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or
+                      item.seller_username }}</a></p>
+                  <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                  <div class="featured-meta">Stock: {{ item.stock }}</div>
+                  <div class="featured-actions">
+                    <button type="button" class="featured-view-btn"
+                      data-product-url="{{ url_for('product_detail', product_id=item.id) }}"
+                      onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
                   </div>
                 </div>
               </div>
-              {% endfor %}
+            </div>
+            {% endfor %}
             {% else %}
-              <div class="featured-empty">No best sellers yet. Recent orders will appear here.</div>
+            <div class="featured-empty">No best sellers yet. Recent orders will appear here.</div>
             {% endif %}
           </div>
         </div>
@@ -385,34 +457,39 @@
           </div>
           <div class="featured-slide-container" id="newArrivalsCarousel">
             {% if new_arrivals and new_arrivals|length > 0 %}
-              {% for item in new_arrivals %}
-              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
-                <div class="featured-product">
-                  <div class="featured-thumb">
-                    {% if item.image %}
-                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
-                    {% else %}
-                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
-                      </svg>
-                    {% endif %}
-                  </div>
-                  <div class="featured-info">
-                    <h4>{{ item.name }}</h4>
-                    <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or item.seller_username }}</a></p>
-                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
-                    <div class="featured-meta">Stock: {{ item.stock }}</div>
-                    <div class="featured-actions">
-                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
-                    </div>
+            {% for item in new_arrivals %}
+            <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+              <div class="featured-product">
+                <div class="featured-thumb">
+                  {% if item.image %}
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                  {% else %}
+                  <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                    <path d="M21 15l-5-5L5 21" stroke-width="2" />
+                  </svg>
+                  {% endif %}
+                </div>
+                <div class="featured-info">
+                  <h4>{{ item.name }}</h4>
+                  <p>by <a href="{{ url_for('public_store', seller_username=item.seller_username) }}"
+                      class="seller-link" style="color: #15803d; text-decoration: none;">{{ item.store_name or
+                      item.seller_username }}</a></p>
+                  <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                  <div class="featured-meta">Stock: {{ item.stock }}</div>
+                  <div class="featured-actions">
+                    <button type="button" class="featured-view-btn"
+                      data-product-url="{{ url_for('product_detail', product_id=item.id) }}"
+                      onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
                   </div>
                 </div>
               </div>
-              {% endfor %}
+            </div>
+            {% endfor %}
             {% else %}
-              <div class="featured-empty">Newly added products will appear here.</div>
+            <div class="featured-empty">Newly added products will appear here.</div>
             {% endif %}
           </div>
         </div>
@@ -425,34 +502,37 @@
           </div>
           <div class="featured-slide-container" id="bestDealsCarousel">
             {% if best_deals and best_deals|length > 0 %}
-              {% for item in best_deals %}
-              <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
-                <div class="featured-product">
-                  <div class="featured-thumb">
-                    {% if item.image %}
-                      <img src="{{ img(item.image) }}" alt="{{ item.name }}">
-                    {% else %}
-                      <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                        <path d="M21 15l-5-5L5 21" stroke-width="2"/>
-                      </svg>
-                    {% endif %}
-                  </div>
-                  <div class="featured-info">
-                    <h4>{{ item.name }}</h4>
-                    <p>by {{ item.store_name or item.seller_username }}</p>
-                    <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
-                    <div class="featured-meta">Stock: {{ item.stock }}</div>
-                    <div class="featured-actions">
-                      <button type="button" class="featured-view-btn" data-product-url="{{ url_for('product_detail', product_id=item.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
-                    </div>
+            {% for item in best_deals %}
+            <div class="featured-slide {% if loop.first %}active{% endif %}" data-product-id="{{ item.id }}">
+              <div class="featured-product">
+                <div class="featured-thumb">
+                  {% if item.image %}
+                  <img src="{{ img(item.image) }}" alt="{{ item.name }}">
+                  {% else %}
+                  <svg style="width: 48px; height: 48px; color: #cbd5e1;" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor">
+                    <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                    <path d="M21 15l-5-5L5 21" stroke-width="2" />
+                  </svg>
+                  {% endif %}
+                </div>
+                <div class="featured-info">
+                  <h4>{{ item.name }}</h4>
+                  <p>by {{ item.store_name or item.seller_username }}</p>
+                  <div class="featured-price">₱{{ '%.2f'|format(item.price|float) }}</div>
+                  <div class="featured-meta">Stock: {{ item.stock }}</div>
+                  <div class="featured-actions">
+                    <button type="button" class="featured-view-btn"
+                      data-product-url="{{ url_for('product_detail', product_id=item.id) }}"
+                      onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">View item</button>
                   </div>
                 </div>
               </div>
-              {% endfor %}
+            </div>
+            {% endfor %}
             {% else %}
-              <div class="featured-empty">Lowest-priced items will be highlighted here.</div>
+            <div class="featured-empty">Lowest-priced items will be highlighted here.</div>
             {% endif %}
           </div>
         </div>
@@ -462,101 +542,136 @@
 
   <section id="shop" class="products-section">
     <div class="products-wrapper">
-      <div class="products-toolbar">
-        <div class="toolbar-right" style="display: flex; gap: 1rem; width: 100%; justify-content: flex-end;">
-          <select class="filter-select" id="priceFilter" aria-label="Price Filter">
-            <option value="">Price</option>
-            <option value="price-asc">Low to High</option>
-            <option value="price-desc">High to Low</option>
-            <option value="under-50">Under ₱50</option>
-            <option value="50-100">₱50 - ₱100</option>
-            <option value="over-100">Over ₱100</option>
-          </select>
-          <select class="filter-select" id="dateFilter" aria-label="Date Filter">
-            <option value="">Date</option>
-            <option value="date-newest">Newest First</option>
-            <option value="date-oldest">Oldest First</option>
-          </select>
-          <div class="category-dropdown-wrapper">
-            <button type="button" class="category-dropdown-btn" id="categoryDropdownBtn">
-              <span id="selectedCategoryText">All Categories</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
+      <!-- Category Slider Section -->
+      <div class="category-slider-section">
+        <div class="category-slider-header">
+          <h3>Browse by Category</h3>
+          <div class="category-slider-controls">
+            <button type="button" class="category-slider-arrow" id="categoryPrevBtn" aria-label="Previous categories">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
               </svg>
             </button>
-            <div class="category-dropdown-menu" id="categoryDropdownMenu">
-              <div class="category-item" data-category="">
-                <span>All Categories</span>
-              </div>
-              <div class="category-item has-submenu" data-category="indoor">
-                <span>Indoor</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-                <div class="category-submenu">
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Furniture">Furniture</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Decor Accessories">Decor Accessories</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Textiles & Furnishings">Textiles & Furnishings</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Lighting">Lighting</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Housewares">Housewares</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Paint">Paint</div>
-                  <div class="category-subitem" data-category="indoor" data-subcategory="Others">Others</div>
-                </div>
-              </div>
-              <div class="category-item has-submenu" data-category="garden_outdoor">
-                <span>Garden and Outdoor</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-                <div class="category-submenu">
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Plants and Gardening">Plants and Gardening</div>
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Outdoor Furniture">Outdoor Furniture</div>
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Gardening Tools and Equipment">Gardening Tools and Equipment</div>
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Power Equipment">Power Equipment</div>
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Landscaping and Maintenance">Landscaping and Maintenance</div>
-                  <div class="category-subitem" data-category="garden_outdoor" data-subcategory="Other">Other</div>
-                </div>
-              </div>
+            <button type="button" class="category-slider-arrow" id="categoryNextBtn" aria-label="Next categories">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="category-slider-container">
+          <div class="category-slider-track" id="categorySliderTrack">
+            <!-- All Categories Card -->
+            <div class="category-slide-card active" data-category="" data-subcategory="">
+              <h4>All Categories</h4>
+              <p>View all products</p>
+            </div>
+            <!-- Indoor Subcategories -->
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Furniture"
+              style="background-image: url('{{ url_for('static', filename='resources/images/Furniture.jpg') }}');">
+              <h4>Furniture</h4>
+              <p>Indoor furniture</p>
+            </div>
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Decor Accessories"
+              style="background-image: url('{{ url_for('static', filename='resources/images/Decor and accessories.jpg') }}');">
+              <h4>Decor Accessories</h4>
+              <p>Home decorations</p>
+            </div>
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Textiles & Furnishings"
+              style="background-image: url('{{ url_for('static', filename='resources/images/textiles and furnishings.jpg') }}');">
+              <h4>Textiles & Furnishings</h4>
+              <p>Fabrics & soft furnishings</p>
+            </div>
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Lighting"
+              style="background-image: url('{{ url_for('static', filename='resources/images/lightings.jpg') }}');">
+              <h4>Lighting</h4>
+              <p>Indoor lighting solutions</p>
+            </div>
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Housewares"
+              style="background-image: url('{{ url_for('static', filename='resources/images/houseware.jpg') }}');">
+              <h4>Housewares</h4>
+              <p>Kitchen & household items</p>
+            </div>
+            <div class="category-slide-card" data-category="indoor" data-subcategory="Paint"
+              style="background-image: url('{{ url_for('static', filename='resources/images/Paint.jpg') }}');">
+              <h4>Paint</h4>
+              <p>Interior paints & supplies</p>
+            </div>
+            <!-- Garden & Outdoor Subcategories -->
+            <div class="category-slide-card" data-category="garden_outdoor" data-subcategory="Plants and Gardening"
+              style="background-image: url('{{ url_for('static', filename='resources/images/plant and gardening.jpg') }}');">
+              <h4>Plants & Gardening</h4>
+              <p>Plants & gardening supplies</p>
+            </div>
+            <div class="category-slide-card" data-category="garden_outdoor" data-subcategory="Outdoor Furniture"
+              style="background-image: url('{{ url_for('static', filename='resources/images/outdoor furniture.jpg') }}');">
+              <h4>Outdoor Furniture</h4>
+              <p>Patio & garden furniture</p>
+            </div>
+            <div class="category-slide-card" data-category="garden_outdoor"
+              data-subcategory="Gardening Tools and Equipment"
+              style="background-image: url('{{ url_for('static', filename='resources/images/gardening tools.jpg') }}');">
+              <h4>Gardening Tools</h4>
+              <p>Hand tools & equipment</p>
+            </div>
+            <div class="category-slide-card" data-category="garden_outdoor" data-subcategory="Power Equipment"
+              style="background-image: url('{{ url_for('static', filename='resources/images/power equipment.jpg') }}');">
+              <h4>Power Equipment</h4>
+              <p>Powered garden tools</p>
+            </div>
+            <div class="category-slide-card" data-category="garden_outdoor"
+              data-subcategory="Landscaping and Maintenance"
+              style="background-image: url('{{ url_for('static', filename='resources/images/landscaping maintenance.jpg') }}');">
+              <h4>Landscaping</h4>
+              <p>Maintenance & landscaping</p>
             </div>
           </div>
         </div>
       </div>
+
       <div id="productsGrid" class="products-grid">
         {% if products and products|length > 0 %}
-          {% for product in products %}
-          <div class="product-card" data-product-url="{{ url_for('product_detail', product_id=product.id) }}" onclick="window.location.href=this.dataset.productUrl" style="cursor: pointer;">
-            {% if product.image %}
-              <img src="{{ img(product.image) }}" alt="{{ product.name }}" class="product-image">
-            {% else %}
-              <div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                  <path d="M21 15l-5-5L5 21" stroke-width="2"/>
-                </svg>
-              </div>
-            {% endif %}
-            <div class="product-info">
-              <h3 class="product-title">{{ product.name }}</h3>
-              <p class="product-seller">by <a href="{{ url_for('public_store', seller_username=product.seller_username) }}" class="seller-link" style="color: #15803d; text-decoration: none;">{{ product.store_name or product.seller_username }}</a></p>
-              <p class="product-price">₱{{ '%.2f'|format(product.price|float) }}</p>
-              <p class="product-stock">Stock: {{ product.stock }}</p>
-              <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
-                <button class="view-btn outline" data-product-url="{{ url_for('product_detail', product_id=product.id) }}" onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">
-                  View
-                </button>
-                <button class="add-to-cart-btn outline" onclick="event.stopPropagation(); showLoginModal();">
-                  Add to Cart
-                </button>
-              </div>
+        {% for product in products %}
+        <div class="product-card" data-product-url="{{ url_for('product_detail', product_id=product.id) }}"
+          onclick="window.location.href=this.dataset.productUrl" style="cursor: pointer;">
+          {% if product.image %}
+          <img src="{{ img(product.image) }}" alt="{{ product.name }}" class="product-image">
+          {% else %}
+          <div class="product-image"
+            style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+            <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+              <path d="M21 15l-5-5L5 21" stroke-width="2" />
+            </svg>
+          </div>
+          {% endif %}
+          <div class="product-info">
+            <h3 class="product-title">{{ product.name }}</h3>
+            <p class="product-seller">by <a
+                href="{{ url_for('public_store', seller_username=product.seller_username) }}" class="seller-link"
+                style="color: #15803d; text-decoration: none;">{{ product.store_name or product.seller_username }}</a>
+            </p>
+            <p class="product-price">₱{{ '%.2f'|format(product.price|float) }}</p>
+            <p class="product-stock">Stock: {{ product.stock }}</p>
+            <div class="product-actions">
+              <button class="view-btn outline" data-product-url="{{ url_for('product_detail', product_id=product.id) }}"
+                onclick="event.stopPropagation(); window.location.href=this.dataset.productUrl">
+                View
+              </button>
+              <button class="add-to-cart-btn outline" onclick="event.stopPropagation(); showLoginModal();">
+                Add to Cart
+              </button>
             </div>
           </div>
-          {% endfor %}
+        </div>
+        {% endfor %}
         {% else %}
-          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #6c757d;">
-            <h3>No products available yet</h3>
-            <p>Products from sellers will appear here soon</p>
-          </div>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: #6c757d;">
+          <h3>No products available yet</h3>
+          <p>Products from sellers will appear here soon</p>
+        </div>
         {% endif %}
       </div>
       <div class="pagination-inside">
@@ -571,7 +686,7 @@
 
   {% include 'footer_verdant.html' %}
 
-  
+
 
   <!-- Cart modal -->
   <div class="modal" id="cartModal" style="display:none;">
@@ -594,14 +709,20 @@
   </div>
 
   <!-- Guest action modal -->
-  <div class="modal" id="guestActionModal" style="display:none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items:center; justify-content:center;">
-    <div class="modal-content" style="background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
-      <span class="close" id="closeGuestModal" style="float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa;">&times;</span>
+  <div class="modal" id="guestActionModal"
+    style="display:none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+    <div class="modal-content"
+      style="background: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+      <span class="close" id="closeGuestModal"
+        style="float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa;">&times;</span>
       <h2 style="margin-bottom: 1rem;">Login Required</h2>
       <p style="margin-bottom: 1.5rem; color: #6c757d;">You need to log in or create an account to use this feature.</p>
       <div style="display:flex; gap:0.75rem; justify-content:center;">
-        <a href="{{ url_for('login_page') }}" class="btn-primary" style="text-decoration:none; padding:0.75rem 1.5rem; background: #198754; color: white; border-radius: 8px; font-weight: 600;">Login</a>
-        <a href="{{ url_for('login_page') }}?signup=true" class="btn-secondary" style="text-decoration:none; padding:0.75rem 1.5rem; background: #6c757d; color: white; border-radius: 8px; font-weight: 600;">Sign Up</a>
+        <a href="{{ url_for('login_page') }}" class="btn-primary"
+          style="text-decoration:none; padding:0.75rem 1.5rem; background: #198754; color: white; border-radius: 8px; font-weight: 600;">Login</a>
+        <a href="{{ url_for('login_page') }}?signup=true" class="btn-secondary"
+          style="text-decoration:none; padding:0.75rem 1.5rem; background: #6c757d; color: white; border-radius: 8px; font-weight: 600;">Sign
+          Up</a>
       </div>
     </div>
   </div>
@@ -646,16 +767,16 @@
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
     }
-    
-    document.getElementById('closeGuestModal').onclick = function() {
+
+    document.getElementById('closeGuestModal').onclick = function () {
       const modal = document.getElementById('guestActionModal');
       if (!modal) return;
       modal.style.display = 'none';
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
     }
-    
-    window.addEventListener('click', function(event) {
+
+    window.addEventListener('click', function (event) {
       const modal = document.getElementById('guestActionModal');
       if (modal && event.target === modal) {
         modal.style.display = 'none';
@@ -663,63 +784,165 @@
         document.body.style.overflow = '';
       }
     });
-    
+
     // Search, filter, and category functionality
     const searchInput = document.getElementById('searchInput');
     const searchButton = document.getElementById('searchButton');
     const productsGrid = document.getElementById('productsGrid');
     const filterSelect = document.querySelector('.filter-select');
-    const categoryDropdownBtn = document.getElementById('categoryDropdownBtn');
-    const categoryDropdownMenu = document.getElementById('categoryDropdownMenu');
-    const selectedCategoryText = document.getElementById('selectedCategoryText');
-    
+
     let selectedCategory = '';
     let selectedSubcategory = '';
 
-    // Toggle category dropdown
-    if (categoryDropdownBtn && categoryDropdownMenu) {
-      categoryDropdownBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        categoryDropdownMenu.classList.toggle('show');
-      });
+    // Category Slider Functionality
+    const categorySliderTrack = document.getElementById('categorySliderTrack');
+    const categoryPrevBtn = document.getElementById('categoryPrevBtn');
+    const categoryNextBtn = document.getElementById('categoryNextBtn');
+    const categoryCards = document.querySelectorAll('.category-slide-card');
 
-      // Close dropdown when clicking outside
-      document.addEventListener('click', function(e) {
-        if (!categoryDropdownBtn.contains(e.target) && !categoryDropdownMenu.contains(e.target)) {
-          categoryDropdownMenu.classList.remove('show');
-        }
-      });
+    let currentSlideIndex = 0;
+    let autoScrollInterval = null;
+    const cardWidth = 280; // min-width from CSS
+    const gap = 16; // 1rem gap
+    const slideStep = cardWidth + gap;
+    const autoScrollDelay = 3000; // 3 seconds
 
-      // Handle category selection
-      const categoryItems = categoryDropdownMenu.querySelectorAll('.category-item:not(.has-submenu)');
-      categoryItems.forEach(function(item) {
-        item.addEventListener('click', function() {
-          selectedCategory = '';
-          selectedSubcategory = '';
-          selectedCategoryText.textContent = 'All Categories';
-          categoryDropdownMenu.classList.remove('show');
-          performSearch();
-        });
-      });
+    // Calculate max slides based on container width
+    function getVisibleCards() {
+      if (!categorySliderTrack) return 4;
+      const containerWidth = categorySliderTrack.parentElement.offsetWidth;
+      return Math.floor(containerWidth / slideStep);
+    }
 
-      // Handle subcategory selection
-      const subcategoryItems = categoryDropdownMenu.querySelectorAll('.category-subitem');
-      subcategoryItems.forEach(function(item) {
-        item.addEventListener('click', function(e) {
-          e.stopPropagation();
-          selectedCategory = this.getAttribute('data-category');
-          selectedSubcategory = this.getAttribute('data-subcategory');
-          selectedCategoryText.textContent = selectedSubcategory;
-          categoryDropdownMenu.classList.remove('show');
-          performSearch();
-        });
+    function updateSliderPosition(smooth = true) {
+      if (!categorySliderTrack) return;
+      const translateX = -(currentSlideIndex * slideStep);
+      categorySliderTrack.style.transition = smooth ? 'transform 0.3s ease' : 'none';
+      categorySliderTrack.style.transform = `translateX(${translateX}px)`;
+
+      // Update button states (always enabled for looping)
+      if (categoryPrevBtn) {
+        categoryPrevBtn.disabled = false;
+        categoryPrevBtn.style.opacity = '1';
+        categoryPrevBtn.style.cursor = 'pointer';
+      }
+
+      if (categoryNextBtn) {
+        categoryNextBtn.disabled = false;
+        categoryNextBtn.style.opacity = '1';
+        categoryNextBtn.style.cursor = 'pointer';
+      }
+    }
+
+    function slideNext() {
+      const visibleCards = getVisibleCards();
+      const maxIndex = Math.max(0, categoryCards.length - visibleCards);
+
+      currentSlideIndex++;
+
+      // True infinite loop: when reaching the end, instantly jump to start
+      if (currentSlideIndex > maxIndex) {
+        // Smoothly slide one more
+        updateSliderPosition(true);
+        // After animation, instantly reset to beginning
+        setTimeout(() => {
+          currentSlideIndex = 0;
+          updateSliderPosition(false);
+        }, 300);
+      } else {
+        updateSliderPosition(true);
+      }
+    }
+
+    function slidePrev() {
+      const visibleCards = getVisibleCards();
+      const maxIndex = Math.max(0, categoryCards.length - visibleCards);
+
+      currentSlideIndex--;
+
+      // True infinite loop: when reaching the beginning, instantly jump to end
+      if (currentSlideIndex < 0) {
+        // Smoothly slide one more
+        updateSliderPosition(true);
+        // After animation, instantly reset to end
+        setTimeout(() => {
+          currentSlideIndex = maxIndex;
+          updateSliderPosition(false);
+        }, 300);
+      } else {
+        updateSliderPosition(true);
+      }
+    }
+
+    // Start auto-scroll
+    function startAutoScroll() {
+      stopAutoScroll(); // Clear any existing interval
+      autoScrollInterval = setInterval(slideNext, autoScrollDelay);
+    }
+
+    // Stop auto-scroll
+    function stopAutoScroll() {
+      if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+        autoScrollInterval = null;
+      }
+    }
+
+    if (categoryPrevBtn) {
+      categoryPrevBtn.addEventListener('click', function () {
+        slidePrev();
+        stopAutoScroll(); // Stop auto-scroll on manual interaction
+        setTimeout(startAutoScroll, 5000); // Resume after 5 seconds
       });
     }
 
+    if (categoryNextBtn) {
+      categoryNextBtn.addEventListener('click', function () {
+        slideNext();
+        stopAutoScroll(); // Stop auto-scroll on manual interaction
+        setTimeout(startAutoScroll, 5000); // Resume after 5 seconds
+      });
+    }
+
+    // Handle category card clicks
+    categoryCards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        // Remove active class from all cards
+        categoryCards.forEach(c => c.classList.remove('active'));
+        // Add active class to clicked card
+        this.classList.add('active');
+
+        // Get category and subcategory
+        selectedCategory = this.getAttribute('data-category') || '';
+        selectedSubcategory = this.getAttribute('data-subcategory') || '';
+
+        // Perform search
+        performSearch();
+
+        // Pause auto-scroll on interaction
+        stopAutoScroll();
+        setTimeout(startAutoScroll, 5000);
+      });
+    });
+
+    // Pause auto-scroll on hover
+    if (categorySliderTrack) {
+      categorySliderTrack.parentElement.addEventListener('mouseenter', stopAutoScroll);
+      categorySliderTrack.parentElement.addEventListener('mouseleave', startAutoScroll);
+    }
+
+    // Initialize slider
+    updateSliderPosition();
+    startAutoScroll();
+
+    // Update on window resize
+    window.addEventListener('resize', function () {
+      updateSliderPosition(false);
+    });
+
     function performSearch() {
       const query = searchInput ? searchInput.value.trim() : '';
-      const sort = filterSelect ? filterSelect.value : '';
-      
+
       // Build category string: "category:subcategory" or just "category"
       let category = '';
       if (selectedCategory && selectedSubcategory) {
@@ -730,14 +953,13 @@
 
       const params = new URLSearchParams();
       if (query) params.set('q', query);
-      if (sort) params.set('sort', sort);
       if (category) params.set('category', category);
 
       const url = params.toString() ? `/search?${params.toString()}` : '/search';
 
       searchButton.disabled = true;
       searchButton.innerHTML = '<span>Searching...</span>';
-      
+
       fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -790,16 +1012,16 @@
 
       const productHtml = productList.map(product => `
         <div class="product-card" onclick="window.location.href='/product/${product.id}'" style="cursor: pointer;">
-          ${product.image ? 
-            `<img src="${product.image.startsWith('http') ? product.image : '/static/uploads/products/' + product.image}" alt="${product.name}" class="product-image">` :
-            `<div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+          ${product.image ?
+          `<img src="${product.image.startsWith('http') ? product.image : '/static/uploads/products/' + product.image}" alt="${product.name}" class="product-image">` :
+          `<div class="product-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
               <svg style="width: 60px; height: 60px; color: #dee2e6;" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
                 <path d="M21 15l-5-5L5 21" stroke-width="2"/>
               </svg>
             </div>`
-          }
+        }
           <div class="product-info">
             <h3 class="product-title">${product.name}</h3>
             <p class="product-seller">by <a href="/store/${encodeURIComponent(product.seller_username)}" class="seller-link" style="color: #15803d; text-decoration: none;">${product.store_name || product.seller_username}</a></p>
@@ -831,12 +1053,6 @@
       });
     }
 
-    if (filterSelect) {
-      filterSelect.addEventListener('change', () => {
-        performSearch();
-      });
-    }
-
     // Pagination functionality (without overwriting products)
     const prevPageBtn = document.getElementById('prevPageBtn');
     const nextPageBtn = document.getElementById('nextPageBtn');
@@ -854,5 +1070,5 @@
     initCarousel('bestDealsCarousel');
   </script>
 </body>
-</html>
 
+</html>

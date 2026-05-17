@@ -1,0 +1,90 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                  EMAILJS SETUP - QUICK REFERENCE                 ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📋 WHAT YOU NEED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Public Key:    _________________________ (from Account → General)
+2. Service ID:    _________________________ (from Email Services)
+3. Template ID:   _________________________ (from Email Templates)
+
+
+🔧 WHERE TO UPDATE IN CODE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: finals_web/templates/login.html
+
+Location 1 (Line ~17):
+┌────────────────────────────────────────────────────────────────┐
+│ emailjs.init("YOUR_PUBLIC_KEY_HERE");                          │
+│              ^^^^^^^^^^^^^^^^^^^^                              │
+│              Replace this with your Public Key                 │
+└────────────────────────────────────────────────────────────────┘
+
+Location 2 (Line ~735):
+┌────────────────────────────────────────────────────────────────┐
+│ emailjs.send(                                                  │
+│   "YOUR_SERVICE_ID",      // Replace with Service ID          │
+│   "YOUR_TEMPLATE_ID",     // Replace with Template ID         │
+│   {                                                            │
+│     to_email: data.email,                                      │
+│     user_name: data.user_name,                                 │
+│     reset_code: data.reset_code                                │
+│   }                                                            │
+│ )                                                              │
+└────────────────────────────────────────────────────────────────┘
+
+
+📧 EMAIL TEMPLATE VARIABLES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Use these in your EmailJS template:
+
+{{to_email}}     - Recipient's email (auto-filled by EmailJS)
+{{user_name}}    - User's full name
+{{reset_code}}   - 6-digit OTP code
+
+
+✅ TESTING CHECKLIST:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Created EmailJS account
+□ Connected Gmail/email service
+□ Created email template with correct variables
+□ Copied Public Key, Service ID, Template ID
+□ Updated login.html with all 3 IDs
+□ Tested forgot password flow
+□ Received email with 6-digit code
+□ Successfully reset password
+
+
+🚀 DEPLOYMENT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Works on Render automatically (no extra config needed!)
+✅ Just push to GitHub and deploy
+✅ No environment variables required
+
+
+⚠️  IMPORTANT NOTES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Free tier: 200 emails/month
+• OTP expires in 5 minutes
+• Public Key is safe to expose (it's meant for frontend)
+• Check spam folder if email not received
+• Browser console (F12) shows EmailJS errors
+
+
+📞 SUPPORT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+EmailJS Dashboard: https://dashboard.emailjs.com/
+EmailJS Docs:      https://www.emailjs.com/docs/
+Full Guide:        See EMAILJS_SETUP_INSTRUCTIONS.md
+
+
+═══════════════════════════════════════════════════════════════════
+
+Setup Time: ~15 minutes | Difficulty: Easy | Cost: FREE

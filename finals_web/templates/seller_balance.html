@@ -1,0 +1,400 @@
+{% extends 'base_user.html' %}
+
+{% block title %}Balance - Verdant{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Balance & Earnings</h2>
+
+            <!-- Balance Header Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="text-muted mb-2">Total Balance</h5>
+                            <h1 class="display-4 text-success mb-0">₱<span id="totalBalance">{{
+                                    '%.2f'|format(total_balance|float) }}</span></h1>
+                            <p class="text-muted mt-2 mb-0">
+                                <small>Total Earnings: ₱<span id="totalEarnings">{{ '%.2f'|format(total_earnings|float)
+                                        }}</span></small>
+                                <span class="mx-2">|</span>
+                                <small>Withdrawn: ₱<span id="totalWithdrawn">{{ '%.2f'|format(total_withdrawn|float)
+                                        }}</span></small>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <button class="btn btn-success btn-lg" onclick="showWithdrawModal()" {% if total_balance <=0
+                                %}disabled{% endif %}>
+                                <i class="bi bi-cash-coin me-2"></i>Withdraw Funds
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Sold Section -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Items Sold</h5>
+                    <button class="btn btn-outline-primary btn-sm" onclick="generateReport()">
+                        <i class="bi bi-file-earmark-text me-1"></i>Generate Report
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    {% if items_sold and items_sold|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th class="text-center">Quantity Sold</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Total Revenue</th>
+                                    <th class="text-center">Date Range</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items_sold %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.image %}
+                                            <img src="{{ img(item.image) }}" alt="{{ item.name }}" class="rounded me-2"
+                                                style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center"
+                                                style="width: 40px; height: 40px;">
+                                                <i class="bi bi-box text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <span class="fw-medium">{{ item.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ item.quantity_sold }}</span>
+                                    </td>
+                                    <td class="text-end">₱{{ '%.2f'|format(item.price|float) }}</td>
+                                    <td class="text-end fw-bold text-success">₱{{
+                                        '%.2f'|format(item.total_revenue|float) }}</td>
+                                    <td class="text-center text-muted">
+                                        <small>{{ item.first_sale }} - {{ item.last_sale }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end">Total:</th>
+                                    <th class="text-end text-success">₱{{ '%.2f'|format(total_earnings|float) }}</th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <p class="text-muted mt-3">No items sold yet</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Withdrawal History -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Withdrawal History</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if withdrawal_history and withdrawal_history|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Reference</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for withdrawal in withdrawal_history %}
+                                <tr>
+                                    <td>{{ withdrawal.created_at.strftime('%b %d, %Y %I:%M %p') if withdrawal.created_at
+                                        else 'N/A' }}</td>
+                                    <td class="fw-bold">₱{{ '%.2f'|format(withdrawal.amount|float) }}</td>
+                                    <td>{{ withdrawal.method }}</td>
+                                    <td>
+                                        {% if withdrawal.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                        {% elif withdrawal.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif withdrawal.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ withdrawal.reference or 'N/A' }}</small></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted mb-0">No withdrawal history</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Withdraw Funds</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <small>Available Balance: <strong>₱<span id="modalBalance">{{ '%.2f'|format(total_balance|float)
+                                }}</span></strong></small>
+                </div>
+
+                <form id="withdrawForm">
+                    <div class="mb-3">
+                        <label for="withdrawAmount" class="form-label">Amount to Withdraw</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <input type="number" class="form-control" id="withdrawAmount" name="amount" min="100"
+                                max="{{ total_balance }}" step="0.01" required>
+                        </div>
+                        <small class="text-muted">Minimum withdrawal: ₱100.00</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="withdrawMethod" class="form-label">Withdrawal Method</label>
+                        <select class="form-select" id="withdrawMethod" name="method" required
+                            onchange="updateAccountFields()">
+                            <option value="">Select method...</option>
+                            <option value="GCash">GCash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+
+                    <!-- GCash Fields (shown when GCash is selected) -->
+                    <div id="gcashFields" class="d-none">
+                        <div class="mb-3">
+                            <label for="gcashNumber" class="form-label">GCash Number</label>
+                            <input type="tel" class="form-control" id="gcashNumber" placeholder="09XX XXX XXXX"
+                                pattern="[0-9]{11}" maxlength="11">
+                            <small class="text-muted">Enter your 11-digit GCash mobile number</small>
+                        </div>
+                    </div>
+
+                    <!-- Bank Fields (shown when Bank Transfer is selected) -->
+                    <div id="bankFields" class="d-none">
+                        <div class="mb-3">
+                            <label for="bankId" class="form-label">Bank Account ID</label>
+                            <input type="text" class="form-control" id="bankId"
+                                placeholder="Enter your bank account number">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bankPassword" class="form-label">Bank Password</label>
+                            <input type="password" class="form-control" id="bankPassword"
+                                placeholder="Enter your bank password">
+                            <small class="text-muted">For verification purposes only</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="withdrawNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="withdrawNotes" name="notes" rows="2"
+                            placeholder="Any additional information"></textarea>
+                    </div>
+
+                    <div id="withdrawMessage" class="alert d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitWithdrawal()">
+                    <i class="bi bi-check-circle me-1"></i>Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showWithdrawModal() {
+        const modal = new bootstrap.Modal(document.getElementById('withdrawModal'));
+        document.getElementById('withdrawForm').reset();
+        document.getElementById('gcashFields').classList.add('d-none');
+        document.getElementById('bankFields').classList.add('d-none');
+        document.getElementById('withdrawMessage').classList.add('d-none');
+        modal.show();
+    }
+
+    function updateAccountFields() {
+        const method = document.getElementById('withdrawMethod').value;
+        const gcashFields = document.getElementById('gcashFields');
+        const bankFields = document.getElementById('bankFields');
+        const gcashNumber = document.getElementById('gcashNumber');
+        const bankId = document.getElementById('bankId');
+        const bankPassword = document.getElementById('bankPassword');
+
+        // Hide all fields first
+        gcashFields.classList.add('d-none');
+        bankFields.classList.add('d-none');
+
+        // Remove required attributes
+        gcashNumber.removeAttribute('required');
+        bankId.removeAttribute('required');
+        bankPassword.removeAttribute('required');
+
+        // Show relevant fields based on method
+        if (method === 'GCash') {
+            gcashFields.classList.remove('d-none');
+            gcashNumber.setAttribute('required', 'required');
+        } else if (method === 'Bank Transfer') {
+            bankFields.classList.remove('d-none');
+            bankId.setAttribute('required', 'required');
+            bankPassword.setAttribute('required', 'required');
+        }
+    }
+
+    function submitWithdrawal() {
+        const form = document.getElementById('withdrawForm');
+        const messageDiv = document.getElementById('withdrawMessage');
+        const method = document.getElementById('withdrawMethod').value;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Build account details based on method
+        let accountDetails = '';
+        if (method === 'GCash') {
+            const gcashNumber = document.getElementById('gcashNumber').value;
+            if (!gcashNumber || gcashNumber.length !== 11) {
+                showMessage('Please enter a valid 11-digit GCash number', 'danger');
+                return;
+            }
+            accountDetails = `GCash Number: ${gcashNumber}`;
+        } else if (method === 'Bank Transfer') {
+            const bankId = document.getElementById('bankId').value;
+            const bankPassword = document.getElementById('bankPassword').value;
+            if (!bankId || !bankPassword) {
+                showMessage('Please enter both Bank ID and Password', 'danger');
+                return;
+            }
+            accountDetails = `Bank Account: ${bankId} | Password: ${bankPassword}`;
+        } else {
+            showMessage('Please select a withdrawal method', 'danger');
+            return;
+        }
+
+        const formData = {
+            amount: parseFloat(document.getElementById('withdrawAmount').value),
+            method: method,
+            account_details: accountDetails,
+            notes: document.getElementById('withdrawNotes').value
+        };
+
+        // Validate amount
+        const maxBalance = parseFloat(document.getElementById('modalBalance').textContent);
+        if (formData.amount < 100) {
+            showMessage('Minimum withdrawal amount is ₱100.00', 'danger');
+            return;
+        }
+        if (formData.amount > maxBalance) {
+            showMessage('Amount exceeds available balance', 'danger');
+            return;
+        }
+
+        // Disable submit button
+        const submitBtn = event.target;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+
+        fetch('/api/seller/withdraw', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message || 'Withdrawal completed successfully!', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showMessage(data.message || 'Failed to process withdrawal', 'danger');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Submit Request';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('An error occurred. Please try again.', 'danger');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Submit Request';
+            });
+    }
+
+    function showMessage(message, type) {
+        const messageDiv = document.getElementById('withdrawMessage');
+        messageDiv.className = `alert alert-${type}`;
+        messageDiv.textContent = message;
+        messageDiv.classList.remove('d-none');
+    }
+
+    function generateReport() {
+        window.location.href = '/seller/balance/report';
+    }
+</script>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .table th {
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+    }
+
+    .display-4 {
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
