@@ -5386,6 +5386,8 @@ def reject_order(order_id):
 def api_calculate_shipping_preview():
     """Calculate shipping fee preview for cart items before checkout"""
     try:
+        from firestore_db import products_v2_ref
+
         data = request.get_json()
         cart_ids = data.get('cart_ids', [])
 
