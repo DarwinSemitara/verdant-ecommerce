@@ -5389,6 +5389,8 @@ def api_calculate_shipping_preview():
         data = request.get_json()
         cart_ids = data.get('cart_ids', [])
 
+        print(f"🛒 SHIPPING PREVIEW REQUEST - Cart IDs: {cart_ids}")
+
         if not cart_ids:
             return jsonify({'success': False, 'message': 'No cart items provided'}), 400
 
@@ -5399,6 +5401,9 @@ def api_calculate_shipping_preview():
 
         user_latitude = user.get('latitude')
         user_longitude = user.get('longitude')
+
+        print(f"👤 Buyer: {session['username']}")
+        print(f"   Location: {user_latitude}, {user_longitude}")
 
         if not user_latitude or not user_longitude:
             return jsonify({'success': False, 'message': 'User location not set'}), 400
@@ -5412,33 +5417,40 @@ def api_calculate_shipping_preview():
         for cart_id in cart_ids:
             cart_doc = db.collection('cart').document(cart_id).get()
             if not cart_doc.exists:
+                print(f"   ⚠️ Cart {cart_id} not found")
                 continue
 
             cart_data = cart_doc.to_dict()
             if cart_data.get('user_id') != user['id']:
+                print(f"   ⚠️ Cart {cart_id} belongs to different user")
                 continue
 
             # Get product to find seller
             product_id = cart_data.get('product_id')
             product_doc = products_v2_ref.document(product_id).get()
             if not product_doc.exists:
+                print(f"   ⚠️ Product {product_id} not found")
                 continue
 
             product_data = product_doc.to_dict()
             seller_username = product_data.get('seller_username')
 
+            print(f"🏪 Seller: {seller_username}")
+
             # Skip if we already calculated for this seller
             if seller_username in sellers_shipping:
+                print(f"   ✓ Already calculated for this seller")
                 continue
 
             # Get seller location
             seller_user = get_user_by_username(seller_username)
             if not seller_user:
-                # Fallback to base fee if seller not found
+                print(f"   ❌ Seller user not found - using base fee")
                 sellers_shipping[seller_username] = 38.0
                 continue
 
             seller_user_id = seller_user['id']
+            print(f"   Seller user_id: {seller_user_id}")
 
             # Get seller's approved application with location
             seller_apps = list(db.collection('seller_applications')
@@ -5448,6 +5460,7 @@ def api_calculate_shipping_preview():
                                .stream())
 
             if not seller_apps:
+                print(f"   ⚠️ No seller app by user_id, trying username...")
                 # Try by username
                 seller_apps = list(db.collection('seller_applications')
                                    .where('username', '==', seller_username)
@@ -5460,17 +5473,27 @@ def api_calculate_shipping_preview():
                 seller_lat = seller_app_data.get('store_latitude')
                 seller_lon = seller_app_data.get('store_longitude')
 
+                print(f"   📍 Seller location from DB:")
+                print(
+                    f"      Latitude: {seller_lat} (type: {type(seller_lat).__name__})")
+                print(
+                    f"      Longitude: {seller_lon} (type: {type(seller_lon).__name__})")
+
                 # Convert to float if needed
                 if seller_lat and isinstance(seller_lat, str):
                     try:
                         seller_lat = float(seller_lat)
+                        print(f"      Converted lat to float: {seller_lat}")
                     except ValueError:
+                        print(f"      ❌ Could not convert lat to float")
                         seller_lat = None
 
                 if seller_lon and isinstance(seller_lon, str):
                     try:
                         seller_lon = float(seller_lon)
+                        print(f"      Converted lon to float: {seller_lon}")
                     except ValueError:
+                        print(f"      ❌ Could not convert lon to float")
                         seller_lon = None
 
                 if seller_lat and seller_lon:
@@ -5479,15 +5502,20 @@ def api_calculate_shipping_preview():
                         seller_lat, seller_lon, user_latitude, user_longitude
                     )
                     sellers_shipping[seller_username] = shipping_fee
+                    print(
+                        f"   ✅ Calculated shipping: ₱{shipping_fee:.2f} ({distance_km:.2f} km)")
                 else:
-                    # Fallback to base fee
+                    print(f"   ⚠️ Seller location incomplete - using base fee ₱38")
                     sellers_shipping[seller_username] = 38.0
             else:
-                # Fallback to base fee
+                print(f"   ❌ No approved seller application found - using base fee ₱38")
                 sellers_shipping[seller_username] = 38.0
 
         # Sum up shipping fees from all sellers
         total_shipping = sum(sellers_shipping.values())
+
+        print(f"💰 TOTAL SHIPPING FEE: ₱{total_shipping:.2f}")
+        print(f"   Breakdown: {sellers_shipping}")
 
         return jsonify({
             'success': True,
