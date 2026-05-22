@@ -1186,7 +1186,7 @@
           const nameEl = row.querySelector('.cart-item-name');
           const price = parseFloat(cb.dataset.price);
           const qty = parseInt(document.getElementById('qty-' + cb.dataset.cartId)?.value) || 1;
-          const cartId = parseInt(cb.dataset.cartId);
+          const cartId = cb.dataset.cartId; // Keep as string, don't parseInt
           const name = nameEl ? nameEl.textContent.trim() : 'Item';
           checkoutItemsData.push({ cartId, name, price, quantity: qty });
           checkoutCheckboxMap[cartId] = cb;
