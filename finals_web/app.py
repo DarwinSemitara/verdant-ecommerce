@@ -5381,6 +5381,127 @@ def reject_order(order_id):
 # API Routes for Seller Order Management (for AJAX calls)
 
 
+@app.route('/api/calculate-shipping-preview', methods=['POST'])
+@role_required('user')
+def api_calculate_shipping_preview():
+    """Calculate shipping fee preview for cart items before checkout"""
+    try:
+        data = request.get_json()
+        cart_ids = data.get('cart_ids', [])
+
+        if not cart_ids:
+            return jsonify({'success': False, 'message': 'No cart items provided'}), 400
+
+        # Get user location
+        user = get_user_by_username(session['username'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_latitude = user.get('latitude')
+        user_longitude = user.get('longitude')
+
+        if not user_latitude or not user_longitude:
+            return jsonify({'success': False, 'message': 'User location not set'}), 400
+
+        # Group cart items by seller
+        from checkout_routes import calculate_shipping_fee_by_distance
+
+        sellers_shipping = {}
+        total_shipping = 0.0
+
+        for cart_id in cart_ids:
+            cart_doc = db.collection('cart').document(cart_id).get()
+            if not cart_doc.exists:
+                continue
+
+            cart_data = cart_doc.to_dict()
+            if cart_data.get('user_id') != user['id']:
+                continue
+
+            # Get product to find seller
+            product_id = cart_data.get('product_id')
+            product_doc = products_v2_ref.document(product_id).get()
+            if not product_doc.exists:
+                continue
+
+            product_data = product_doc.to_dict()
+            seller_username = product_data.get('seller_username')
+
+            # Skip if we already calculated for this seller
+            if seller_username in sellers_shipping:
+                continue
+
+            # Get seller location
+            seller_user = get_user_by_username(seller_username)
+            if not seller_user:
+                # Fallback to base fee if seller not found
+                sellers_shipping[seller_username] = 38.0
+                continue
+
+            seller_user_id = seller_user['id']
+
+            # Get seller's approved application with location
+            seller_apps = list(db.collection('seller_applications')
+                               .where('user_id', '==', seller_user_id)
+                               .where('status', '==', 'approved')
+                               .limit(1)
+                               .stream())
+
+            if not seller_apps:
+                # Try by username
+                seller_apps = list(db.collection('seller_applications')
+                                   .where('username', '==', seller_username)
+                                   .where('status', '==', 'approved')
+                                   .limit(1)
+                                   .stream())
+
+            if seller_apps:
+                seller_app_data = seller_apps[0].to_dict()
+                seller_lat = seller_app_data.get('store_latitude')
+                seller_lon = seller_app_data.get('store_longitude')
+
+                # Convert to float if needed
+                if seller_lat and isinstance(seller_lat, str):
+                    try:
+                        seller_lat = float(seller_lat)
+                    except ValueError:
+                        seller_lat = None
+
+                if seller_lon and isinstance(seller_lon, str):
+                    try:
+                        seller_lon = float(seller_lon)
+                    except ValueError:
+                        seller_lon = None
+
+                if seller_lat and seller_lon:
+                    # Calculate distance-based shipping
+                    shipping_fee, _, _, distance_km = calculate_shipping_fee_by_distance(
+                        seller_lat, seller_lon, user_latitude, user_longitude
+                    )
+                    sellers_shipping[seller_username] = shipping_fee
+                else:
+                    # Fallback to base fee
+                    sellers_shipping[seller_username] = 38.0
+            else:
+                # Fallback to base fee
+                sellers_shipping[seller_username] = 38.0
+
+        # Sum up shipping fees from all sellers
+        total_shipping = sum(sellers_shipping.values())
+
+        return jsonify({
+            'success': True,
+            'shipping_fee': total_shipping,
+            'sellers_shipping': sellers_shipping
+        })
+
+    except Exception as e:
+        print(f"❌ Error calculating shipping preview: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @app.route('/api/get-store-location', methods=['GET'])
 @role_required('seller')
 def api_get_store_location():

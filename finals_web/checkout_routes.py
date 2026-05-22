@@ -37,7 +37,7 @@ def calculate_shipping_fee_by_distance(seller_lat, seller_lon, buyer_lat, buyer_
     Calculate shipping fee based on distance from seller to buyer.
 
     Pricing structure:
-    - Base fee: ₱38
+    - Base fee: ₱38 for first 50km
     - Additional ₱10 per 50km after the first 50km
 
     Fee breakdown:
@@ -51,13 +51,26 @@ def calculate_shipping_fee_by_distance(seller_lat, seller_lon, buyer_lat, buyer_
     distance_km = calculate_distance(
         seller_lat, seller_lon, buyer_lat, buyer_lon)
 
+    print(f"🧮 Calculating shipping fee:")
+    print(f"   - Seller: ({seller_lat}, {seller_lon})")
+    print(f"   - Buyer: ({buyer_lat}, {buyer_lon})")
+    print(f"   - Distance: {distance_km:.2f} km")
+
     # Base fee
     shipping_fee = 38.0
 
     # Add ₱10 for every 50km beyond the first 50km
     if distance_km > 50:
         additional_50km_blocks = math.ceil((distance_km - 50) / 50)
-        shipping_fee += additional_50km_blocks * 10.0
+        additional_fee = additional_50km_blocks * 10.0
+        shipping_fee += additional_fee
+        print(f"   - Additional distance: {distance_km - 50:.2f} km")
+        print(f"   - Additional 50km blocks: {additional_50km_blocks}")
+        print(f"   - Additional fee: ₱{additional_fee:.2f}")
+    else:
+        print(f"   - Within first 50km, no additional fee")
+
+    print(f"   - Total shipping fee: ₱{shipping_fee:.2f}")
 
     # Calculate portions
     admin_portion = shipping_fee * 0.02  # 2% to admin
@@ -226,6 +239,8 @@ def register_checkout_routes(app):
                     seller_user = get_user_by_username(seller_username)
                     if seller_user:
                         seller_user_id = seller_user['id']
+                        print(
+                            f"🔍 Looking for seller location - Username: {seller_username}, User ID: {seller_user_id}")
 
                         # Get seller's approved application with location
                         seller_apps = list(db.collection('seller_applications')
@@ -236,6 +251,8 @@ def register_checkout_routes(app):
 
                         if not seller_apps:
                             # Try by username
+                            print(
+                                f"⚠️ No seller app found by user_id, trying username...")
                             seller_apps = list(db.collection('seller_applications')
                                                .where('username', '==', seller_username)
                                                .where('status', '==', 'approved')
@@ -244,14 +261,57 @@ def register_checkout_routes(app):
 
                         if seller_apps:
                             seller_app_data = seller_apps[0].to_dict()
+
+                            # Debug: Print all fields in seller application
+                            print(f"📋 Seller application data fields:")
+                            for key, value in seller_app_data.items():
+                                if 'store' in key.lower() or 'location' in key.lower() or 'lat' in key.lower() or 'lon' in key.lower():
+                                    print(
+                                        f"   - {key}: {value} (type: {type(value).__name__})")
+
                             seller_lat = seller_app_data.get('store_latitude')
                             seller_lon = seller_app_data.get('store_longitude')
                             seller_address = seller_app_data.get(
                                 'store_address', '')
+
+                            print(f"✅ Found seller application:")
                             print(
-                                f"✅ Found seller location: Lat {seller_lat}, Lon {seller_lon}")
+                                f"   - Latitude: {seller_lat} (type: {type(seller_lat).__name__})")
+                            print(
+                                f"   - Longitude: {seller_lon} (type: {type(seller_lon).__name__})")
+                            print(f"   - Address: {seller_address}")
+
+                            # Convert to float if they're strings
+                            if seller_lat is not None and isinstance(seller_lat, str):
+                                try:
+                                    seller_lat = float(seller_lat)
+                                    print(
+                                        f"   - Converted latitude to float: {seller_lat}")
+                                except ValueError:
+                                    print(
+                                        f"   - ⚠️ Could not convert latitude '{seller_lat}' to float")
+                                    seller_lat = None
+
+                            if seller_lon is not None and isinstance(seller_lon, str):
+                                try:
+                                    seller_lon = float(seller_lon)
+                                    print(
+                                        f"   - Converted longitude to float: {seller_lon}")
+                                except ValueError:
+                                    print(
+                                        f"   - ⚠️ Could not convert longitude '{seller_lon}' to float")
+                                    seller_lon = None
+
+                            if not seller_lat or not seller_lon:
+                                print(
+                                    f"⚠️ WARNING: Seller location is incomplete or invalid!")
+                        else:
+                            print(
+                                f"❌ ERROR: No approved seller application found for {seller_username}")
                 except Exception as e:
-                    print(f"⚠️ Error getting seller location: {e}")
+                    print(f"❌ Error getting seller location: {e}")
+                    import traceback
+                    traceback.print_exc()
 
                 # Calculate shipping fee based on distance
                 shipping_fee = 38.0  # Default base fee
@@ -259,21 +319,60 @@ def register_checkout_routes(app):
                 shipping_rider_portion = 0.0
                 distance_km = 0.0
 
+                print(f"🌍 LOCATION DATA CHECK:")
+                print(
+                    f"   Buyer location - Lat: {user_latitude} (type: {type(user_latitude).__name__}), Lon: {user_longitude} (type: {type(user_longitude).__name__})")
+                print(
+                    f"   Seller location - Lat: {seller_lat} (type: {type(seller_lat).__name__ if seller_lat else 'None'}), Lon: {seller_lon} (type: {type(seller_lon).__name__ if seller_lon else 'None'})")
+
+                # Ensure buyer location is float
+                if user_latitude is not None and isinstance(user_latitude, str):
+                    try:
+                        user_latitude = float(user_latitude)
+                        print(
+                            f"   - Converted buyer latitude to float: {user_latitude}")
+                    except ValueError:
+                        print(
+                            f"   - ⚠️ Could not convert buyer latitude '{user_latitude}' to float")
+                        user_latitude = None
+
+                if user_longitude is not None and isinstance(user_longitude, str):
+                    try:
+                        user_longitude = float(user_longitude)
+                        print(
+                            f"   - Converted buyer longitude to float: {user_longitude}")
+                    except ValueError:
+                        print(
+                            f"   - ⚠️ Could not convert buyer longitude '{user_longitude}' to float")
+                        user_longitude = None
+
                 if seller_lat and seller_lon and user_latitude and user_longitude:
                     try:
                         shipping_fee, shipping_admin_portion, shipping_rider_portion, distance_km = calculate_shipping_fee_by_distance(
                             seller_lat, seller_lon, user_latitude, user_longitude
                         )
+                        print(f"📍 SHIPPING CALCULATION:")
+                        print(f"   - Distance: {distance_km:.2f} km")
+                        print(f"   - Shipping Fee: ₱{shipping_fee:.2f}")
                         print(
-                            f"📍 Distance: {distance_km:.2f}km, Shipping: ₱{shipping_fee:.2f} (Admin: ₱{shipping_admin_portion:.2f}, Rider: ₱{shipping_rider_portion:.2f})")
+                            f"   - Admin Portion (2%): ₱{shipping_admin_portion:.2f}")
+                        print(
+                            f"   - Rider Portion (98%): ₱{shipping_rider_portion:.2f}")
                     except Exception as e:
                         print(
-                            f"⚠️ Error calculating shipping fee by distance: {e}")
+                            f"❌ Error calculating shipping fee by distance: {e}")
+                        import traceback
+                        traceback.print_exc()
                         # Fallback to base fee
                         shipping_admin_portion = shipping_fee * 0.02
                         shipping_rider_portion = shipping_fee * 0.98
                 else:
-                    print(f"⚠️ Missing location data - using base shipping fee")
+                    print(
+                        f"⚠️ WARNING: Missing location data - using base shipping fee ₱38")
+                    if not seller_lat or not seller_lon:
+                        print(f"   - Seller location missing!")
+                    if not user_latitude or not user_longitude:
+                        print(f"   - Buyer location missing!")
                     # Fallback to base fee
                     shipping_admin_portion = shipping_fee * 0.02
                     shipping_rider_portion = shipping_fee * 0.98

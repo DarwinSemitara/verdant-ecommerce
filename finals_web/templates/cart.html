@@ -1091,20 +1091,12 @@
             </div>`;
         }).join('');
 
-        // Calculate shipping fee: ₱38 base for orders up to ₱1000, +₱40 per additional ₱2000 bracket
-        let shippingFee = 38.0;
-        if (subtotal > 1000) {
-          const extraBrackets = Math.floor((subtotal - 1000) / 2000) + 1;
-          shippingFee += extraBrackets * 40;
-        }
-
         // Calculate admin fee: ₱10 fixed + 2% commission
         const adminFixedFee = 10.0;
         const adminCommission = subtotal * 0.02;
         const adminFee = adminFixedFee + adminCommission;
 
-        const total = subtotal + adminFee + shippingFee;
-
+        // Show loading state for shipping fee
         checkoutItemsSummary.innerHTML = `
           <div style="font-weight:600;margin-bottom:0.5rem;color:#2d5016;">${checkoutItemsData.length} item(s)</div>
           <div>${linesHtml}</div>
@@ -1116,12 +1108,71 @@
               <span>Platform Fee</span><span>₱${adminFee.toFixed(2)}</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
-              <span>Shipping Fee</span><span>₱${shippingFee.toFixed(2)}</span>
+              <span>Shipping Fee</span><span style="color:#6c757d;">Calculating...</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;padding-top:0.5rem;border-top:1px solid #e9ecef;">
-              <span>Total</span><span style="color:#2d5016;">₱${total.toFixed(2)}</span>
+              <span>Total</span><span style="color:#6c757d;">Calculating...</span>
             </div>
           </div>`;
+
+        // Fetch actual shipping fee from server based on seller-to-buyer distance
+        const cartIds = checkoutItemsData.map(item => item.cartId);
+        fetch('/api/calculate-shipping-preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cart_ids: cartIds })
+        })
+          .then(r => r.json())
+          .then(data => {
+            let shippingFee = 38.0; // Default fallback
+            if (data.success && data.shipping_fee) {
+              shippingFee = data.shipping_fee;
+            }
+
+            const total = subtotal + adminFee + shippingFee;
+
+            checkoutItemsSummary.innerHTML = `
+              <div style="font-weight:600;margin-bottom:0.5rem;color:#2d5016;">${checkoutItemsData.length} item(s)</div>
+              <div>${linesHtml}</div>
+              <div style="margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid #e9ecef;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Subtotal</span><span>₱${subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Platform Fee</span><span>₱${adminFee.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Shipping Fee</span><span>₱${shippingFee.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;padding-top:0.5rem;border-top:1px solid #e9ecef;">
+                  <span>Total</span><span style="color:#2d5016;">₱${total.toFixed(2)}</span>
+                </div>
+              </div>`;
+          })
+          .catch(err => {
+            console.error('Error calculating shipping:', err);
+            // Fallback to base fee on error
+            const shippingFee = 38.0;
+            const total = subtotal + adminFee + shippingFee;
+
+            checkoutItemsSummary.innerHTML = `
+              <div style="font-weight:600;margin-bottom:0.5rem;color:#2d5016;">${checkoutItemsData.length} item(s)</div>
+              <div>${linesHtml}</div>
+              <div style="margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid #e9ecef;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Subtotal</span><span>₱${subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Platform Fee</span><span>₱${adminFee.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.95rem;">
+                  <span>Shipping Fee</span><span>₱${shippingFee.toFixed(2)}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem;padding-top:0.5rem;border-top:1px solid #e9ecef;">
+                  <span>Total</span><span style="color:#2d5016;">₱${total.toFixed(2)}</span>
+                </div>
+              </div>`;
+          });
       }
 
       function openCheckoutModal() {
