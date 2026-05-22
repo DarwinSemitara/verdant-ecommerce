@@ -3,10 +3,76 @@ from flask import session, request, jsonify, redirect, url_for, render_template,
 from firestore_db import db, get_user_by_username, get_product_by_id, products_v2_ref, product_variations_ref
 from datetime import datetime
 from google.cloud.firestore import SERVER_TIMESTAMP
+import math
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    Calculate distance between two coordinates using Haversine formula.
+    Returns distance in kilometers.
+    """
+    # Radius of Earth in kilometers
+    R = 6371.0
+
+    # Convert degrees to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+
+    # Haversine formula
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+
+    a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * \
+        math.cos(lat2_rad) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = R * c
+    return distance
+
+
+def calculate_shipping_fee_by_distance(seller_lat, seller_lon, buyer_lat, buyer_lon):
+    """
+    Calculate shipping fee based on distance from seller to buyer.
+
+    Pricing structure:
+    - Base fee: ₱38
+    - Additional ₱10 per 50km after the first 50km
+
+    Fee breakdown:
+    - 2% goes to admin
+    - 98% goes to rider
+    - Seller pays nothing (full product price goes to seller)
+
+    Returns: (total_shipping_fee, admin_portion, rider_portion, distance_km)
+    """
+    # Calculate distance in kilometers
+    distance_km = calculate_distance(
+        seller_lat, seller_lon, buyer_lat, buyer_lon)
+
+    # Base fee
+    shipping_fee = 38.0
+
+    # Add ₱10 for every 50km beyond the first 50km
+    if distance_km > 50:
+        additional_50km_blocks = math.ceil((distance_km - 50) / 50)
+        shipping_fee += additional_50km_blocks * 10.0
+
+    # Calculate portions
+    admin_portion = shipping_fee * 0.02  # 2% to admin
+    rider_portion = shipping_fee * 0.98  # 98% to rider
+
+    return shipping_fee, admin_portion, rider_portion, distance_km
 
 
 def calculate_shipping_fee(subtotal: float) -> float:
-    """₱38 base for orders up to ₱1000, +₱40 per additional ₱2000 bracket."""
+    """
+    DEPRECATED: Old shipping fee calculation based on subtotal.
+    Use calculate_shipping_fee_by_distance instead.
+
+    Kept for backward compatibility with old orders.
+    """
     fee = 38.0
     if subtotal > 1000:
         extra_brackets = int((subtotal - 1000) / 2000) + 1
@@ -145,13 +211,75 @@ def register_checkout_routes(app):
                 subtotal = sum(item['quantity'] * item['price']
                                for item in items)
 
-                # Calculate admin fees: ₱10 fixed + 2% commission
+                # Calculate admin fees: ₱10 fixed + 2% commission on product subtotal
                 admin_fixed_fee = 10.0
                 admin_commission = subtotal * 0.02
                 admin_fee = admin_fixed_fee + admin_commission
 
-                # Calculate shipping fee
-                shipping_fee = calculate_shipping_fee(subtotal)
+                # Get seller location from approved seller application
+                seller_lat = None
+                seller_lon = None
+                seller_address = None
+
+                try:
+                    # Get seller's user document to find user_id
+                    seller_user = get_user_by_username(seller_username)
+                    if seller_user:
+                        seller_user_id = seller_user['id']
+
+                        # Get seller's approved application with location
+                        seller_apps = list(db.collection('seller_applications')
+                                           .where('user_id', '==', seller_user_id)
+                                           .where('status', '==', 'approved')
+                                           .limit(1)
+                                           .stream())
+
+                        if not seller_apps:
+                            # Try by username
+                            seller_apps = list(db.collection('seller_applications')
+                                               .where('username', '==', seller_username)
+                                               .where('status', '==', 'approved')
+                                               .limit(1)
+                                               .stream())
+
+                        if seller_apps:
+                            seller_app_data = seller_apps[0].to_dict()
+                            seller_lat = seller_app_data.get('store_latitude')
+                            seller_lon = seller_app_data.get('store_longitude')
+                            seller_address = seller_app_data.get(
+                                'store_address', '')
+                            print(
+                                f"✅ Found seller location: Lat {seller_lat}, Lon {seller_lon}")
+                except Exception as e:
+                    print(f"⚠️ Error getting seller location: {e}")
+
+                # Calculate shipping fee based on distance
+                shipping_fee = 38.0  # Default base fee
+                shipping_admin_portion = 0.0
+                shipping_rider_portion = 0.0
+                distance_km = 0.0
+
+                if seller_lat and seller_lon and user_latitude and user_longitude:
+                    try:
+                        shipping_fee, shipping_admin_portion, shipping_rider_portion, distance_km = calculate_shipping_fee_by_distance(
+                            seller_lat, seller_lon, user_latitude, user_longitude
+                        )
+                        print(
+                            f"📍 Distance: {distance_km:.2f}km, Shipping: ₱{shipping_fee:.2f} (Admin: ₱{shipping_admin_portion:.2f}, Rider: ₱{shipping_rider_portion:.2f})")
+                    except Exception as e:
+                        print(
+                            f"⚠️ Error calculating shipping fee by distance: {e}")
+                        # Fallback to base fee
+                        shipping_admin_portion = shipping_fee * 0.02
+                        shipping_rider_portion = shipping_fee * 0.98
+                else:
+                    print(f"⚠️ Missing location data - using base shipping fee")
+                    # Fallback to base fee
+                    shipping_admin_portion = shipping_fee * 0.02
+                    shipping_rider_portion = shipping_fee * 0.98
+
+                # Add shipping admin portion to total admin fee
+                total_admin_fee = admin_fee + shipping_admin_portion
 
                 # Total amount includes subtotal + admin fee + shipping
                 total_amount = subtotal + admin_fee + shipping_fee
@@ -162,10 +290,25 @@ def register_checkout_routes(app):
                     'username': session['username'],
                     'seller_username': seller_username,
                     'subtotal': subtotal,
-                    'admin_fee': admin_fee,
+                    'admin_fee': admin_fee,  # Admin fee from product commission
                     'admin_fixed_fee': admin_fixed_fee,
                     'admin_commission': admin_commission,
                     'shipping_fee': shipping_fee,
+                    'shipping_admin_portion': shipping_admin_portion,  # Admin portion from shipping
+                    'shipping_rider_portion': shipping_rider_portion,  # Rider portion from shipping
+                    # Total admin earnings (product commission + shipping portion)
+                    'total_admin_earnings': total_admin_fee,
+                    'distance_km': distance_km,  # Distance from seller to buyer
+                    'seller_location': {
+                        'latitude': seller_lat,
+                        'longitude': seller_lon,
+                        'address': seller_address
+                    } if seller_lat and seller_lon else None,
+                    'buyer_location': {
+                        'latitude': user_latitude,
+                        'longitude': user_longitude,
+                        'address': shipping_address
+                    },
                     'total_amount': total_amount,
                     'status': 'pending',
                     'shipping_address': shipping_address,

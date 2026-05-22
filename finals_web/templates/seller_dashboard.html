@@ -21,15 +21,17 @@
         </h5>
         <p class="mb-2">
           {% if ban_permanent %}
-          <strong>Your account has been permanently banned.</strong> This is your third violation. You can no longer accept orders.
+          <strong>Your account has been permanently banned.</strong> This is your third violation. You can no longer
+          accept orders.
           {% elif ban_days_remaining %}
-          <strong>Your account is temporarily banned for {{ ban_days_remaining }} day(s).</strong> You cannot accept orders during this period.
+          <strong>Your account is temporarily banned for {{ ban_days_remaining }} day(s).</strong> You cannot accept
+          orders during this period.
           {% else %}
           <strong>Your account has been banned.</strong> You cannot accept orders at this time.
           {% endif %}
         </p>
         {% if ban_reason %}
-        <p class="mb-2"><strong>Reason:</strong> 
+        <p class="mb-2"><strong>Reason:</strong>
           {% if ban_reason == 'fake_listings' %}
           Fake or Misleading Listings - Products misrepresented in description or images.
           {% elif ban_reason == 'non_delivery' %}
@@ -42,19 +44,19 @@
         </p>
         {% endif %}
         {% if ban_count %}
-        <p class="mb-2"><small class="text-muted">This is ban #{{ ban_count }}. 
-          {% if ban_count == 1 %}
-          Next violation will result in a 3-day ban.
-          {% elif ban_count == 2 %}
-          Next violation will result in a permanent ban.
-          {% endif %}
-        </small></p>
+        <p class="mb-2"><small class="text-muted">This is ban #{{ ban_count }}.
+            {% if ban_count == 1 %}
+            Next violation will result in a 3-day ban.
+            {% elif ban_count == 2 %}
+            Next violation will result in a permanent ban.
+            {% endif %}
+          </small></p>
         {% endif %}
         <hr style="margin: 1rem 0;">
         <p class="mb-0" style="font-size: 0.9rem;">
-          If you believe this was a mistake, you can 
-          <a href="mailto:darwinjeffsemitara@gmail.com?subject=Ban%20Appeal%20-%20{{ session.username }}&body=Hello%20Verdant%20Team%2C%0A%0AI%20am%20writing%20to%20appeal%20the%20ban%20on%20my%20account.%0A%0AUsername%3A%20{{ session.username }}%0AReason%20for%20appeal%3A%20%5BExplain%20why%20you%20believe%20this%20was%20a%20mistake%5D%0A%0AThank%20you%20for%20your%20consideration." 
-             class="alert-link" style="font-weight: 600;">submit a report</a> to our team for review.
+          If you believe this was a mistake, you can
+          <a href="mailto:darwinjeffsemitara@gmail.com?subject=Ban%20Appeal%20-%20{{ session.username }}&body=Hello%20Verdant%20Team%2C%0A%0AI%20am%20writing%20to%20appeal%20the%20ban%20on%20my%20account.%0A%0AUsername%3A%20{{ session.username }}%0AReason%20for%20appeal%3A%20%5BExplain%20why%20you%20believe%20this%20was%20a%20mistake%5D%0A%0AThank%20you%20for%20your%20consideration."
+            class="alert-link" style="font-weight: 600;">submit a report</a> to our team for review.
         </p>
       </div>
     </div>
@@ -63,10 +65,54 @@
   {% endif %}
 
   {% if not seller_approved %}
-  {% if application_status == 'pending' %}
+  {% if application_status == 'rejected' %}
+  <!-- Application Rejected - Blocking Modal -->
+  <div
+    style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div
+      style="background: #fff; border-radius: 1rem; padding: 3rem; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+      <h2 style="color: #dc3545; margin-bottom: 1rem;">Application Rejected</h2>
+      <p style="color: #6b7280; margin-bottom: 0.5rem; line-height: 1.6;">
+        Unfortunately, your seller application has been rejected by our admin team.
+      </p>
+      {% if rejection_reason %}
+      <div
+        style="background: #fff5f5; border: 1px solid #fecaca; border-radius: 0.5rem; padding: 1rem; margin: 1.5rem 0; text-align: left;">
+        <p style="color: #991b1b; margin: 0; font-size: 0.9rem;"><strong>Reason:</strong></p>
+        <p style="color: #7f1d1d; margin: 0.5rem 0 0 0; font-size: 0.9rem;">{{ rejection_reason }}</p>
+      </div>
+      {% endif %}
+      {% if application_submitted_at %}
+      <p style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Submitted: {{ application_submitted_at }}
+      </p>
+      {% endif %}
+      <p style="color: #6b7280; margin-bottom: 2rem; line-height: 1.6; font-size: 0.9rem;">
+        You can reapply by submitting a new application below, or contact support if you believe this was a mistake.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <a href="{{ url_for('reapply_seller') }}"
+          style="display: inline-block; padding: 0.75rem 2rem; background: #198754; color: #fff; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">
+          Reapply
+        </a>
+        <a href="mailto:support@verdant.com?subject=Seller%20Application%20Appeal%20-%20{{ session.username }}"
+          style="display: inline-block; padding: 0.75rem 2rem; background: #6c757d; color: #fff; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">
+          Contact Support
+        </a>
+      </div>
+      <a href="{{ url_for('logout') }}"
+        style="display: inline-block; margin-top: 1rem; padding: 0.5rem 1.5rem; background: transparent; color: #6c757d; text-decoration: none; border-radius: 0.5rem; font-weight: 500; font-size: 0.9rem;">
+        Logout
+      </a>
+    </div>
+  </div>
+  {% elif application_status == 'pending' %}
   <!-- Application Under Review - Blocking Modal -->
-  <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-    <div style="background: #fff; border-radius: 1rem; padding: 3rem; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+  <div
+    style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+    <div
+      style="background: #fff; border-radius: 1rem; padding: 3rem; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
       <div style="font-size: 4rem; margin-bottom: 1rem;">⏳</div>
       <h2 style="color: #111827; margin-bottom: 1rem;">Application Under Review</h2>
       <p style="color: #6b7280; margin-bottom: 0.5rem; line-height: 1.6;">
@@ -78,9 +124,11 @@
       </p>
       {% endif %}
       <p style="color: #6b7280; margin-bottom: 2rem; line-height: 1.6;">
-        You will be notified once your application is approved. Please check back later or contact support if you have questions.
+        You will be notified once your application is approved. Please check back later or contact support if you have
+        questions.
       </p>
-      <a href="{{ url_for('logout') }}" style="display: inline-block; padding: 0.75rem 2rem; background: #111827; color: #fff; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">
+      <a href="{{ url_for('logout') }}"
+        style="display: inline-block; padding: 0.75rem 2rem; background: #111827; color: #fff; text-decoration: none; border-radius: 0.5rem; font-weight: 600;">
         Logout
       </a>
     </div>
@@ -97,11 +145,12 @@
             <p class="text-muted">Before you can start selling, please complete your store information</p>
           </div>
 
-          <form id="sellerApplicationForm" method="POST" action="{{ url_for('submit_seller_application') }}" enctype="multipart/form-data">
+          <form id="sellerApplicationForm" method="POST" action="{{ url_for('submit_seller_application') }}"
+            enctype="multipart/form-data">
             <!-- Store Information -->
             <div class="mb-4">
               <h5 class="mb-3"><i class="bi bi-shop-window me-2"></i>Store Information</h5>
-              
+
               <div class="mb-3">
                 <label class="form-label fw-semibold">Store Name <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" name="store_name" placeholder="Enter your store name" required>
@@ -110,7 +159,8 @@
 
               <div class="mb-3">
                 <label class="form-label fw-semibold">Store Description <span class="text-danger">*</span></label>
-                <textarea class="form-control" name="store_description" rows="4" placeholder="Describe what your store sells..." required></textarea>
+                <textarea class="form-control" name="store_description" rows="4"
+                  placeholder="Describe what your store sells..." required></textarea>
                 <small class="text-muted">Tell customers about your products and services</small>
               </div>
 
@@ -135,12 +185,32 @@
                   <input type="tel" class="form-control" name="store_phone" placeholder="09XXXXXXXXX" required>
                 </div>
               </div>
+
+              <!-- Store Location -->
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Store Location <span class="text-danger">*</span></label>
+                <div id="locationDisplay"
+                  style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 1rem; margin-bottom: 0.5rem; min-height: 60px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                  <span id="locationText">Click "Select Location" to pin your store on the map</span>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openLocationPicker()">
+                  <i class="bi bi-geo-alt"></i> Select Location on Map
+                </button>
+                <input type="hidden" name="store_latitude" id="storeLatitude" required>
+                <input type="hidden" name="store_longitude" id="storeLongitude" required>
+                <input type="hidden" name="store_address" id="storeAddress" required>
+                <input type="hidden" name="store_street" id="storeStreet">
+                <input type="hidden" name="store_barangay" id="storeBarangay">
+                <input type="hidden" name="store_city" id="storeCity">
+                <small class="text-muted d-block mt-2">This location will be used to calculate shipping fees for your
+                  customers</small>
+              </div>
             </div>
 
             <!-- Business Documents -->
             <div class="mb-4">
               <h5 class="mb-3"><i class="bi bi-file-earmark-text me-2"></i>Business Documents</h5>
-              
+
               <div class="mb-3">
                 <label class="form-label fw-semibold">Business Permit/DTI Registration (Optional)</label>
                 <input type="file" class="form-control" name="business_permit" accept="image/*,.pdf">
@@ -159,7 +229,8 @@
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="agreeTerms" required>
                 <label class="form-check-label" for="agreeTerms">
-                  I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Seller Policy</a>
+                  I agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#"
+                    target="_blank">Seller Policy</a>
                 </label>
               </div>
             </div>
@@ -175,16 +246,242 @@
     </div>
   </div>
   <script>
-    (function(){
+    (function () {
       var form = document.getElementById('sellerApplicationForm');
       var btn = document.getElementById('submitApplicationBtn');
       if (form && btn) {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function (e) {
+          // Validate location is selected
+          var lat = document.getElementById('storeLatitude');
+          var lng = document.getElementById('storeLongitude');
+          var address = document.getElementById('storeAddress');
+
+          if (!lat || !lng || !address || !lat.value || !lng.value || !address.value) {
+            e.preventDefault();
+            alert('Please select your store location on the map before submitting.');
+            return false;
+          }
+
           btn.disabled = true;
           btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
         });
       }
     })();
+
+    // Location Picker Modal
+    var locationModal = null;
+    var selectedLocation = null;
+
+    function openLocationPicker() {
+      // Create modal if it doesn't exist
+      if (!locationModal) {
+        var modalHTML = `
+          <div id="locationPickerModal" style="position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+            <div style="background: #fff; border-radius: 1rem; padding: 1.5rem; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h5 style="margin: 0; color: #111827; font-weight: 700;">Select Store Location</h5>
+                <button onclick="closeLocationPicker()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">&times;</button>
+              </div>
+              <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 1rem;">Tap on the map to pin your store's exact location. This will be used to calculate shipping fees.</p>
+              <div id="mapContainer" style="width: 100%; height: 400px; border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem;"></div>
+              <div id="selectedAddressDisplay" style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; display: none;">
+                <p style="margin: 0; font-size: 0.9rem; color: #495057;"><strong>Selected Location:</strong></p>
+                <p id="selectedAddressText" style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #6c757d;"></p>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button onclick="closeLocationPicker()" style="flex: 1; padding: 0.75rem; background: #6c757d; color: #fff; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">Cancel</button>
+                <button onclick="confirmLocation()" style="flex: 1; padding: 0.75rem; background: #198754; color: #fff; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer;">Confirm Location</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        locationModal = document.getElementById('locationPickerModal');
+      }
+
+      locationModal.style.display = 'flex';
+      initMap();
+    }
+
+    function closeLocationPicker() {
+      if (locationModal) {
+        locationModal.style.display = 'none';
+      }
+    }
+
+    function initMap() {
+      var mapContainer = document.getElementById('mapContainer');
+      if (!mapContainer) return;
+
+      // Default to Manila
+      var defaultLat = 14.5995;
+      var defaultLng = 120.9842;
+
+      // Try to get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          defaultLat = position.coords.latitude;
+          defaultLng = position.coords.longitude;
+          renderMap(defaultLat, defaultLng);
+        }, function () {
+          renderMap(defaultLat, defaultLng);
+        });
+      } else {
+        renderMap(defaultLat, defaultLng);
+      }
+    }
+
+    function renderMap(lat, lng) {
+      var mapContainer = document.getElementById('mapContainer');
+      mapContainer.innerHTML = `
+        <div id="leafletMap" style="width: 100%; height: 100%;"></div>
+      `;
+
+      // Use Leaflet for the map
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = function () {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+
+        var map = L.map('leafletMap').setView([lat, lng], 15);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        var marker = null;
+
+        map.on('click', function (e) {
+          var clickedLat = e.latlng.lat;
+          var clickedLng = e.latlng.lng;
+
+          if (marker) {
+            map.removeLayer(marker);
+          }
+
+          marker = L.marker([clickedLat, clickedLng], {
+            icon: L.icon({
+              iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+              shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41]
+            })
+          }).addTo(map);
+
+          selectedLocation = { lat: clickedLat, lng: clickedLng };
+          reverseGeocode(clickedLat, clickedLng);
+        });
+      };
+      document.head.appendChild(script);
+    }
+
+    function reverseGeocode(lat, lng) {
+      document.getElementById('selectedAddressDisplay').style.display = 'block';
+      document.getElementById('selectedAddressText').textContent = 'Getting address...';
+
+      // Try Google Geocoding API first
+      fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyBXRk8JG6K_TYqPvNqFLqGZwKkRqQqPvNs`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.status === 'OK' && data.results && data.results.length > 0) {
+            var result = data.results[0];
+            var components = result.address_components;
+
+            var street = '';
+            var streetNumber = '';
+            var barangay = '';
+            var city = '';
+
+            components.forEach(function (component) {
+              var types = component.types;
+              if (types.includes('street_number')) {
+                streetNumber = component.long_name;
+              } else if (types.includes('route')) {
+                street = component.long_name;
+              } else if (types.includes('neighborhood') || types.includes('sublocality_level_1')) {
+                if (!barangay) barangay = component.long_name;
+              } else if (types.includes('locality') || types.includes('administrative_area_level_2')) {
+                if (!city) city = component.long_name;
+              }
+            });
+
+            if (streetNumber && street) {
+              street = streetNumber + ' ' + street;
+            }
+
+            var fullAddress = result.formatted_address;
+
+            selectedLocation.address = fullAddress;
+            selectedLocation.street = street;
+            selectedLocation.barangay = barangay;
+            selectedLocation.city = city;
+
+            document.getElementById('selectedAddressText').textContent = fullAddress;
+          } else {
+            // Fallback to Nominatim
+            return fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+              headers: { 'User-Agent': 'VerdantApp/1.0' }
+            });
+          }
+        })
+        .then(r => r ? r.json() : null)
+        .then(data => {
+          if (data && data.address) {
+            var address = data.address;
+            var street = address.road || address.street || '';
+            var barangay = address.suburb || address.village || '';
+            var city = address.city || address.town || address.municipality || '';
+
+            var fullAddress = data.display_name;
+
+            selectedLocation.address = fullAddress;
+            selectedLocation.street = street;
+            selectedLocation.barangay = barangay;
+            selectedLocation.city = city;
+
+            document.getElementById('selectedAddressText').textContent = fullAddress;
+          }
+        })
+        .catch(function () {
+          selectedLocation.address = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+          document.getElementById('selectedAddressText').textContent = selectedLocation.address;
+        });
+    }
+
+    function confirmLocation() {
+      if (!selectedLocation) {
+        alert('Please select a location on the map first.');
+        return;
+      }
+
+      document.getElementById('storeLatitude').value = selectedLocation.lat;
+      document.getElementById('storeLongitude').value = selectedLocation.lng;
+      document.getElementById('storeAddress').value = selectedLocation.address || '';
+      document.getElementById('storeStreet').value = selectedLocation.street || '';
+      document.getElementById('storeBarangay').value = selectedLocation.barangay || '';
+      document.getElementById('storeCity').value = selectedLocation.city || '';
+
+      var locationText = document.getElementById('locationText');
+      locationText.innerHTML = `
+        <div style="text-align: left; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <i class="bi bi-geo-alt-fill" style="color: #198754;"></i>
+            <strong style="color: #198754;">Location Selected</strong>
+          </div>
+          <div style="font-size: 0.9rem; color: #495057;">${selectedLocation.address}</div>
+          <div style="font-size: 0.8rem; color: #6c757d; margin-top: 0.25rem;">Lat: ${selectedLocation.lat.toFixed(6)}, Lng: ${selectedLocation.lng.toFixed(6)}</div>
+        </div>
+      `;
+
+      document.getElementById('locationDisplay').style.background = '#d1e7dd';
+      document.getElementById('locationDisplay').style.borderColor = '#198754';
+
+      closeLocationPicker();
+    }
   </script>
   {% endif %}
   {% else %}
@@ -263,14 +560,15 @@
               <span class="status-count" id="metricDeliveredOrders">0</span>
             </div>
           </div>
-          <a href="{{ url_for('seller_orders') }}" class="btn w-100 mt-3 text-white" style="background-color: #2c3e50; border-color: #2c3e50;">View all orders</a>
+          <a href="{{ url_for('seller_orders') }}" class="btn w-100 mt-3 text-white"
+            style="background-color: #2c3e50; border-color: #2c3e50;">View all orders</a>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    window.initSellerDashboard = function() {
+    window.initSellerDashboard = function () {
       var canvas = document.getElementById('salesTrendChart');
       if (!canvas || typeof Chart === 'undefined') return;
       var ctx = canvas.getContext('2d');
@@ -279,8 +577,8 @@
       }
 
       fetch("{{ url_for('api_get_seller_orders') }}")
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
           if (!data || !data.success) return;
           var orders = data.orders || [];
           var byDate = {};
@@ -297,7 +595,7 @@
           var todayIso = new Date().toISOString().slice(0, 10);
           var todayRevenue = 0;
 
-          orders.forEach(function(o) {
+          orders.forEach(function (o) {
             var amount = Number(o.total_amount) || 0;
             var dateStr = (o.order_date || '').slice(0, 10);
             var statusKey = (o.status || '').toLowerCase();
@@ -319,7 +617,7 @@
           });
 
           var labels = Object.keys(byDate).sort();
-          var series = labels.map(function(d) { return byDate[d]; });
+          var series = labels.map(function (d) { return byDate[d]; });
 
           var totalRevenueEl = document.getElementById('metricTotalRevenue');
           var totalOrdersEl = document.getElementById('metricTotalOrders');
@@ -375,7 +673,7 @@
                 legend: { display: false },
                 tooltip: {
                   callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                       var v = context.parsed.y || 0;
                       return formatCurrency(v);
                     }
@@ -397,20 +695,20 @@
                     color: 'rgba(148, 163, 184, 0.25)'
                   },
                   ticks: {
-                    callback: function(value) { return formatCurrency(value); }
+                    callback: function (value) { return formatCurrency(value); }
                   }
                 }
               }
             }
           });
         })
-        .catch(function(e) {
+        .catch(function (e) {
           console.error('Seller dashboard load error:', e);
         });
     };
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function () {
         if (window.initSellerDashboard) window.initSellerDashboard();
       });
     } else {
@@ -422,81 +720,104 @@
 
 
 <style>
-.metric-card {
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  text-decoration: none;
-  color: inherit;
-}
+  .metric-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+  }
 
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  text-decoration: none;
-  color: inherit;
-}
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: inherit;
+  }
 
-.metric-body {
-  text-align: center;
-}
+  .metric-body {
+    text-align: center;
+  }
 
-.metric-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-}
+  .metric-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
 
-.metric-icon.primary { background: rgba(44, 62, 80, 0.1); color: #2c3e50; }
-.metric-icon.success { background: rgba(25, 135, 84, 0.1); color: #198754; }
-.metric-icon.warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
-.metric-icon.danger { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
-.metric-icon.info { background: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
-.metric-icon.secondary { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+  .metric-icon.primary {
+    background: rgba(44, 62, 80, 0.1);
+    color: #2c3e50;
+  }
 
-.metric-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #212529;
-  margin-bottom: 0.5rem;
-}
+  .metric-icon.success {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+  }
 
-.metric-label {
-  font-size: 0.875rem;
-  color: #6c757d;
-  font-weight: 500;
-}
+  .metric-icon.warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+  }
 
-.header-chip {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
+  .metric-icon.danger {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
 
-.chip-success {
-  background: rgba(25, 135, 84, 0.1);
-  color: #198754;
-}
+  .metric-icon.info {
+    background: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+  }
 
-.status-count {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #212529;
-  line-height: 1;
-  margin-bottom: 0.25rem;
-}
+  .metric-icon.secondary {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+  }
 
-.status-label {
-  font-size: 0.75rem;
-  color: #6c757d;
-  font-weight: 500;
-}
+  .metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  .header-chip {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .chip-success {
+    background: rgba(25, 135, 84, 0.1);
+    color: #198754;
+  }
+
+  .status-count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .status-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
 </style>
 {% endblock %}

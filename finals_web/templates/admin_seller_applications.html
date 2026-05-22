@@ -8,85 +8,223 @@
     box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
     border: 1px solid #e5e7eb;
   }
+
   .seller-app-card .table td,
-  .seller-app-card .table th { color: #111827; }
-  .seller-app-card .table td .text-muted { color: #6b7280 !important; }
+  .seller-app-card .table th {
+    color: #111827;
+  }
+
+  .seller-app-card .table td .text-muted {
+    color: #6b7280 !important;
+  }
 
   /* Red outline for 3rd-ban sellers */
-  tr.ban-permanent-row td:first-child { border-left: 3px solid #dc3545; }
-  tr.ban-permanent-row { background: #fff5f5; }
+  tr.ban-permanent-row td:first-child {
+    border-left: 3px solid #dc3545;
+  }
+
+  tr.ban-permanent-row {
+    background: #fff5f5;
+  }
 
   /* Manage modal */
   .manage-modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.45); z-index: 1055;
-    align-items: center; justify-content: center;
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1055;
+    align-items: center;
+    justify-content: center;
     overflow-y: auto;
     padding: 2rem 0;
   }
-  .manage-modal-overlay.show { display: flex; }
+
+  .manage-modal-overlay.show {
+    display: flex;
+  }
+
   .manage-modal-box {
-    background: #fff; border-radius: 0.75rem;
-    padding: 1.75rem; max-width: 520px; width: 95%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 1.75rem;
+    max-width: 520px;
+    width: 95%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     margin: auto;
     max-height: 90vh;
     overflow-y: auto;
   }
-  .manage-modal-box h5 { color: #111827; font-weight: 700; margin-bottom: 0.25rem; }
-  .manage-section { border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem; }
-  .manage-section h6 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #6b7280; margin-bottom: 0.75rem; }
-  .manage-section .duration-highlight { 
-    background: #fef3c7; 
-    padding: 0.5rem; 
-    border-radius: 0.375rem; 
-    font-weight: 600; 
+
+  .manage-modal-box h5 {
+    color: #111827;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  .manage-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .manage-section h6 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+  }
+
+  .manage-section .duration-highlight {
+    background: #fef3c7;
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
     color: #92400e;
     margin-bottom: 0.75rem;
     font-size: 0.9rem;
   }
-  .reason-option { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; }
-  .reason-option input { margin-top: 0.2rem; accent-color: #111827; }
-  .reason-option label { cursor: pointer; font-size: 0.9rem; color: #374151; }
-  .reason-option label small { display: block; color: #9ca3af; font-size: 0.8rem; }
+
+  .reason-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+  }
+
+  .reason-option input {
+    margin-top: 0.2rem;
+    accent-color: #111827;
+  }
+
+  .reason-option label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #374151;
+  }
+
+  .reason-option label small {
+    display: block;
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+
   .btn-manage-action {
-    width: 100%; padding: 0.6rem; border: none; border-radius: 0.5rem;
-    font-weight: 600; font-size: 0.9rem; cursor: pointer; margin-top: 0.5rem;
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
     transition: opacity 0.15s;
   }
-  .btn-manage-action:hover { opacity: 0.85; }
-  .btn-delete-action { background: #dc3545; color: #fff; }
-  .btn-ban-action { background: #111827; color: #fff; }
-  .btn-cancel-manage { background: #f3f4f6; color: #374151; }
+
+  .btn-manage-action:hover {
+    opacity: 0.85;
+  }
+
+  .btn-delete-action {
+    background: #dc3545;
+    color: #fff;
+  }
+
+  .btn-ban-action {
+    background: #111827;
+    color: #fff;
+  }
+
+  .btn-cancel-manage {
+    background: #f3f4f6;
+    color: #374151;
+  }
 
   /* Confirmation modal */
   .confirm-modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.6); z-index: 1060;
-    align-items: center; justify-content: center;
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1060;
+    align-items: center;
+    justify-content: center;
   }
-  .confirm-modal-overlay.show { display: flex; }
+
+  .confirm-modal-overlay.show {
+    display: flex;
+  }
+
   .confirm-modal-box {
-    background: #fff; border-radius: 0.75rem;
-    padding: 1.5rem; max-width: 380px; width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   }
-  .confirm-modal-box h5 { color: #111827; font-weight: 700; margin-bottom: 0.75rem; font-size: 1.1rem; }
-  .confirm-modal-box p { color: #6b7280; margin-bottom: 1.25rem; line-height: 1.5; font-size: 0.9rem; }
-  .confirm-modal-actions { display: flex; gap: 0.5rem; }
-  .confirm-modal-actions button { flex: 1; padding: 0.65rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+
+  .confirm-modal-box h5 {
+    color: #111827;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  .confirm-modal-box p {
+    color: #6b7280;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+    font-size: 0.9rem;
+  }
+
+  .confirm-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .confirm-modal-actions button {
+    flex: 1;
+    padding: 0.65rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
 
   /* Success notification */
   .success-toast {
-    position: fixed; top: 2rem; right: 2rem; z-index: 1070;
-    background: #10b981; color: #fff; padding: 1rem 1.5rem;
-    border-radius: 0.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    display: none; animation: slideIn 0.3s ease;
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 1070;
+    background: #10b981;
+    color: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    display: none;
+    animation: slideIn 0.3s ease;
   }
-  .success-toast.show { display: block; }
+
+  .success-toast.show {
+    display: block;
+  }
+
   @keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
 </style>
 {% endblock %}
@@ -128,15 +266,14 @@
         <tbody>
           {% for app in applications %}
           <tr data-status="{% if app.account_status == 'deleted' %}deleted{% else %}{{ app.status }}{% endif %}"
-              data-username="{{ app.username }}"
-              {% if app.ban_permanent %} class="ban-permanent-row"{% endif %}>
+            data-username="{{ app.username }}" {% if app.ban_permanent %} class="ban-permanent-row" {% endif %}>
             <td>
               <div class="fw-semibold text-dark d-flex align-items-center gap-1">
                 {{ app.store_name }}
                 {% if app.ban_permanent %}
-                  <span class="badge bg-danger ms-1" title="3rd ban — consider deletion">3× banned</span>
+                <span class="badge bg-danger ms-1" title="3rd ban — consider deletion">3× banned</span>
                 {% elif app.ban_count and app.ban_count > 0 %}
-                  <span class="badge bg-warning text-dark ms-1">{{ app.ban_count }}× banned</span>
+                <span class="badge bg-warning text-dark ms-1">{{ app.ban_count }}× banned</span>
                 {% endif %}
               </div>
               <div class="text-muted small">{{ app.store_phone or 'N/A' }}</div>
@@ -148,13 +285,13 @@
             <td class="text-muted small">{{ app.store_category or 'N/A' }}</td>
             <td class="status-cell">
               {% if app.account_status == 'deleted' %}
-                <span class="text-danger fw-semibold">Deleted</span>
+              <span class="text-danger fw-semibold">Deleted</span>
               {% elif app.status == 'pending' %}
-                <span class="text-warning fw-semibold">Pending</span>
+              <span class="text-warning fw-semibold">Pending</span>
               {% elif app.status == 'approved' %}
-                <span class="text-success fw-semibold">Approved</span>
+              <span class="text-success fw-semibold">Approved</span>
               {% else %}
-                <span class="text-danger fw-semibold">Rejected</span>
+              <span class="text-danger fw-semibold">Rejected</span>
               {% endif %}
             </td>
             <td class="text-muted small">
@@ -162,27 +299,32 @@
             </td>
             <td class="text-end">
               {% if app.account_status == 'deleted' %}
-              <button type="button" class="btn btn-sm btn-outline-success me-1" onclick="undoDelete('{{ app.username }}', '{{ app.store_name }}')">
+              <button type="button" class="btn btn-sm btn-outline-success me-1"
+                onclick="undoDelete('{{ app.username }}', '{{ app.store_name }}')">
                 Undo
               </button>
-              <button type="button" class="btn btn-sm btn-danger" onclick="permanentDelete('{{ app.username }}', '{{ app.store_name }}')">
+              <button type="button" class="btn btn-sm btn-danger"
+                onclick="permanentDelete('{{ app.username }}', '{{ app.store_name }}')">
                 Delete
               </button>
               {% else %}
-              <a href="{{ url_for('admin_seller_application_detail', application_id=app.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+              <a href="{{ url_for('admin_seller_application_detail', application_id=app.id) }}"
+                class="btn btn-sm btn-outline-secondary me-1">
                 View
               </a>
               {% if app.status == 'pending' %}
-              <button type="button" class="btn btn-sm btn-success me-1" onclick="handleApplication('{{ app.id }}', 'approve', this)">
+              <button type="button" class="btn btn-sm btn-success me-1"
+                onclick="handleApplication('{{ app.id }}', 'approve', this)">
                 Approve
               </button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="handleApplication('{{ app.id }}', 'reject', this)">
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                onclick="handleApplication('{{ app.id }}', 'reject', this)">
                 Reject
               </button>
               {% endif %}
               {% if app.status == 'approved' %}
               <button type="button" class="btn btn-sm btn-outline-dark"
-                      onclick="openManageModal('{{ app.username }}', '{{ app.store_name }}', {{ app.ban_count or 0 }})">
+                onclick="openManageModal('{{ app.username }}', '{{ app.store_name }}', {{ app.ban_count or 0 }})">
                 Manage
               </button>
               {% endif %}
@@ -208,7 +350,8 @@
         <h5 id="manageModalTitle">Manage Seller</h5>
         <p class="text-muted small mb-0" id="manageModalSub"></p>
       </div>
-      <button type="button" onclick="closeManageModal()" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9ca3af;">&times;</button>
+      <button type="button" onclick="closeManageModal()"
+        style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#9ca3af;">&times;</button>
     </div>
 
     <!-- Delete section -->
@@ -236,15 +379,18 @@
       <div class="duration-highlight" id="banDurationNote"></div>
       <div class="reason-option">
         <input type="radio" name="ban_reason" id="ban_fake" value="fake_listings">
-        <label for="ban_fake">Fake or Misleading Listings <small>Products misrepresented in description or images.</small></label>
+        <label for="ban_fake">Fake or Misleading Listings <small>Products misrepresented in description or
+            images.</small></label>
       </div>
       <div class="reason-option">
         <input type="radio" name="ban_reason" id="ban_nondelivery" value="non_delivery">
-        <label for="ban_nondelivery">Non-Delivery of Orders <small>Consistently failing to fulfil accepted orders.</small></label>
+        <label for="ban_nondelivery">Non-Delivery of Orders <small>Consistently failing to fulfil accepted
+            orders.</small></label>
       </div>
       <div class="reason-option">
         <input type="radio" name="ban_reason" id="ban_harassment" value="harassment">
-        <label for="ban_harassment">Harassment / Abuse <small>Abusive behaviour toward buyers or platform staff.</small></label>
+        <label for="ban_harassment">Harassment / Abuse <small>Abusive behaviour toward buyers or platform
+            staff.</small></label>
       </div>
       <button class="btn-manage-action btn-ban-action" id="banBtn" onclick="confirmManage('ban')">Ban Account</button>
     </div>
@@ -260,7 +406,8 @@
     <p id="confirmMessage">Are you sure you want to proceed?</p>
     <div class="confirm-modal-actions">
       <button onclick="closeConfirmModal()" style="background: #f3f4f6; color: #374151;">Cancel</button>
-      <button id="confirmBtn" onclick="executeConfirmedAction()" style="background: #dc3545; color: #fff;">Confirm</button>
+      <button id="confirmBtn" onclick="executeConfirmedAction()"
+        style="background: #dc3545; color: #fff;">Confirm</button>
     </div>
   </div>
 </div>
@@ -352,33 +499,6 @@
     _pendingAction = null;
   }
 
-  function executeConfirmedAction() {
-    if (!_pendingAction) return;
-
-    const { action, reason, username } = _pendingAction;
-
-    fetch(`/admin/seller/manage/${username}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, reason })
-    })
-    .then(r => r.json())
-    .then(data => {
-      closeConfirmModal();
-      closeManageModal();
-      if (data.success) {
-        showSuccessToast(data.message);
-        setTimeout(() => location.reload(), 1500);
-      } else {
-        alert(data.message || 'An error occurred.');
-      }
-    })
-    .catch(() => {
-      closeConfirmModal();
-      alert('An error occurred. Please try again.');
-    });
-  }
-
   function undoDelete(username, storeName) {
     if (!confirm(`Restore @${username}? The account will be reactivated and moved back to approved sellers.`)) return;
 
@@ -386,22 +506,22 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        showSuccessToast(data.message);
-        setTimeout(() => location.reload(), 1500);
-      } else {
-        alert(data.message || 'An error occurred.');
-      }
-    })
-    .catch(() => alert('An error occurred. Please try again.'));
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          showSuccessToast(data.message);
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          alert(data.message || 'An error occurred.');
+        }
+      })
+      .catch(() => alert('An error occurred. Please try again.'));
   }
 
   function permanentDelete(username, storeName) {
     // Show confirmation modal
     _pendingAction = { type: 'permanent_delete', username, storeName };
-    
+
     const confirmTitle = document.getElementById('confirmTitle');
     const confirmMessage = document.getElementById('confirmMessage');
     const confirmBtn = document.getElementById('confirmBtn');
@@ -414,30 +534,135 @@
     document.getElementById('confirmModal').classList.add('show');
   }
 
+  function showSuccessToast(message) {
+    const toast = document.getElementById('successToast');
+    document.getElementById('successMessage').textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Close modals on backdrop click
+  document.getElementById('manageModal').addEventListener('click', function (e) {
+    if (e.target === this) closeManageModal();
+  });
+  document.getElementById('confirmModal').addEventListener('click', function (e) {
+    if (e.target === this) closeConfirmModal();
+  });
+
+  function handleApplication(userId, action, btn) {
+    // Store pending action
+    _pendingAction = { type: 'application_action', userId, action, btn };
+
+    const confirmTitle = document.getElementById('confirmTitle');
+    const confirmMessage = document.getElementById('confirmMessage');
+    const confirmBtn = document.getElementById('confirmBtn');
+
+    if (action === 'approve') {
+      confirmTitle.textContent = 'Confirm Approval';
+      confirmMessage.textContent = 'Are you sure you want to approve this seller application? The seller will be able to start listing products.';
+      confirmBtn.style.background = '#198754';
+      confirmBtn.textContent = 'Approve';
+    } else {
+      confirmTitle.textContent = 'Confirm Rejection';
+      confirmMessage.innerHTML = `
+        <p style="margin-bottom: 1rem;">Are you sure you want to reject this seller application?</p>
+        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151;">Rejection Reason (optional):</label>
+        <textarea id="rejectionReasonInput" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.9rem; resize: vertical; min-height: 80px;" placeholder="Explain why this application is being rejected..."></textarea>
+      `;
+      confirmBtn.style.background = '#dc3545';
+      confirmBtn.textContent = 'Reject';
+    }
+
+    document.getElementById('confirmModal').classList.add('show');
+  }
+
   function executeConfirmedAction() {
     if (!_pendingAction) return;
 
     if (_pendingAction.type === 'permanent_delete') {
       const { username } = _pendingAction;
-      
+
       fetch(`/admin/seller/permanent-delete/${username}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       })
-      .then(r => r.json())
-      .then(data => {
-        closeConfirmModal();
-        if (data.success) {
-          showSuccessToast(data.message);
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          alert(data.message || 'An error occurred.');
+        .then(r => r.json())
+        .then(data => {
+          closeConfirmModal();
+          if (data.success) {
+            showSuccessToast(data.message);
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            alert(data.message || 'An error occurred.');
+          }
+        })
+        .catch(() => {
+          closeConfirmModal();
+          alert('An error occurred. Please try again.');
+        });
+    } else if (_pendingAction.type === 'application_action') {
+      const { userId, action, btn } = _pendingAction;
+      const row = btn ? btn.closest('tr') : null;
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
+        const sibling = btn.nextElementSibling || btn.previousElementSibling;
+        if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = true;
+      }
+
+      // Get rejection reason if rejecting
+      let rejectionReason = '';
+      if (action === 'reject') {
+        const reasonInput = document.getElementById('rejectionReasonInput');
+        if (reasonInput) {
+          rejectionReason = reasonInput.value.trim();
         }
+      }
+
+      const requestBody = action === 'reject' && rejectionReason
+        ? JSON.stringify({ rejection_reason: rejectionReason })
+        : null;
+
+      fetch(`/admin/seller-application/${userId}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody
       })
-      .catch(() => {
-        closeConfirmModal();
-        alert('An error occurred. Please try again.');
-      });
+        .then(r => r.json())
+        .then(data => {
+          closeConfirmModal();
+          if (data.success) {
+            showSuccessToast(data.message);
+            if (row) {
+              const statusCell = row.querySelector('.status-cell');
+              if (statusCell) {
+                statusCell.innerHTML = action === 'approve'
+                  ? '<span class="text-success fw-semibold">Approved</span>'
+                  : '<span class="text-danger fw-semibold">Rejected</span>';
+                row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
+              }
+              const actionsCell = row.querySelector('td:last-child');
+              if (actionsCell) actionsCell.innerHTML = '<span class="text-muted small">Updated</span>';
+            }
+          } else {
+            alert(data.message || 'An error occurred.');
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+              const sibling = btn.nextElementSibling || btn.previousElementSibling;
+              if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = false;
+            }
+          }
+        })
+        .catch(() => {
+          closeConfirmModal();
+          alert('An error occurred. Please try again.');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
+          }
+        });
     } else {
       // Original ban/delete action
       const { action, reason, username } = _pendingAction;
@@ -447,93 +672,29 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, reason })
       })
-      .then(r => r.json())
-      .then(data => {
-        closeConfirmModal();
-        closeManageModal();
-        if (data.success) {
-          showSuccessToast(data.message);
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          alert(data.message || 'An error occurred.');
-        }
-      })
-      .catch(() => {
-        closeConfirmModal();
-        alert('An error occurred. Please try again.');
-      });
-    }
-  }
-
-  function showSuccessToast(message) {
-    const toast = document.getElementById('successToast');
-    document.getElementById('successMessage').textContent = message;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-  }
-
-  // Close modals on backdrop click
-  document.getElementById('manageModal').addEventListener('click', function(e) {
-    if (e.target === this) closeManageModal();
-  });
-  document.getElementById('confirmModal').addEventListener('click', function(e) {
-    if (e.target === this) closeConfirmModal();
-  });
-
-  function handleApplication(userId, action, btn) {
-    const actionText = action === 'approve' ? 'approve' : 'reject';
-    if (!confirm(`Are you sure you want to ${actionText} this seller application?`)) return;
-
-    const row = btn ? btn.closest('tr') : null;
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = action === 'approve' ? 'Approving...' : 'Rejecting...';
-      const sibling = btn.nextElementSibling || btn.previousElementSibling;
-      if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = true;
-    }
-
-    fetch(`/admin/seller-application/${userId}/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success) {
-        if (row) {
-          const statusCell = row.querySelector('.status-cell');
-          if (statusCell) {
-            statusCell.innerHTML = action === 'approve'
-              ? '<span class="text-success fw-semibold">Approved</span>'
-              : '<span class="text-danger fw-semibold">Rejected</span>';
-            row.setAttribute('data-status', action === 'approve' ? 'approved' : 'rejected');
+        .then(r => r.json())
+        .then(data => {
+          closeConfirmModal();
+          closeManageModal();
+          if (data.success) {
+            showSuccessToast(data.message);
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            alert(data.message || 'An error occurred.');
           }
-          const actionsCell = row.querySelector('td:last-child');
-          if (actionsCell) actionsCell.innerHTML = '<span class="text-muted small">Updated</span>';
-        }
-      } else {
-        alert(data.message || 'An error occurred.');
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
-          const sibling = btn.nextElementSibling || btn.previousElementSibling;
-          if (sibling && sibling.tagName === 'BUTTON') sibling.disabled = false;
-        }
-      }
-    })
-    .catch(() => {
-      alert('An error occurred. Please try again.');
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = action === 'approve' ? 'Approve' : 'Reject';
-      }
-    });
+        })
+        .catch(() => {
+          closeConfirmModal();
+          alert('An error occurred. Please try again.');
+        });
+    }
   }
 
-  (function() {
+  (function () {
     const filterButtons = document.querySelectorAll('.app-filter-btn');
     const rows = document.querySelectorAll('tbody tr[data-status]');
     let currentFilter = null;
-    
+
     function applyFilter(status) {
       rows.forEach(row => {
         const rowStatus = row.getAttribute('data-status');
@@ -546,11 +707,11 @@
         }
       });
     }
-    
+
     filterButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function () {
         const status = btn.getAttribute('data-filter');
-        
+
         // Toggle filter
         if (currentFilter === status) {
           // Clicking same filter - turn off filter
@@ -568,7 +729,7 @@
     });
   })();
 
-  (function() {
+  (function () {
     const filterButtons = document.querySelectorAll('.app-filter-btn');
     const rows = document.querySelectorAll('tbody tr[data-status]');
     let currentFilter = null;
@@ -578,7 +739,7 @@
       });
     }
     filterButtons.forEach(btn => {
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function () {
         const status = btn.getAttribute('data-filter');
         if (currentFilter === status) {
           currentFilter = null;

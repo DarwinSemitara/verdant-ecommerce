@@ -2452,6 +2452,7 @@ def seller_dashboard():
     # Get latest application status
     application_status = None
     application_submitted_at = None
+    rejection_reason = None
 
     try:
         # Try to query by user_id first (new applications)
@@ -2472,9 +2473,12 @@ def seller_dashboard():
         if apps:
             app_data = apps[0].to_dict()
             application_status = app_data.get('status')
+            rejection_reason = app_data.get('rejection_reason')
             created_at = app_data.get('created_at')
 
             print(f"✅ Application Status: {application_status}")
+            if rejection_reason:
+                print(f"📝 Rejection Reason: {rejection_reason}")
 
             if created_at:
                 application_submitted_at = created_at.isoformat() if hasattr(
@@ -2494,6 +2498,7 @@ def seller_dashboard():
                            seller_approved=seller_approved,
                            application_status=application_status,
                            application_submitted_at=application_submitted_at,
+                           rejection_reason=rejection_reason,
                            account_status=account_status,
                            ban_reason=ban_reason,
                            ban_count=ban_count,
@@ -3074,57 +3079,140 @@ def submit_seller_application():
     if 'username' not in session or session.get('role') != 'seller':
         return redirect(url_for('login_page'))
 
-    # Get user info to get user_id
+    try:
+        # Get user info to get user_id
+        user = get_user_by_username(session['username'])
+        if not user:
+            flash('User not found', 'error')
+            return redirect(url_for('login_page'))
+
+        user_id = user['id']
+
+        store_name = request.form.get('store_name')
+        store_description = request.form.get('store_description')
+        store_category = request.form.get('store_category')
+        store_phone = request.form.get('store_phone')
+
+        # Get store location data
+        store_latitude = request.form.get('store_latitude')
+        store_longitude = request.form.get('store_longitude')
+        store_address = request.form.get('store_address')
+        store_street = request.form.get('store_street')
+        store_barangay = request.form.get('store_barangay')
+        store_city = request.form.get('store_city')
+
+        print(
+            f"📍 Location data - Lat: {store_latitude}, Lng: {store_longitude}, Address: {store_address}")
+
+        # Handle file uploads
+        business_permit_filename = None
+        valid_id_filename = None
+
+        if 'business_permit' in request.files:
+            file = request.files['business_permit']
+            if file and file.filename:
+                print(f"📤 Uploading business permit...")
+                business_permit_filename = cloud_upload(
+                    file, 'verdant/documents')
+                print(
+                    f"✅ Business permit uploaded: {business_permit_filename}")
+
+        if 'valid_id' in request.files:
+            file = request.files['valid_id']
+            if file and file.filename:
+                print(f"📤 Uploading valid ID...")
+                valid_id_filename = cloud_upload(file, 'verdant/documents')
+                print(f"✅ Valid ID uploaded: {valid_id_filename}")
+
+        # Create seller application in Firestore with user_id
+        application_ref = db.collection('seller_applications').document()
+        application_data = {
+            'user_id': user_id,  # Add user_id for querying
+            'username': session['username'],
+            'store_name': store_name,
+            'store_description': store_description,
+            'store_category': store_category,
+            'store_phone': store_phone,
+            'business_permit': business_permit_filename,
+            'valid_id': valid_id_filename,
+            'status': 'pending',
+            'created_at': firestore_module.SERVER_TIMESTAMP,
+            'updated_at': firestore_module.SERVER_TIMESTAMP
+        }
+
+        # Add location data if provided
+        if store_latitude and store_longitude:
+            try:
+                application_data['store_latitude'] = float(store_latitude)
+                application_data['store_longitude'] = float(store_longitude)
+                application_data['store_address'] = store_address or ''
+                application_data['store_street'] = store_street or ''
+                application_data['store_barangay'] = store_barangay or ''
+                application_data['store_city'] = store_city or ''
+                print(f"✅ Location data added to application")
+            except ValueError as e:
+                print(f"⚠️ Error converting location coordinates: {e}")
+                flash(
+                    'Invalid location coordinates. Please select location again.', 'error')
+                return redirect(url_for('seller_dashboard'))
+
+        print(f"💾 Saving application to Firestore...")
+        application_ref.set(application_data)
+        print(f"✅ Application saved with ID: {application_ref.id}")
+
+        # Update user record with store name (but don't approve yet)
+        user_ref = db.collection('users').document(session['username'])
+        user_ref.update({'store_name': store_name})
+
+        print(
+            f"✅ Seller application submitted for user_id: {user_id}, username: {session['username']}")
+
+        flash('Your seller application has been submitted successfully! Please wait for admin approval.', 'success')
+        return redirect(url_for('seller_dashboard'))
+
+    except Exception as e:
+        print(f"❌ Error submitting seller application: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f'Error submitting application: {str(e)}', 'error')
+        return redirect(url_for('seller_dashboard'))
+
+
+@app.route('/reapply_seller')
+def reapply_seller():
+    """Allow seller to reapply after rejection"""
+    if 'username' not in session or session.get('role') != 'seller':
+        return redirect(url_for('login_page'))
+
+    # Get user info
     user = get_user_by_username(session['username'])
     if not user:
-        flash('User not found', 'error')
         return redirect(url_for('login_page'))
 
     user_id = user['id']
 
-    store_name = request.form.get('store_name')
-    store_description = request.form.get('store_description')
-    store_category = request.form.get('store_category')
-    store_phone = request.form.get('store_phone')
+    try:
+        # Delete the rejected application
+        apps = list(seller_applications_ref.where(
+            'user_id', '==', user_id).stream())
 
-    # Handle file uploads
-    business_permit_filename = None
-    valid_id_filename = None
+        # If no application found by user_id, try by username
+        if not apps:
+            apps = list(seller_applications_ref.where(
+                'username', '==', session['username']).stream())
 
-    if 'business_permit' in request.files:
-        file = request.files['business_permit']
-        if file and file.filename:
-            business_permit_filename = cloud_upload(file, 'verdant/documents')
+        for app in apps:
+            app_data = app.to_dict()
+            if app_data.get('status') == 'rejected':
+                # Delete the rejected application
+                seller_applications_ref.document(app.id).delete()
+                print(f"✅ Deleted rejected application for user_id: {user_id}")
 
-    if 'valid_id' in request.files:
-        file = request.files['valid_id']
-        if file and file.filename:
-            valid_id_filename = cloud_upload(file, 'verdant/documents')
+        flash('You can now submit a new seller application.', 'info')
+    except Exception as e:
+        print(f"❌ Error deleting rejected application: {e}")
+        flash('Error processing reapplication. Please try again.', 'error')
 
-    # Create seller application in Firestore with user_id
-    application_ref = db.collection('seller_applications').document()
-    application_ref.set({
-        'user_id': user_id,  # Add user_id for querying
-        'username': session['username'],
-        'store_name': store_name,
-        'store_description': store_description,
-        'store_category': store_category,
-        'store_phone': store_phone,
-        'business_permit': business_permit_filename,
-        'valid_id': valid_id_filename,
-        'status': 'pending',
-        'created_at': firestore_module.SERVER_TIMESTAMP,
-        'updated_at': firestore_module.SERVER_TIMESTAMP
-    })
-
-    # Update user record with store name (but don't approve yet)
-    user_ref = db.collection('users').document(session['username'])
-    user_ref.update({'store_name': store_name})
-
-    print(
-        f"✅ Seller application submitted for user_id: {user_id}, username: {session['username']}")
-
-    flash('Your seller application has been submitted successfully! Please wait for admin approval.', 'success')
     return redirect(url_for('seller_dashboard'))
 
 
@@ -4488,8 +4576,16 @@ def handle_seller_application(application_id, action):
 
             message = f'Seller application approved successfully! Seller ID: {seller_id}'
         else:
-            # Update seller_applications status
-            app_ref.update({'status': 'rejected'})
+            # Get rejection reason from request
+            rejection_reason = request.json.get(
+                'rejection_reason', '') if request.is_json else request.form.get('rejection_reason', '')
+
+            # Update seller_applications status with rejection reason
+            update_data = {'status': 'rejected'}
+            if rejection_reason:
+                update_data['rejection_reason'] = rejection_reason
+
+            app_ref.update(update_data)
 
             message = 'Seller application rejected!'
 
@@ -4675,8 +4771,16 @@ def handle_user_application(application_id, action):
 
             message = 'User application approved successfully!'
         else:
-            # Update user_applications status
-            app_ref.update({'status': 'rejected'})
+            # Get rejection reason from request
+            rejection_reason = request.json.get(
+                'rejection_reason', '') if request.is_json else request.form.get('rejection_reason', '')
+
+            # Update user_applications status with rejection reason
+            update_data = {'status': 'rejected'}
+            if rejection_reason:
+                update_data['rejection_reason'] = rejection_reason
+
+            app_ref.update(update_data)
 
             # Update user's is_approved status to False
             user_ref = db.collection('users').document(user_id)
@@ -4832,8 +4936,16 @@ def handle_rider_application(user_id, action):
             user_ref = db.collection('users').document(username)
             user_ref.update({'is_approved': True})
         else:
-            # Update rider_applications status
-            app_ref.update({'status': 'rejected'})
+            # Get rejection reason from request
+            rejection_reason = request.json.get(
+                'rejection_reason', '') if request.is_json else request.form.get('rejection_reason', '')
+
+            # Update rider_applications status with rejection reason
+            update_data = {'status': 'rejected'}
+            if rejection_reason:
+                update_data['rejection_reason'] = rejection_reason
+
+            app_ref.update(update_data)
 
             # Update user's is_approved status
             user_ref = db.collection('users').document(username)
@@ -5267,6 +5379,103 @@ def reject_order(order_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # API Routes for Seller Order Management (for AJAX calls)
+
+
+@app.route('/api/get-store-location', methods=['GET'])
+@role_required('seller')
+def api_get_store_location():
+    """Get current store location for seller"""
+    try:
+        user = get_user_by_username(session['username'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_id = user['id']
+
+        # Try to get location from approved seller application first
+        apps = list(seller_applications_ref.where('user_id', '==', user_id).where(
+            'status', '==', 'approved').limit(1).stream())
+
+        if not apps:
+            # Try by username
+            apps = list(seller_applications_ref.where('username', '==', session['username']).where(
+                'status', '==', 'approved').limit(1).stream())
+
+        if apps:
+            app_data = apps[0].to_dict()
+            if app_data.get('store_latitude') and app_data.get('store_longitude'):
+                return jsonify({
+                    'success': True,
+                    'location': {
+                        'latitude': app_data.get('store_latitude'),
+                        'longitude': app_data.get('store_longitude'),
+                        'address': app_data.get('store_address', ''),
+                        'street': app_data.get('store_street', ''),
+                        'barangay': app_data.get('store_barangay', ''),
+                        'city': app_data.get('store_city', '')
+                    }
+                })
+
+        return jsonify({'success': False, 'message': 'No location set'})
+
+    except Exception as e:
+        print(f"❌ Error getting store location: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/update-store-location', methods=['POST'])
+@role_required('seller')
+def api_update_store_location():
+    """Update store location for seller"""
+    try:
+        data = request.get_json()
+        latitude = data.get('latitude')
+        longitude = data.get('longitude')
+        address = data.get('address', '')
+        street = data.get('street', '')
+        barangay = data.get('barangay', '')
+        city = data.get('city', '')
+
+        if not latitude or not longitude:
+            return jsonify({'success': False, 'message': 'Latitude and longitude are required'}), 400
+
+        user = get_user_by_username(session['username'])
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        user_id = user['id']
+
+        # Update the approved seller application
+        apps = list(seller_applications_ref.where('user_id', '==',
+                    user_id).where('status', '==', 'approved').stream())
+
+        if not apps:
+            # Try by username
+            apps = list(seller_applications_ref.where(
+                'username', '==', session['username']).where('status', '==', 'approved').stream())
+
+        if apps:
+            for app in apps:
+                app.reference.update({
+                    'store_latitude': float(latitude),
+                    'store_longitude': float(longitude),
+                    'store_address': address,
+                    'store_street': street,
+                    'store_barangay': barangay,
+                    'store_city': city,
+                    'updated_at': firestore_module.SERVER_TIMESTAMP
+                })
+                print(f"✅ Updated store location for {session['username']}")
+
+            return jsonify({'success': True, 'message': 'Store location updated successfully'})
+        else:
+            return jsonify({'success': False, 'message': 'No approved seller application found'}), 404
+
+    except Exception as e:
+        print(f"❌ Error updating store location: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/api/seller/orders')
@@ -6400,15 +6609,34 @@ def mobile_rider_update_status():
         # Update order status
         order_ref.update({'status': new_status})
 
-        # If delivered, add earnings to rider balance
+        # If delivered, add earnings to rider balance (98% of shipping fee)
         if new_status == 'delivered':
-            shipping_fee = order_data.get('shipping_fee', 38.0)
+            # Use shipping_rider_portion if available (new orders), otherwise calculate from shipping_fee (old orders)
+            shipping_rider_portion = order_data.get('shipping_rider_portion')
+            if shipping_rider_portion is None:
+                # Fallback for old orders without shipping_rider_portion
+                shipping_fee = order_data.get('shipping_fee', 38.0)
+                shipping_rider_portion = shipping_fee * 0.98
+
             rider_ref = db.collection('users').document(rider_username)
             rider_doc = rider_ref.get()
 
             if rider_doc.exists:
                 current_balance = rider_doc.to_dict().get('balance', 0.0)
-                rider_ref.update({'balance': current_balance + shipping_fee})
+                new_balance = current_balance + shipping_rider_portion
+                rider_ref.update({'balance': new_balance})
+                print(
+                    f"✅ Rider {rider_username} earned ₱{shipping_rider_portion:.2f} (98% of shipping). New balance: ₱{new_balance:.2f}")
+
+            # Update admin earnings
+            shipping_admin_portion = order_data.get('shipping_admin_portion')
+            if shipping_admin_portion is None:
+                # Fallback for old orders
+                shipping_fee = order_data.get('shipping_fee', 38.0)
+                shipping_admin_portion = shipping_fee * 0.02
+
+            print(
+                f"💰 Admin earned ₱{shipping_admin_portion:.2f} (2% of shipping) from this delivery")
 
         return jsonify({'success': True, 'message': 'Status updated successfully'})
 
